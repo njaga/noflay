@@ -1,5 +1,7 @@
 <?php
 
+// UserPolicy.php
+
 namespace App\Policies;
 
 use App\Models\User;
@@ -9,79 +11,64 @@ class UserPolicy
 {
     use HandlesAuthorization;
 
-    /**
-     * Determine whether the user can view any models.
-     */
-    public function viewAny(User $user): bool
+    public function viewAny(User $user)
     {
-        return $user->hasAnyRole(['super_admin', 'admin_entreprise', 'user_entreprise']) && $user->is_active;
+        return $this->isSuperAdmin($user) || $this->isAdminEntreprise($user);
     }
 
-    /**
-     * Determine whether the user can view the model.
-     */
-    public function view(User $user, User $model): bool
+    public function view(User $user, User $model)
     {
-        if (!$user->is_active) {
-            return false;
-        }
-
-        if ($user->hasRole('super_admin')) {
+        if ($this->isSuperAdmin($user)) {
             return true;
         }
 
-        if ($user->hasAnyRole(['admin_entreprise', 'user_entreprise'])) {
-            return $user->company_id === $model->company_id;
-        }
-
-        return false;
+        return $this->isAdminEntreprise($user) && $user->company_id === $model->company_id;
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
-    public function create(User $user): bool
+    public function create(User $user)
     {
-        return $user->hasAnyRole(['super_admin', 'admin_entreprise']) && $user->is_active;
+        return $this->isSuperAdmin($user) || ($this->isAdminEntreprise($user) && !$this->isSuperAdmin($user));
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
-    public function update(User $user, User $model): bool
+    public function update(User $user, User $model)
     {
-        if (!$user->is_active) {
-            return false;
-        }
-
-        if ($user->hasRole('super_admin')) {
+        if ($this->isSuperAdmin($user)) {
             return true;
         }
 
-        if ($user->hasRole('admin_entreprise') && !$model->hasRole('super_admin')) {
-            return $user->company_id === $model->company_id;
-        }
-
-        return false;
+        return $this->isAdminEntreprise($user) && $user->company_id === $model->company_id && !$this->isSuperAdmin($model);
     }
 
-    /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(User $user, User $model): bool
+    public function delete(User $user, User $model)
     {
-        if (!$user->is_active) {
-            return false;
-        }
-
-        if ($user->hasRole('super_admin')) {
+        if ($this->isSuperAdmin($user)) {
             return true;
         }
 
-        if ($user->hasRole('admin_entreprise') && !$model->hasRole('super_admin')) {
-            return $user->company_id === $model->company_id && $user->id !== $model->id;
+        return $this->isAdminEntreprise($user) && $user->company_id === $model->company_id && !$this->isSuperAdmin($model);
+    }
+
+    public function toggleStatus(User $user, User $model)
+    {
+        if ($this->isSuperAdmin($user)) {
+            return true;
         }
 
-        return false;
+        return $this->isAdminEntreprise($user) && $user->company_id === $model->company_id && !$this->isSuperAdmin($model);
+    }
+
+    public function isSuperAdmin(User $user)
+    {
+        return $user->roles->contains('name', 'super_admin');
+    }
+
+    public function isAdminEntreprise(User $user)
+    {
+        return $user->roles->contains('name', 'admin_entreprise');
+    }
+
+    public function isUserEntreprise(User $user)
+    {
+        return $user->roles->contains('name', 'user_entreprise');
     }
 }

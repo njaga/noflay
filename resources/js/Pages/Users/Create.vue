@@ -1,112 +1,68 @@
 <template>
     <AppLayout title="Ajouter un utilisateur">
-        <div class="py-12 bg-gray-100">
-            <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
-                    <div class="p-8">
-                        <h1 class="text-3xl font-bold text-gray-900 mb-6">Ajouter un utilisateur</h1>
-                        <form @submit.prevent="submit" class="space-y-6">
-                            <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
-                                <div class="sm:col-span-2">
-                                    <label for="name" class="block text-sm font-medium text-gray-700">Nom</label>
-                                    <div class="mt-1 flex rounded-md shadow-sm">
-                                        <span
-                                            class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm">
-                                            <i class="fas fa-user"></i>
-                                        </span>
-                                        <input type="text" id="name" v-model="form.name"
-                                            class="flex-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full rounded-none rounded-r-md sm:text-sm border-gray-300"
-                                            required>
-                                    </div>
-                                    <div v-if="form.errors.name" class="text-red-500 text-sm mt-1">{{ form.errors.name
-                                        }}</div>
-                                </div>
-
-                                <div class="sm:col-span-2">
-                                    <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                                    <div class="mt-1 flex rounded-md shadow-sm">
-                                        <span
-                                            class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm">
-                                            <i class="fas fa-envelope"></i>
-                                        </span>
-                                        <input type="email" id="email" v-model="form.email"
-                                            class="flex-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full rounded-none rounded-r-md sm:text-sm border-gray-300"
-                                            required>
-                                    </div>
-                                    <div v-if="form.errors.email" class="text-red-500 text-sm mt-1">{{ form.errors.email
-                                        }}</div>
-                                </div>
-
-                                <div>
-                                    <label for="password" class="block text-sm font-medium text-gray-700">Mot de
-                                        passe</label>
-                                    <div class="mt-1 flex rounded-md shadow-sm">
-                                        <span
-                                            class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm">
-                                            <i class="fas fa-lock"></i>
-                                        </span>
-                                        <input type="password" id="password" v-model="form.password"
-                                            class="flex-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full rounded-none rounded-r-md sm:text-sm border-gray-300"
-                                            required>
-                                    </div>
-                                    <div v-if="form.errors.password" class="text-red-500 text-sm mt-1">{{
-                                        form.errors.password }}</div>
-                                </div>
-
-                                <div>
-                                    <label for="password_confirmation"
-                                        class="block text-sm font-medium text-gray-700">Confirmer le mot de
-                                        passe</label>
-                                    <div class="mt-1 flex rounded-md shadow-sm">
-                                        <span
-                                            class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm">
-                                            <i class="fas fa-lock"></i>
-                                        </span>
-                                        <input type="password" id="password_confirmation"
-                                            v-model="form.password_confirmation"
-                                            class="flex-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full rounded-none rounded-r-md sm:text-sm border-gray-300"
-                                            required>
-                                    </div>
-                                </div>
-
-                                <div class="sm:col-span-2">
-                                    <label for="role" class="block text-sm font-medium text-gray-700">Rôle</label>
-                                    <select id="role" v-model="form.role"
-                                        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                        <option value="" disabled>Sélectionnez un rôle</option>
-                                        <option v-for="role in roles" :key="role" :value="role">{{ formatRole(role) }}
-                                        </option>
-                                    </select>
-                                    <div v-if="form.errors.role" class="text-red-500 text-sm mt-1">{{ form.errors.role
-                                        }}</div>
-                                </div>
-
-                                <div v-if="showCompanySelect" class="sm:col-span-2">
-                                    <label for="company_id"
-                                        class="block text-sm font-medium text-gray-700">Entreprise</label>
-                                    <select id="company_id" v-model="form.company_id"
-                                        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                        <option value="" disabled>Sélectionnez une entreprise</option>
-                                        <option v-for="company in companies" :key="company.id" :value="company.id">{{
-                                            company.name }}</option>
-                                    </select>
-                                    <div v-if="form.errors.company_id" class="text-red-500 text-sm mt-1">{{
-                                        form.errors.company_id }}</div>
-                                </div>
+        <div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-white shadow-2xl rounded-3xl overflow-hidden transform hover:scale-105 transition-all duration-300">
+                    <div class="md:flex">
+                        <div class="md:flex-shrink-0 bg-gradient-to-br from-indigo-500 to-purple-600 md:w-48 flex flex-col justify-center items-center py-8 px-4">
+                            <div class="text-white text-4xl mb-4">
+                                <i class="fas fa-user-plus"></i>
                             </div>
-
-                            <div class="flex justify-end mt-6">
-                                <button type="button" @click="cancel"
-                                    class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                    Annuler
-                                </button>
-                                <button type="submit"
-                                    class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                                    :disabled="form.processing">
-                                    {{ form.processing ? 'Création en cours...' : 'Ajouter l\'utilisateur' }}
-                                </button>
-                            </div>
-                        </form>
+                            <h2 class="text-white text-2xl font-semibold text-center">Ajouter un utilisateur</h2>
+                        </div>
+                        <div class="p-8 flex-grow">
+                            <form @submit.prevent="submit" class="space-y-6">
+                                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+                                    <FloatingInput
+                                        v-model="form.name"
+                                        label="Nom"
+                                        icon="fas fa-user"
+                                        :error="form.errors.name"
+                                    />
+                                    <FloatingInput
+                                        v-model="form.email"
+                                        label="Email"
+                                        type="email"
+                                        icon="fas fa-envelope"
+                                        :error="form.errors.email"
+                                    />
+                                    <FloatingInput
+                                        v-model="form.password"
+                                        label="Mot de passe"
+                                        type="password"
+                                        icon="fas fa-lock"
+                                        :error="form.errors.password"
+                                    />
+                                    <FloatingInput
+                                        v-model="form.password_confirmation"
+                                        label="Confirmer le mot de passe"
+                                        type="password"
+                                        icon="fas fa-lock"
+                                    />
+                                    <AnimatedSelect
+                                        v-model="form.role"
+                                        :options="filteredRoleOptions"
+                                        label="Rôle"
+                                        :error="form.errors.role"
+                                    />
+                                    <AnimatedSelect
+                                        v-if="showCompanySelect"
+                                        v-model="form.company_id"
+                                        :options="companyOptions"
+                                        label="Entreprise"
+                                        :error="form.errors.company_id"
+                                    />
+                                </div>
+                                <div class="flex justify-end mt-6 space-x-4">
+                                    <button @click="cancel" type="button" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-300">
+                                        Annuler
+                                    </button>
+                                    <button type="submit" class="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full hover:from-indigo-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 transform hover:scale-105" :disabled="form.processing">
+                                        {{ form.processing ? 'Création en cours...' : 'Ajouter l\'utilisateur' }}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -116,18 +72,14 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { useForm } from '@inertiajs/vue3';
+import { useForm, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import FloatingInput from '@/Components/FloatingInput.vue';
+import AnimatedSelect from '@/Components/AnimatedSelect.vue';
 
 const props = defineProps({
-    roles: {
-        type: Array,
-        required: true
-    },
-    companies: {
-        type: Array,
-        required: true
-    }
+    roles: Array,
+    companies: Array,
 });
 
 const form = useForm({
@@ -139,11 +91,13 @@ const form = useForm({
     company_id: null,
 });
 
-const showCompanySelect = computed(() => {
-    return ['admin_entreprise', 'user_entreprise', 'bailleur', 'locataire'].includes(form.role);
-});
+const showCompanySelect = computed(() =>
+    ['admin_entreprise', 'user_entreprise', 'bailleur', 'locataire'].includes(form.role)
+);
 
-const formatRole = (role) => {
+const currentUserRole = computed(() => usePage().props.auth.user.role);
+
+const filteredRoleOptions = computed(() => {
     const roleMap = {
         'super_admin': 'Super Administrateur',
         'admin_entreprise': 'Administrateur d\'entreprise',
@@ -151,18 +105,30 @@ const formatRole = (role) => {
         'bailleur': 'Bailleur',
         'locataire': 'Locataire'
     };
-    return roleMap[role] || role;
-};
+
+    return props.roles
+        .filter(role => currentUserRole.value !== 'admin_entreprise' || role !== 'super_admin')
+        .map(role => ({
+            value: role,
+            label: roleMap[role] || role
+        }));
+});
+
+const companyOptions = computed(() => [
+    { value: '', label: 'Sélectionnez une entreprise' },
+    ...props.companies.map(company => ({
+        value: company.id,
+        label: company.name
+    }))
+]);
 
 const submit = () => {
     form.post(route('users.store'), {
-        onSuccess: () => {
-            form.reset();
-        },
+        onSuccess: () => form.reset(),
     });
 };
 
 const cancel = () => {
-    window.history.back()
+    window.history.back();
 };
 </script>

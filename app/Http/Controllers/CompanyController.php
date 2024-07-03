@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Company;
+use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -32,29 +33,34 @@ class CompanyController extends Controller
     {
         Gate::authorize('create', Company::class);
 
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:companies',
             'address' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:20',
+            'website' => 'nullable|url|max:255',
+            'is_active' => 'boolean',
         ]);
 
-        Company::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'address' => $request->address,
-        ]);
+        $company = Company::create($validated);
 
-        return redirect()->route('companies.index')->with('success', 'Company created successfully.');
+        return redirect()->route('companies.index')->with('flash', [
+            'success' => true,
+            'message' => 'Entreprise créée avec succès.',
+            'company' => $company,
+        ]);
     }
+
 
     public function show(Company $company)
     {
-        Gate::authorize('view', $company);
+        $company->load('users.roles', 'landlords', 'tenants', 'properties');
 
         return Inertia::render('Companies/Show', [
             'company' => $company,
         ]);
     }
+
 
     public function edit(Company $company)
     {
@@ -100,4 +106,5 @@ class CompanyController extends Controller
 
         return redirect()->route('companies.index')->with('success', 'Company status updated successfully.');
     }
+
 }

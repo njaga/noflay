@@ -1,36 +1,31 @@
 <?php
 
+// database/migrations/2024_06_24_000002_create_properties_table.php
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 class CreatePropertiesTable extends Migration
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
     public function up()
     {
         Schema::create('properties', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('landlord_id')->constrained('landlords')->onDelete('cascade');
+            $table->string('property_type');
             $table->string('name');
-            $table->string('type');
+            $table->text('description')->nullable();
             $table->string('address');
-            $table->decimal('price', 10, 2);
-            $table->foreignId('company_id')->constrained()->onDelete('cascade');
+            $table->integer('available_count');
+            $table->foreignId('company_id')->constrained('companies')->onDelete('cascade');
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
     public function down()
     {
         Schema::dropIfExists('properties');
     }
 }
+

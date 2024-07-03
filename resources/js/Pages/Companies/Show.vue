@@ -1,22 +1,22 @@
 <template>
     <AppLayout :title="'Détails de ' + company.name">
-        <div class="py-12 bg-gray-100">
+        <div class="min-h-screen py-12">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
-                    <div class="p-6 sm:p-8">
-                        <!-- Bouton de retour -->
-                        <Link :href="route('companies.index')"
-                            class="inline-flex items-center mb-6 text-indigo-600 hover:text-indigo-800 transition-colors duration-200">
-                        <i class="fas fa-arrow-left mr-2"></i> Retour à la liste
-                        </Link>
-
+                <div
+                    class="bg-white bg-opacity-90 backdrop-filter backdrop-blur-lg overflow-hidden shadow-2xl rounded-3xl">
+                    <div class="p-8">
                         <!-- En-tête avec le nom de l'entreprise et les boutons d'action -->
-                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
-                            <h1 class="text-3xl font-bold text-gray-900 mb-4 sm:mb-0 flex items-center">
-                                <i class="fas fa-building mr-3 text-indigo-600"></i>
-                                {{ company.name }}
-                            </h1>
-                            <div class="flex space-x-2">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-12">
+                            <div class="flex items-center space-x-4">
+                                <div
+                                    class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-building text-3xl text-white"></i>
+                                </div>
+                                <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">
+                                    {{ company.name }}
+                                </h1>
+                            </div>
+                            <div class="flex space-x-4 mt-4 sm:mt-0">
                                 <Link :href="route('companies.edit', company.id)" class="btn-primary">
                                 <i class="fas fa-edit mr-2"></i>
                                 Modifier
@@ -29,114 +29,93 @@
                         </div>
 
                         <!-- Informations de l'entreprise -->
-                        <div class="bg-indigo-50 p-6 rounded-lg mb-8 shadow-sm">
-                            <h2 class="text-xl font-semibold text-indigo-800 mb-4 flex items-center">
-                                <i class="fas fa-info-circle mr-2"></i> Informations de l'entreprise
+                        <div class="bg-gradient-to-br from-indigo-50 to-purple-50 p-8 rounded-2xl mb-12 shadow-inner">
+                            <h2 class="text-2xl font-semibold text-indigo-800 mb-6 flex items-center">
+                                <i class="fas fa-info-circle mr-3 text-indigo-600"></i> Informations de l'entreprise
                             </h2>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div v-for="(value, key) in companyInfo" :key="key" class="flex items-start">
-                                    <i :class="['fas', getIcon(key), 'mr-3', 'text-indigo-500', 'mt-1']"></i>
+                                    <div
+                                        class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mr-4">
+                                        <i :class="['fas', getIcon(key), 'text-indigo-600 text-xl']"></i>
+                                    </div>
                                     <div>
-                                        <p class="text-sm font-medium text-gray-500 mb-1">{{ getLabel(key) }}</p>
-                                        <p v-if="key === 'website'" class="text-base text-gray-900">
-                                            <a v-if="value" :href="value" target="_blank" class="text-indigo-600 hover:text-indigo-800">
+                                        <p class="text-sm font-medium text-indigo-600 mb-1">{{ getLabel(key) }}</p>
+                                        <p v-if="key === 'website'" class="text-lg text-gray-800">
+                                            <a v-if="value" :href="value" target="_blank"
+                                                class="text-indigo-600 hover:text-indigo-800 underline">
                                                 {{ value }}
                                             </a>
                                             <span v-else>Non spécifié</span>
                                         </p>
-                                        <p v-else-if="key === 'is_active'" class="text-base">
-                                            <span :class="value ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
-                                                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
+                                        <p v-else-if="key === 'is_active'" class="text-lg">
+                                            <span
+                                                :class="value ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+                                                class="px-3 py-1 inline-flex text-sm font-semibold rounded-full">
                                                 {{ value ? "Actif" : "Inactif" }}
                                             </span>
                                         </p>
-                                        <p v-else class="text-base text-gray-900">{{ value || "Non spécifié" }}</p>
+                                        <p v-else class="text-lg text-gray-800">{{ value || "Non spécifié" }}</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Utilisateurs associés -->
-                        <div class="mb-8">
-                            <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-                                <i class="fas fa-users mr-2 text-indigo-600"></i> Utilisateurs associés
-                            </h2>
-                            <div v-if="company.users && company.users.length > 0"
-                                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <div v-for="user in company.users" :key="user.id"
-                                    class="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-                                    <div class="flex items-center space-x-3">
-                                        <div class="flex-shrink-0">
-                                            <img class="h-10 w-10 rounded-full" :src="user.profile_photo_url" :alt="user.name" />
-                                        </div>
-                                        <div class="flex-1 min-w-0">
-                                            <p class="font-medium text-gray-900 truncate">{{ user.name }}</p>
-                                            <p class="text-sm text-gray-500 truncate">{{ user.email }}</p>
-                                            <p class="mt-1 text-sm text-gray-500">{{ getRoleLabel(user.role) }}</p>
+                        <!-- Sections pour les utilisateurs, bailleurs, locataires et propriétés -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                            <AssociatedSection title="Utilisateurs associés" icon="fas fa-users" :items="company.users">
+                                <template #item="{ item: user }">
+                                    <div class="flex items-center space-x-4">
+                                        <img class="h-12 w-12 rounded-full object-cover" :src="user.profile_photo_url"
+                                            :alt="user.name" />
+                                        <div>
+                                            <p class="font-semibold text-gray-900">{{ user.name }}</p>
+                                            <p class="text-sm text-gray-600">{{ user.email }}</p>
+                                            <p class="text-xs text-indigo-600 mt-1">
+                                                {{ user.roles.map(role => role.name).join(', ') }}
+                                            </p>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                            <p v-else class="text-gray-600 bg-gray-100 p-4 rounded-lg">
-                                Aucun utilisateur associé à cette entreprise.
-                            </p>
-                        </div>
+                                </template>
+                            </AssociatedSection>
 
-                        <!-- Bailleurs associés -->
-                        <div class="mb-8">
-                            <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-                                <i class="fas fa-user-tie mr-2 text-indigo-600"></i> Bailleurs associés
-                            </h2>
-                            <div v-if="company.landlords && company.landlords.length > 0"
-                                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <div v-for="landlord in company.landlords" :key="landlord.id"
-                                    class="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-                                    <p class="font-medium text-gray-900">{{ landlord.prenom }} {{ landlord.nom }}</p>
-                                    <p class="text-sm text-gray-500">{{ landlord.email }}</p>
-                                    <p class="text-sm text-gray-500">{{ landlord.telephone }}</p>
-                                </div>
-                            </div>
-                            <p v-else class="text-gray-600 bg-gray-100 p-4 rounded-lg">
-                                Aucun bailleur associé à cette entreprise.
-                            </p>
-                        </div>
+                            <AssociatedSection title="Bailleurs associés" icon="fas fa-user-tie"
+                                :items="company.landlords">
+                                <template #item="{ item: landlord }">
+                                    <div>
+                                        <p class="font-semibold text-gray-900">{{ landlord.first_name }} {{
+                                            landlord.last_name }}</p>
+                                        <p class="text-sm text-gray-600">{{ landlord.email }}</p>
+                                        <p class="text-sm text-gray-600">{{ landlord.phone }}</p>
+                                    </div>
+                                </template>
+                            </AssociatedSection>
 
-                        <!-- Locataires associés -->
-                        <div class="mb-8">
-                            <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-                                <i class="fas fa-home mr-2 text-indigo-600"></i> Locataires associés
-                            </h2>
-                            <div v-if="company.tenants && company.tenants.length > 0"
-                                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <div v-for="tenant in company.tenants" :key="tenant.id"
-                                    class="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-                                    <p class="font-medium text-gray-900">{{ tenant.prenom }} {{ tenant.nom }}</p>
-                                    <p class="text-sm text-gray-500">{{ tenant.email }}</p>
-                                    <p class="text-sm text-gray-500">{{ tenant.telephone }}</p>
-                                </div>
-                            </div>
-                            <p v-else class="text-gray-600 bg-gray-100 p-4 rounded-lg">
-                                Aucun locataire associé à cette entreprise.
-                            </p>
-                        </div>
+                            <AssociatedSection title="Locataires associés" icon="fas fa-home" :items="company.tenants">
+                                <template #item="{ item: tenant }">
+                                    <div>
+                                        <p class="font-semibold text-gray-900">{{ tenant.first_name }} {{
+                                            tenant.last_name }}</p>
+                                        <p class="text-sm text-gray-600">{{ tenant.email }}</p>
+                                        <p class="text-sm text-gray-600">{{ tenant.phone_number }}</p>
+                                    </div>
+                                </template>
+                            </AssociatedSection>
 
-                        <!-- Propriétés associées -->
-                        <div>
-                            <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-                                <i class="fas fa-building mr-2 text-indigo-600"></i> Propriétés associées
-                            </h2>
-                            <div v-if="company.properties && company.properties.length > 0"
-                                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <div v-for="property in company.properties" :key="property.id"
-                                    class="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-                                    <p class="font-medium text-gray-900">{{ property.name }}</p>
-                                    <p class="text-sm text-gray-500">{{ property.address }}</p>
-                                    <p class="text-sm text-gray-500">{{ property.type }}</p>
-                                </div>
-                            </div>
-                            <p v-else class="text-gray-600 bg-gray-100 p-4 rounded-lg">
-                                Aucune propriété associée à cette entreprise.
-                            </p>
+                            <AssociatedSection title="Propriétés associées" icon="fas fa-building"
+                                :items="company.properties">
+                                <template #item="{ item: property }">
+                                    <div class="flex space-x-4">
+                                        <img :src="getPropertyImage(property)" alt="Property Image"
+                                            class="w-24 h-24 object-cover rounded-lg" />
+                                        <div>
+                                            <p class="font-semibold text-gray-900">{{ property.name }}</p>
+                                            <p class="text-sm text-gray-600">{{ property.address }}</p>
+                                            <p class="text-sm text-indigo-600">{{ property.property_type }}</p>
+                                        </div>
+                                    </div>
+                                </template>
+                            </AssociatedSection>
                         </div>
                     </div>
                 </div>
@@ -146,14 +125,14 @@
         <!-- Modal de confirmation de suppression -->
         <Modal :show="showDeleteModal" @close="closeDeleteModal">
             <div class="p-6">
-                <h2 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                    <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
+                <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-exclamation-triangle text-red-500 mr-3"></i>
                     Confirmer la suppression
                 </h2>
-                <p class="mb-4 text-sm text-gray-600">
+                <p class="mb-6 text-gray-600">
                     Êtes-vous sûr de vouloir supprimer cette entreprise ? Cette action est irréversible.
                 </p>
-                <div class="mt-6 flex justify-end space-x-3">
+                <div class="flex justify-end space-x-4">
                     <button @click="closeDeleteModal" class="btn-secondary">
                         Annuler
                     </button>
@@ -171,12 +150,14 @@ import { defineComponent, ref, computed } from "vue";
 import AppLayout from "@/Layouts/AppLayout.vue";
 import { Link, router } from "@inertiajs/vue3";
 import Modal from "@/Components/Modal.vue";
+import AssociatedSection from "@/Components/AssociatedSection.vue";
 
 export default defineComponent({
     components: {
         AppLayout,
         Link,
-        Modal
+        Modal,
+        AssociatedSection
     },
     props: {
         company: Object,
@@ -211,7 +192,7 @@ export default defineComponent({
                 is_active: 'Statut',
                 address: 'Adresse'
             };
-            return labels[key] || key.replace('_', ' ').capitalize();
+            return labels[key] || key.replace('_', ' ').charAt(0).toUpperCase() + key.replace('_', ' ').slice(1);
         };
 
         const confirmDelete = () => {
@@ -232,15 +213,19 @@ export default defineComponent({
             });
         };
 
-        const getRoleLabel = (role) => {
-            const labels = {
-                super_admin: 'Super Admin',
-                user_entreprise: 'Utilisateur',
-                landlord: 'Bailleur',
-                tenant: 'Locataire',
-                admin_entreprise: 'Admin'
-            };
-            return labels[role] || 'N/A';
+        const getPropertyImage = (property) => {
+            if (property.photos && property.photos.length) {
+                try {
+                    const parsedPhotos = JSON.parse(property.photos);
+                    if (parsedPhotos.length > 0) {
+                        const photoPath = parsedPhotos[0].replace(/^public\//, '');
+                        return `/storage/${photoPath}`;
+                    }
+                } catch (error) {
+                    console.error("Error parsing property photos:", error);
+                }
+            }
+            return 'https://via.placeholder.com/150'; // Image par défaut
         };
 
         return {
@@ -251,7 +236,7 @@ export default defineComponent({
             companyInfo,
             getIcon,
             getLabel,
-            getRoleLabel
+            getPropertyImage
         };
     },
 });
@@ -259,65 +244,14 @@ export default defineComponent({
 
 <style scoped>
 .btn-primary {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.5rem 1rem;
-    background-color: #4f46e5;
-    border: 1px solid transparent;
-    border-radius: 0.375rem;
-    font-weight: 600;
-    font-size: 0.75rem;
-    color: white;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 150ms;
-}
-
-.btn-primary:hover {
-    background-color: #4338ca;
+    @apply inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:from-indigo-600 hover:to-purple-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring focus:ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150;
 }
 
 .btn-danger {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.5rem 1rem;
-    background-color: #dc2626;
-    border: 1px solid transparent;
-    border-radius: 0.375rem;
-    font-weight: 600;
-    font-size: 0.75rem;
-    color: white;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 150ms;
-}
-
-.btn-danger:hover {
-    background-color: #b91c1c;
+    @apply inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-500 to-pink-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:from-red-600 hover:to-pink-700 active:bg-red-900 focus:outline-none focus:border-red-900 focus:ring focus:ring-red-300 disabled:opacity-25 transition ease-in-out duration-150;
 }
 
 .btn-secondary {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.5rem 1rem;
-    background-color: white;
-    border: 1px solid #d1d5db;
-    border-radius: 0.375rem;
-    font-weight: 600;
-    font-size: 0.75rem;
-    color: #374151;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 150ms;
-}
-
-.btn-secondary:hover {
-    background-color: #f3f4f6;
+    @apply inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:border-blue-300 focus:ring focus:ring-blue-200 active:text-gray-800 active:bg-gray-50 disabled:opacity-25 transition ease-in-out duration-150;
 }
 </style>

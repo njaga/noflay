@@ -24,9 +24,15 @@
         "@fortawesome/free-solid-svg-icons": "^6.5.2",
         "@fortawesome/vue-fontawesome": "^3.0.8",
         "@headlessui/vue": "^1.7.22",
+        "@heroicons/vue": "^2.1.4",
         "bootstrap": "^5.3.3",
         "bootstrap-icons": "^1.11.3",
+        "date-fns": "^3.6.0",
         "element-plus": "^2.7.6",
+        "jspdf": "^2.5.1",
+        "jspdf-autotable": "^3.8.2",
+        "lucide-vue-next": "^0.396.0",
+        "recharts": "^2.12.7",
         "vue-router": "^4.3.3"
     }
 }

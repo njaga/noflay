@@ -12,46 +12,95 @@ class PropertyPolicy
 
     /**
      * Determine whether the user can view any properties.
+     *
+     * @param  \App\Models\User  $user
+     * @return mixed
      */
     public function viewAny(User $user)
     {
-        // Tous les utilisateurs authentifiés peuvent voir les propriétés
-        return $user->isAuthenticated();
+        return $user->hasRole('super_admin') || $user->hasRole('admin_entreprise') || $user->hasRole('user_entreprise');
     }
 
     /**
      * Determine whether the user can view the property.
+     *
+     * @param  \App\Models\User  $user
+     * @param  \App\Models\Property  $property
+     * @return mixed
      */
     public function view(User $user, Property $property)
     {
-        // Peut voir si dans la même entreprise
+        if ($user->hasRole('super_admin')) {
+            return true;
+        }
+
         return $user->company_id === $property->company_id;
     }
 
     /**
      * Determine whether the user can create properties.
+     *
+     * @param  \App\Models\User  $user
+     * @return mixed
      */
     public function create(User $user)
     {
-        // Seuls les utilisateurs avec rôle admin ou super_admin peuvent créer des propriétés
-        return in_array($user->role, ['super_admin', 'admin_entreprise']);
+        return $user->hasRole('super_admin') || $user->hasRole('admin_entreprise') || $user->hasRole('user_entreprise');
     }
 
     /**
      * Determine whether the user can update the property.
+     *
+     * @param  \App\Models\User  $user
+     * @param  \App\Models\Property  $property
+     * @return mixed
      */
     public function update(User $user, Property $property)
     {
-        // Peut mettre à jour si admin et dans la même entreprise
-        return $user->role !== 'user_entreprise' && $user->company_id === $property->company_id;
+        if ($user->hasRole('super_admin')) {
+            return true;
+        }
+
+        return $user->hasRole('admin_entreprise') && $user->company_id === $property->company_id;
     }
 
     /**
      * Determine whether the user can delete the property.
+     *
+     * @param  \App\Models\User  $user
+     * @param  \App\Models\Property  $property
+     * @return mixed
      */
     public function delete(User $user, Property $property)
     {
-        // Seul un super_admin peut supprimer des propriétés
-        return $user->role === 'super_admin';
+        if ($user->hasRole('super_admin')) {
+            return true;
+        }
+
+        return $user->hasRole('admin_entreprise') && $user->company_id === $property->company_id;
+    }
+
+    /**
+     * Determine whether the user can restore the property.
+     *
+     * @param  \App\Models\User  $user
+     * @param  \App\Models\Property  $property
+     * @return mixed
+     */
+    public function restore(User $user, Property $property)
+    {
+        return $this->delete($user, $property);
+    }
+
+    /**
+     * Determine whether the user can permanently delete the property.
+     *
+     * @param  \App\Models\User  $user
+     * @param  \App\Models\Property  $property
+     * @return mixed
+     */
+    public function forceDelete(User $user, Property $property)
+    {
+        return $this->delete($user, $property);
     }
 }

@@ -1,30 +1,25 @@
 <?php
 
+// database/migrations/2024_06_24_000001_add_company_id_to_landlords_table.php
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
+class AddCompanyIdToLandlordsTable extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up()
     {
         Schema::table('landlords', function (Blueprint $table) {
-            $table->unsignedBigInteger('company_id')->nullable(); // Vous pouvez ajuster le type de données selon vos besoins
+            $table->foreignId('company_id')->constrained('companies')->onDelete('cascade');
         });
     }
 
-
-    /**
-     * Reverse the migrations.
-     */
     public function down()
     {
         Schema::table('landlords', function (Blueprint $table) {
+            $table->dropForeign(['company_id']);
             $table->dropColumn('company_id');
         });
     }
-
-};
+}

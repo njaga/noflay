@@ -1,5 +1,7 @@
 <?php
 
+// Landlord.php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,24 +12,35 @@ class Landlord extends Model
     use HasFactory;
 
     protected $fillable = [
-        'prenom',
-        'nom',
-        'telephone',
+        'first_name',
+        'last_name',
+        'address',
+        'phone',
         'email',
-        'adresse',
-        'numero_cni_passport',
-        'date_expiration',
-        'pourcentage_agence',
+        'identity_number',
+        'identity_expiry_date',
+        'agency_percentage',
+        'contract_duration',
         'company_id',
+        'attachments'
     ];
 
     protected $casts = [
-        'date_expiration' => 'date',
-        'pourcentage_agence' => 'decimal:2',
+        'attachments' => 'array',
     ];
 
     public function company()
     {
         return $this->belongsTo(Company::class);
+    }
+
+    public function properties()
+    {
+        return $this->hasMany(Property::class);
+    }
+
+    public function tenants()
+    {
+        return $this->hasMany(Tenant::class);
     }
 }
