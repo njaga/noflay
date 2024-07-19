@@ -17,6 +17,7 @@ class Landlord extends Model
         'address',
         'phone',
         'email',
+        'balance',
         'identity_number',
         'identity_expiry_date',
         'agency_percentage',
@@ -43,4 +44,43 @@ class Landlord extends Model
     {
         return $this->hasMany(Tenant::class);
     }
+
+    public function totalCommissions()
+    {
+        $totalCommission = 0;
+        foreach ($this->properties as $property) {
+            foreach ($property->contracts as $contract) {
+                $totalCommission += $contract->rent * ($this->agency_percentage / 100);
+            }
+        }
+        return $totalCommission;
+    }
+
+    public function calculateBalance()
+    {
+        $totalRentIncome = 0;
+        $totalExpenses = 0;
+        $totalCommissions = 0;
+
+        foreach ($this->properties as $property) {
+            foreach ($property->contracts as $contract) {
+                $totalRentIncome += $contract->payments->sum('amount');
+                $totalCommissions += $contract->commission_amount;
+            }
+            $totalExpenses += $property->expenses->sum('amount');
+        }
+
+        return $totalRentIncome - $totalExpenses - $totalCommissions;
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(LandlordTransaction::class);
+    }
+
+    public function payouts()
+    {
+        return $this->hasMany(LandlordPayout::class);
+    }
+
 }

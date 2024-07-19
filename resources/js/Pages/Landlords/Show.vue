@@ -1,124 +1,296 @@
 <template>
-    <AppLayout title="Détails du bailleur">
-        <div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
-            <div class="max-w-3xl mx-auto">
-                <h1 class="text-3xl sm:text-4xl font-extrabold text-indigo-900 mb-8">
-                    <i class="fas fa-user mr-2 text-indigo-600"></i>Détails du bailleur
-                </h1>
-                <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-                    <div class="px-4 py-5 sm:px-6">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900">{{ landlord.first_name }} {{
-                            landlord.last_name }}</h3>
-                        <p class="mt-1 max-w-2xl text-sm text-gray-500">Informations personnelles et détails du contrat.
-                        </p>
+    <AppLayout title="Compte Bailleur">
+        <div class="bg-gray-100 min-h-screen">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <LandlordProfile
+                    :landlord="landlord"
+                    :attachments="attachments"
+                    @open-generate-mandat="openGenerateMandat"
+                    @edit-landlord="editLandlord"
+                    @confirm-delete-landlord="confirmDeleteLandlord"
+                    @open-add-expense-modal="openAddExpenseModal"
+                    @open-add-payment-modal="openAddPaymentModal"
+                />
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2 space-y-8">
+                        <FinancialOverview :financialInfo="financialInfo" />
+                        <RecentTransactions
+                            :transactions="transactions"
+                            @view-transaction="viewTransaction"
+                            @edit-transaction="editTransaction"
+                            @delete-transaction="confirmDeleteTransaction"
+                        />
                     </div>
-                    <div class="border-t border-gray-200">
-                        <dl>
-                            <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt class="text-sm font-medium text-gray-500">Nom</dt>
-                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ landlord.last_name }}
-                                </dd>
-                            </div>
-                            <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt class="text-sm font-medium text-gray-500">Prénom</dt>
-                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ landlord.first_name }}
-                                </dd>
-                            </div>
-                            <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt class="text-sm font-medium text-gray-500">Adresse</dt>
-                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ landlord.address }}</dd>
-                            </div>
-                            <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt class="text-sm font-medium text-gray-500">Téléphone</dt>
-                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ landlord.phone }}</dd>
-                            </div>
-                            <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt class="text-sm font-medium text-gray-500">Email</dt>
-                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ landlord.email }}</dd>
-                            </div>
-                            <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt class="text-sm font-medium text-gray-500">Numéro CNI ou passeport</dt>
-                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ landlord.identity_number
-                                    }}</dd>
-                            </div>
-                            <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt class="text-sm font-medium text-gray-500">Date d’expiration CNI ou passeport</dt>
-                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{
-                                    landlord.identity_expiry_date }}</dd>
-                            </div>
-                            <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt class="text-sm font-medium text-gray-500">Pourcentage à donner à l’agence</dt>
-                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{
-                                    landlord.agency_percentage }}%</dd>
-                            </div>
-                            <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt class="text-sm font-medium text-gray-500">Durée de contrat avec l’agence</dt>
-                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{
-                                    landlord.contract_duration }} mois</dd>
-                            </div>
-                            <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt class="text-sm font-medium text-gray-500">Entreprise</dt>
-                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ landlord.company.name }}
-                                </dd>
-                            </div>
-                            <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt class="text-sm font-medium text-gray-500">Pièces-jointes</dt>
-                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                                    <a :href="attachmentUrl" target="_blank"
-                                        class="text-indigo-600 hover:text-indigo-900">Télécharger</a>
-                                </dd>
-                            </div>
-                        </dl>
-                    </div>
-                </div>
-
-                <div class="bg-white shadow overflow-hidden sm:rounded-lg mt-8">
-                    <div class="px-4 py-5 sm:px-6">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900">Propriétés</h3>
-                        <p class="mt-1 max-w-2xl text-sm text-gray-500">Liste des propriétés associées à ce bailleur.
-                        </p>
-                    </div>
-                    <div class="border-t border-gray-200">
-                        <ul>
-                            <li v-for="property in landlord.properties" :key="property.id"
-                                class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <div class="text-sm font-medium text-gray-500">{{ property.name }}</div>
-                                <div class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ property.address }}
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="bg-white shadow overflow-hidden sm:rounded-lg mt-8">
-                    <div class="px-4 py-5 sm:px-6">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900">Locataires</h3>
-                        <p class="mt-1 max-w-2xl text-sm text-gray-500">Liste des locataires associés à ce bailleur.</p>
-                    </div>
-                    <div class="border-t border-gray-200">
-                        <ul>
-                            <li v-for="tenant in landlord.tenants" :key="tenant.id"
-                                class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <div class="text-sm font-medium text-gray-500">{{ tenant.name }}</div>
-                                <div class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ tenant.email }}</div>
-                            </li>
-                        </ul>
-                    </div>
+                    <PropertiesList
+                        :landlord="landlord"
+                        @confirm-delete-property="confirmDeleteProperty"
+                        @add-property="addProperty"
+                    />
                 </div>
             </div>
         </div>
+
+        <!-- Modals -->
+        <GenerateMandat
+            v-if="showGenerateMandat"
+            :landlord="landlord"
+            :properties="landlord.properties"
+            :company="company"
+            @close="showGenerateMandat = false"
+        />
+        <AddExpenseModal
+            v-if="showAddExpenseModal"
+            :landlord="landlord"
+            @close="showAddExpenseModal = false"
+            @saved="handleSavedExpense"
+        />
+        <AddPaymentModal
+            v-if="showAddPaymentModal"
+            :landlord="landlord"
+            @close="showAddPaymentModal = false"
+            @saved="handleSavedPayment"
+        />
+        <ViewTransactionModal
+            v-if="showViewTransactionModal"
+            :show="showViewTransactionModal"
+            :transaction="selectedTransaction"
+            @close="handleCloseViewTransactionModal"
+        />
+        <EditTransactionModal
+            v-if="showEditTransactionModal"
+            :show="showEditTransactionModal"
+            :transaction="selectedTransaction"
+            @close="handleCloseEditTransactionModal"
+        />
+        <NewConfirmationModal
+            :show="showConfirmationModal"
+            :title="confirmationTitle"
+            :message="confirmationMessage"
+            @confirm="handleConfirm"
+            @close="handleCloseConfirmationModal"
+        />
+        <NotificationModal
+            :show="showNotificationModal"
+            :title="notificationTitle"
+            :message="notificationMessage"
+            :type="notificationType"
+            @close="handleCloseNotificationModal"
+        />
     </AppLayout>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { usePage } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import { ref, onMounted } from "vue";
+import { usePage, router } from "@inertiajs/vue3";
+import AppLayout from "@/Layouts/AppLayout.vue";
+import LandlordProfile from "@/Components/Landlords/LandlordProfile.vue";
+import FinancialOverview from "@/Components/Landlords/FinancialOverview.vue";
+import RecentTransactions from "@/Components/Landlords/RecentTransactions.vue";
+import PropertiesList from "@/Components/Landlords/PropertiesList.vue";
+import GenerateMandat from "@/Components/GenerateMandat.vue";
+import AddExpenseModal from "@/Components/Landlords/AddExpenseModal.vue";
+import AddPaymentModal from "@/Components/Landlords/AddPaymentModal.vue";
+import ViewTransactionModal from "@/Components/ViewTransactionModal.vue";
+import EditTransactionModal from "@/Components/EditTransactionModal.vue";
+import NewConfirmationModal from "@/Components/NewConfirmationModal.vue";
+import NotificationModal from "@/Components/NotificationModal.vue";
 
 const { props } = usePage();
-const landlord = props.landlord;
+const landlord = ref(props.landlord || {});
+const transactions = ref(props.transactions || []);
+const financialInfo = ref(props.financialInfo || {});
+const showGenerateMandat = ref(false);
+const showAddExpenseModal = ref(false);
+const showAddPaymentModal = ref(false);
+const showConfirmationModal = ref(false);
+const showNotificationModal = ref(false);
+const showViewTransactionModal = ref(false);
+const showEditTransactionModal = ref(false);
+const selectedTransaction = ref(null);
+const company = ref(props.company || {});
 
-const attachmentUrl = computed(() => {
-    return landlord.attachments ? `/storage/${landlord.attachments}` : '';
+const attachments = ref([]);
+
+onMounted(() => {
+    if (landlord.value.attachments) {
+        attachments.value = JSON.parse(landlord.value.attachments);
+    }
 });
+
+const confirmationTitle = ref("");
+const confirmationMessage = ref("");
+let confirmationAction = null;
+const notificationTitle = ref("");
+const notificationMessage = ref("");
+const notificationType = ref("");
+
+function viewTransaction(transaction) {
+    console.log('Viewing transaction', transaction);
+    selectedTransaction.value = transaction;
+    showViewTransactionModal.value = true;
+}
+
+function editTransaction(transaction) {
+    console.log('Editing transaction', transaction);
+    selectedTransaction.value = transaction;
+    showEditTransactionModal.value = true;
+}
+
+function confirmDeleteTransaction(transaction) {
+    confirmationTitle.value = "Supprimer la transaction";
+    confirmationMessage.value = `Êtes-vous sûr de vouloir supprimer la transaction du ${formatDate(transaction.transaction_date)} pour un montant de ${formatCurrency(transaction.amount)} ?`;
+    confirmationAction = () => deleteTransaction(transaction.id);
+    showConfirmationModal.value = true;
+}
+
+function deleteTransaction(id) {
+    router.delete(route("landlord-transactions.destroy", id), {
+        preserveState: true,
+        preserveScroll: true,
+        onSuccess: () => {
+            notificationTitle.value = "Supprimé avec succès";
+            notificationMessage.value = "La transaction a été supprimée avec succès.";
+            notificationType.value = "success";
+            showNotificationModal.value = true;
+            // Rafraîchir la liste des transactions
+            router.reload({ only: ["transactions"] });
+        },
+        onError: () => {
+            notificationTitle.value = "Échec de la suppression";
+            notificationMessage.value = "La suppression de la transaction a échoué.";
+            notificationType.value = "error";
+            showNotificationModal.value = true;
+        },
+    });
+}
+
+function openGenerateMandat() {
+    showGenerateMandat.value = true;
+}
+
+function openAddExpenseModal() {
+    showAddExpenseModal.value = true;
+}
+
+function openAddPaymentModal() {
+    showAddPaymentModal.value = true;
+}
+
+function confirmDeleteLandlord() {
+    confirmationTitle.value = "Supprimer le bailleur";
+    confirmationMessage.value = "Êtes-vous sûr de vouloir supprimer ce bailleur ? Cette action est irréversible.";
+    confirmationAction = deleteLandlord;
+    showConfirmationModal.value = true;
+}
+
+function confirmDeleteProperty(propertyId) {
+    confirmationTitle.value = "Supprimer la propriété";
+    confirmationMessage.value = "Êtes-vous sûr de vouloir supprimer cette propriété ? Cette action est irréversible.";
+    confirmationAction = () => deleteProperty(propertyId);
+    showConfirmationModal.value = true;
+}
+
+function handleConfirm() {
+    if (confirmationAction) {
+        confirmationAction();
+        showConfirmationModal.value = false;
+    }
+}
+
+function handleCloseConfirmationModal() {
+    showConfirmationModal.value = false;
+}
+
+function handleCloseNotificationModal() {
+    showNotificationModal.value = false;
+}
+
+function handleCloseViewTransactionModal() {
+    showViewTransactionModal.value = false;
+}
+
+function handleCloseEditTransactionModal() {
+    showEditTransactionModal.value = false;
+}
+
+function deleteLandlord() {
+    router.delete(route("landlords.destroy", landlord.value.id), {
+        onSuccess: () => {
+            notificationTitle.value = "Supprimé avec succès";
+            notificationMessage.value = "Le bailleur a été supprimé avec succès.";
+            notificationType.value = "success";
+            showNotificationModal.value = true;
+            router.visit(route("landlords.index"));
+        },
+        onError: () => {
+            notificationTitle.value = "Échec de la suppression";
+            notificationMessage.value = "La suppression du bailleur a échoué.";
+            notificationType.value = "error";
+            showNotificationModal.value = true;
+        },
+    });
+}
+
+function deleteProperty(propertyId) {
+    router.delete(route("properties.destroy", propertyId), {
+        preserveState: true,
+        preserveScroll: true,
+        onSuccess: () => {
+            notificationTitle.value = "Supprimé avec succès";
+            notificationMessage.value = "La propriété a été supprimée avec succès.";
+            notificationType.value = "success";
+            showNotificationModal.value = true;
+            router.reload({ only: ["landlord"] });
+        },
+        onError: () => {
+            notificationTitle.value = "Échec de la suppression";
+            notificationMessage.value = "La suppression de la propriété a échoué.";
+            notificationType.value = "error";
+            showNotificationModal.value = true;
+        },
+    });
+}
+
+function editLandlord() {
+    router.get(route("landlords.edit", landlord.value.id));
+}
+
+function addProperty() {
+    router.get(route("properties.create", { landlord_id: landlord.value.id }));
+}
+
+function handleSavedExpense() {
+    showAddExpenseModal.value = false;
+    notificationTitle.value = "Dépense ajoutée avec succès";
+    notificationMessage.value = "La dépense a été enregistrée avec succès.";
+    notificationType.value = "success";
+    showNotificationModal.value = true;
+    router.reload({ only: ["landlord"] });
+}
+
+function handleSavedPayment() {
+    showAddPaymentModal.value = false;
+    notificationTitle.value = "Paiement enregistré avec succès";
+    notificationMessage.value = "Le paiement a été enregistré avec succès.";
+    notificationType.value = "success";
+    showNotificationModal.value = true;
+    router.reload({ only: ["landlord"] });
+}
+
+function formatDate(dateString) {
+    if (!dateString) return "N/A";
+    const options = { year: "numeric", month: "long", day: "numeric" };
+    return new Date(dateString).toLocaleDateString("fr-FR", options);
+}
+
+function formatCurrency(value) {
+    return new Intl.NumberFormat("fr-FR", {
+        style: "currency",
+        currency: "XOF",
+    }).format(value);
+}
 </script>
+
+<style>
+@import "bootstrap-icons/font/bootstrap-icons.css";
+</style>

@@ -1,37 +1,20 @@
 <template>
-    <div class="flex items-start bg-white p-4 rounded-lg shadow-sm">
-        <div class="flex-shrink-0 mr-4">
-            <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
-                <i :class="['fas', `fa-${icon}`, 'text-indigo-600']"></i>
-            </div>
-        </div>
+    <div class="flex items-center">
+        <i :class="`fas fa-${icon} text-indigo-600 mr-3`"></i>
         <div>
-            <p class="text-sm font-medium text-gray-500 mb-1">{{ label }}</p>
-            <p class="text-base font-semibold text-gray-900">{{ value }}</p>
+            <h3 class="text-sm font-semibold text-gray-900">{{ label }}</h3>
+            <p class="text-sm text-gray-700">{{ value }}</p>
         </div>
     </div>
 </template>
 
-<script>
-export default {
-    name: 'ContractDetailItem',
-    props: {
-        icon: {
-            type: String,
-            required: true
-        },
-        label: {
-            type: String,
-            required: true
-        },
-        value: {
-            type: [String, Number],
-            required: true
-        }
-    }
-}
+<script setup>
+const props = defineProps({
+    icon: String,
+    label: String,
+    value: String
+});
 </script>
 
 <style scoped>
-/* Vous pouvez ajouter des styles spécifiques ici si nécessaire */
 </style>

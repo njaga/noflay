@@ -18,7 +18,7 @@ class Tenant extends Model
         'id_card_number',
         'id_card_expiration_date',
         'company_id',
-        'property_id', // Assuming each tenant is associated with a single property
+        'property_id',
     ];
 
     public function rentalApplications()
@@ -47,4 +47,5 @@ class Tenant extends Model
     {
         return $this->belongsTo(Landlord::class);
     }
+
 }

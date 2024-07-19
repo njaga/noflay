@@ -19,6 +19,7 @@ class RentalApplication extends Model
         'end_date',
         'duration',
         'deposit_amount',
+        'contract_id',
     ];
 
     public function tenant()
@@ -29,5 +30,10 @@ class RentalApplication extends Model
     public function property()
     {
         return $this->belongsTo(Property::class);
+    }
+
+    public function contract()
+    {
+        return $this->belongsTo(Contract::class);
     }
 }

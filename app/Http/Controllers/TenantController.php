@@ -15,22 +15,72 @@ use Inertia\Inertia;
 
 class TenantController extends Controller
 {
+
     public function index()
     {
         Gate::authorize('viewAny', Tenant::class);
 
-        $query = Tenant::query();
+        $query = Tenant::with(['property', 'rentalApplications.property']);
 
         if (!Auth::user()->hasRole('super_admin')) {
             $query->where('company_id', Auth::user()->company_id);
         }
 
-        $tenants = $query->get();
+        $tenants = $query->get()->map(function ($tenant) {
+            $rentalApplication = $tenant->rentalApplications->first();  
+
+            $start_date = $rentalApplication ? $this->formatDate($rentalApplication->start_date) : 'N/A';
+            $end_date = $rentalApplication ? $this->formatDate($rentalApplication->end_date) : 'N/A';
+            $status = $rentalApplication && $rentalApplication->end_date && new \DateTime($rentalApplication->end_date) > new \DateTime() ? 'active' : 'inactive';
+
+            return [
+                'id' => $tenant->id,
+                'first_name' => $tenant->first_name,
+                'last_name' => $tenant->last_name,
+                'email' => $tenant->email,
+                'property' => $rentalApplication && $rentalApplication->property ? $rentalApplication->property->name : 'N/A',
+                'property_address' => $rentalApplication && $rentalApplication->property ? $rentalApplication->property->address : 'N/A',
+                'status' => $status,
+                'start_date' => $start_date,
+                'end_date' => $end_date,
+            ];
+        });
+
+        $propertiesQuery = Property::query();
+        if (!Auth::user()->hasRole('super_admin')) {
+            $propertiesQuery->where('company_id', Auth::user()->company_id);
+        }
+
+        $properties = $propertiesQuery->get()->map(function ($property) {
+            return [
+                'id' => $property->id,
+                'name' => $property->name,
+            ];
+        });
 
         return Inertia::render('Tenants/Index', [
             'tenants' => $tenants,
+            'properties' => $properties,
+            'auth' => [
+                'user' => auth()->user(),
+                'roles' => auth()->user()->roles->pluck('name'),
+            ],
         ]);
     }
+
+    private function formatDate($date)
+    {
+        if (!$date) {
+            return 'N/A';
+        }
+
+        try {
+            return (new \DateTime($date))->format('Y-m-d');
+        } catch (\Exception $e) {
+            return 'Invalid Date';
+        }
+    }
+
 
     public function create()
     {

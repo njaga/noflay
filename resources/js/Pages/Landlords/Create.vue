@@ -75,8 +75,9 @@
                                 <select id="company_id" v-model="form.company_id" required
                                     class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 ease-in-out transform hover:scale-105">
                                     <option value="">Sélectionnez une entreprise</option>
-                                    <option v-for="company in companies" :key="company.id" :value="company.id">{{
-                                        company.name }}</option>
+                                    <option v-for="company in companies" :key="company.id" :value="company.id">
+                                        {{ company.name }}
+                                    </option>
                                 </select>
                             </div>
 
@@ -96,13 +97,46 @@
                                             </svg>
                                             <p class="mb-2 text-sm text-indigo-600"><span class="font-bold">Cliquez pour
                                                     télécharger</span> ou glissez-déposez</p>
-                                            <p class="text-xs text-indigo-500">PNG, JPG, PDF jusqu'à 10MB</p>
+                                            <p class="text-xs text-indigo-500">PNG, JPG, PDF, DOCX jusqu'à 10MB (max 5
+                                                fichiers)</p>
                                         </div>
                                         <input id="attachments" type="file" @change="handleFileUpload" multiple
-                                            class="hidden" />
+                                            class="hidden" accept=".png,.jpg,.jpeg,.pdf,.docx" />
                                     </label>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- File preview section -->
+                        <div v-if="previewFiles.length > 0" class="mt-6 bg-gray-50 p-4 rounded-lg">
+                            <h3 class="text-lg font-medium text-gray-900 mb-3">Fichiers joints:</h3>
+                            <ul class="space-y-3">
+                                <li v-for="(file, index) in previewFiles" :key="index"
+                                    class="flex items-center justify-between p-3 bg-white rounded-md shadow-sm">
+                                    <div class="flex items-center space-x-3">
+                                        <span v-if="file.type.startsWith('image')"
+                                            class="flex-shrink-0 h-10 w-10 rounded-full overflow-hidden">
+                                            <img :src="file.preview" :alt="file.name"
+                                                class="h-full w-full object-cover" />
+                                        </span>
+                                        <span v-else
+                                            class="flex-shrink-0 h-10 w-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                                            <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24"
+                                                stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                            </svg>
+                                        </span>
+                                        <span class="flex-1 text-sm font-medium text-gray-900 truncate">
+                                            {{ file.name }}
+                                        </span>
+                                    </div>
+                                    <button @click="removeFile(index)" type="button"
+                                        class="ml-4 flex-shrink-0 text-sm font-medium text-red-600 hover:text-red-500 transition duration-150 ease-in-out">
+                                        Supprimer
+                                    </button>
+                                </li>
+                            </ul>
                         </div>
 
                         <div class="flex justify-end">
@@ -123,6 +157,45 @@
                 </div>
             </div>
         </div>
+
+        <!-- Modal de succès -->
+        <Transition name="modal">
+            <div v-if="showSuccessModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title"
+                role="dialog" aria-modal="true">
+                <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+                    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                    <div
+                        class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-sm sm:w-full sm:p-6">
+                        <div>
+                            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
+                                <svg class="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <div class="mt-3 text-center sm:mt-5">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                    Bailleur créé avec succès
+                                </h3>
+                                <div class="mt-2">
+                                    <p class="text-sm text-gray-500">
+                                        Le nouveau bailleur a été ajouté à votre liste avec succès.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-5 sm:mt-6">
+                            <button type="button" @click="showSuccessModal = false"
+                                class="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm">
+                                Fermer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </Transition>
     </AppLayout>
 </template>
 
@@ -147,8 +220,37 @@ const form = useForm({
     attachments: [],
 });
 
+const previewFiles = ref([]);
+const showSuccessModal = ref(false);
+
 const handleFileUpload = (event) => {
-    form.attachments = Array.from(event.target.files);
+    const files = Array.from(event.target.files);
+    if (files.length + form.attachments.length > 5) {
+        alert('Vous ne pouvez ajouter que 5 documents maximum.');
+        return;
+    }
+
+    const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png'];
+    const validFiles = files.filter(file => allowedTypes.includes(file.type));
+
+    if (validFiles.length !== files.length) {
+        alert('Certains fichiers ont été ignorés. Seuls les fichiers PDF, DOCX et images sont autorisés.');
+    }
+
+    form.attachments = [...form.attachments, ...validFiles];
+    previewFiles.value = [...previewFiles.value, ...validFiles.map(file => ({
+        name: file.name,
+        type: file.type,
+        preview: file.type.startsWith('image') ? URL.createObjectURL(file) : null
+    }))];
+};
+
+const removeFile = (index) => {
+    form.attachments.splice(index, 1);
+    if (previewFiles.value[index].preview) {
+        URL.revokeObjectURL(previewFiles.value[index].preview);
+    }
+    previewFiles.value.splice(index, 1);
 };
 
 const submit = () => {
@@ -157,7 +259,8 @@ const submit = () => {
         preserveState: true,
         onSuccess: () => {
             form.reset();
-            alert('Bailleur créé avec succès');
+            previewFiles.value = [];
+            showSuccessModal.value = true; // Afficher le modal au lieu de l'alerte
         },
         onError: (errors) => {
             console.error(errors);
@@ -185,5 +288,15 @@ const submit = () => {
 .animate-gradient {
     background-size: 200% 200%;
     animation: gradient 5s ease infinite;
+}
+
+.modal-enter-active,
+.modal-leave-active {
+    transition: opacity 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+    opacity: 0;
 }
 </style>

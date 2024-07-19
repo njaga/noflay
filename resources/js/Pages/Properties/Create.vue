@@ -3,7 +3,8 @@
         <div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
             <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
                 <div class="p-8 sm:p-12">
-                    <h1 class="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-8 animate-gradient">
+                    <h1
+                        class="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-8 animate-gradient">
                         Créer une propriété
                     </h1>
 
@@ -16,12 +17,14 @@
                             </div>
 
                             <div class="space-y-2">
-                                <label for="property_type" class="text-sm font-medium text-gray-700">Type de propriété</label>
+                                <label for="property_type" class="text-sm font-medium text-gray-700">Type de
+                                    propriété</label>
                                 <div class="flex items-center space-x-2">
                                     <select id="property_type" v-model="form.property_type" required
                                         class="flex-grow px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 ease-in-out transform hover:scale-105">
                                         <option value="">Sélectionnez un type</option>
-                                        <option v-for="type in propertyTypes" :key="type" :value="type">{{ type }}</option>
+                                        <option v-for="type in propertyTypes" :key="type" :value="type">{{ type }}
+                                        </option>
                                     </select>
                                     <button @click.prevent="showNewTypeModal = true" type="button"
                                         class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-200 ease-in-out">
@@ -43,7 +46,8 @@
                             </div>
 
                             <div class="space-y-2">
-                                <label for="available_count" class="text-sm font-medium text-gray-700">Nombre disponible</label>
+                                <label for="available_count" class="text-sm font-medium text-gray-700">Nombre
+                                    disponible</label>
                                 <input id="available_count" v-model="form.available_count" type="number" required
                                     class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 ease-in-out transform hover:scale-105" />
                             </div>
@@ -59,7 +63,8 @@
                                 <select id="company_id" v-model="form.company_id" @change="updateLandlords" required
                                     class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 ease-in-out transform hover:scale-105">
                                     <option value="">Sélectionnez une entreprise</option>
-                                    <option v-for="company in companies" :key="company.id" :value="company.id">{{ company.name }}</option>
+                                    <option v-for="company in companies" :key="company.id" :value="company.id">{{
+                                        company.name }}</option>
                                 </select>
                             </div>
 
@@ -68,7 +73,8 @@
                                 <select id="landlord_id" v-model="form.landlord_id" required
                                     class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 ease-in-out transform hover:scale-105">
                                     <option value="">Sélectionnez un bailleur</option>
-                                    <option v-for="landlord in filteredLandlords" :key="landlord.id" :value="landlord.id">{{ landlord.first_name }} {{ landlord.last_name }}</option>
+                                    <option v-for="landlord in filteredLandlords" :key="landlord.id"
+                                        :value="landlord.id">{{ landlord.first_name }} {{ landlord.last_name }}</option>
                                 </select>
                             </div>
 
@@ -78,28 +84,33 @@
                                     <label for="photos"
                                         class="flex flex-col items-center justify-center w-full h-32 border-2 border-indigo-300 border-dashed rounded-lg cursor-pointer bg-indigo-50 hover:bg-indigo-100 transition duration-300 ease-in-out">
                                         <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                                            <svg class="w-10 h-10 mb-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                            <svg class="w-10 h-10 mb-3 text-indigo-500" fill="none"
+                                                stroke="currentColor" viewBox="0 0 24 24"
                                                 xmlns="http://www.w3.org/2000/svg">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
                                                 </path>
                                             </svg>
-                                            <p class="mb-2 text-sm text-indigo-600"><span class="font-bold">Cliquez pour télécharger</span></p>
+                                            <p class="mb-2 text-sm text-indigo-600"><span class="font-bold">Cliquez pour
+                                                    télécharger</span></p>
                                             <p class="text-xs text-indigo-500">PNG, JPG, jusqu'à 10MB</p>
                                         </div>
                                         <input id="photos" type="file" @change="handleFileUpload" multiple
                                             class="hidden" accept="image/*" />
                                     </label>
                                 </div>
-                                <div v-if="previews.length" class="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                <div v-if="previews.length"
+                                    class="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                                     <div v-for="(preview, index) in previews" :key="index" class="relative">
                                         <img :src="preview" class="w-full h-32 object-cover rounded-lg shadow-md" />
-                                        <button @click="removePreview(index)" class="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 hover:bg-red-700 transition duration-200">
+                                        <button @click="removePreview(index)"
+                                            class="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 hover:bg-red-700 transition duration-200">
                                             <i class="fas fa-trash-alt"></i>
                                         </button>
                                     </div>
                                 </div>
-                                <p v-if="form.photos.length >= 5" class="mt-2 text-sm text-red-600">Vous pouvez télécharger jusqu'à 5 photos.</p>
+                                <p v-if="form.photos.length >= 5" class="mt-2 text-sm text-red-600">Vous pouvez
+                                    télécharger jusqu'à 5 photos.</p>
                             </div>
                         </div>
 
@@ -107,11 +118,11 @@
                             <button type="submit" :disabled="form.processing || form.photos.length > 5"
                                 class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transition duration-300 ease-in-out transform hover:-translate-y-1 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                 <span class="flex items-center">
-                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                        xmlns="http://www.w3.org/2000/svg">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M8 7H5a2 2 002 2v9a2 2 002 2h14a2 2 002-2V9a2 2 002-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4">
-                                        </path>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                                        class="bi bi-floppy h-5 w-5 mr-2" viewBox="0 0 16 16">
+                                        <path d="M11 2H9v3h2z" />
+                                        <path
+                                            d="M1.5 0h11.586a1.5 1.5 0 0 1 1.06.44l1.415 1.414A1.5 1.5 0 0 1 16 2.914V14.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 14.5v-13A1.5 1.5 0 0 1 1.5 0M1 1.5v13a.5.5 0 0 0 .5.5H2v-4.5A1.5 1.5 0 0 1 3.5 9h9a1.5 1.5 0 0 1 1.5 1.5V15h.5a.5.5 0 0 0 .5-.5V2.914a.5.5 0 0 0-.146-.353l-1.415-1.415A.5.5 0 0 0 13.086 1H13v4.5A1.5 1.5 0 0 1 11.5 7h-7A1.5 1.5 0 0 1 3 5.5V1H1.5a.5.5 0 0 0-.5.5m3 4a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5V1H4zM3 15h10v-4.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5z" />
                                     </svg>
                                     Enregistrer
                                 </span>
@@ -123,12 +134,15 @@
         </div>
 
         <!-- Modal pour ajouter un nouveau type de propriété -->
-        <div v-if="showNewTypeModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center">
+        <div v-if="showNewTypeModal"
+            class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center">
             <div class="bg-white p-5 rounded-lg shadow-xl">
                 <h2 class="text-lg font-bold mb-4">Ajouter un nouveau type de propriété</h2>
-                <input v-model="newPropertyType" type="text" class="w-full px-3 py-2 border rounded-lg mb-4" placeholder="Entrez le nouveau type">
+                <input v-model="newPropertyType" type="text" class="w-full px-3 py-2 border rounded-lg mb-4"
+                    placeholder="Entrez le nouveau type">
                 <div class="flex justify-end">
-                    <button @click="addNewPropertyType" class="px-4 py-2 bg-indigo-600 text-white rounded-lg mr-2">Ajouter</button>
+                    <button @click="addNewPropertyType"
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg mr-2">Ajouter</button>
                     <button @click="showNewTypeModal = false" class="px-4 py-2 bg-gray-300 rounded-lg">Annuler</button>
                 </div>
             </div>
@@ -241,9 +255,11 @@ updateLandlords();
     0% {
         background-position: 0% 50%;
     }
+
     50% {
         background-position: 100% 50%;
     }
+
     100% {
         background-position: 0% 50%;
     }

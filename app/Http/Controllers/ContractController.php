@@ -2,150 +2,207 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Company;
 use App\Models\Contract;
 use App\Models\Property;
 use App\Models\Tenant;
-use App\Models\RentalApplication;
+use App\Models\Company;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
-use Carbon\Carbon;
 
 class ContractController extends Controller
 {
-    // Méthode index pour lister les contrats
     public function index()
     {
-        $contracts = Contract::with('tenant', 'property')->get();
+        Gate::authorize('viewAny', Contract::class);
+
+        $query = Contract::with(['property', 'tenant'])->withTrashed();
+
+        if (!Auth::user()->hasRole('super_admin')) {
+            $query->whereHas('tenant', function ($q) {
+                $q->where('company_id', Auth::user()->company_id);
+            });
+        }
+
+        $contracts = $query->paginate(10);
 
         return Inertia::render('Contracts/Index', [
             'contracts' => $contracts,
+            'tenants' => Tenant::all(),
+            'properties' => Property::all(),
+            'auth' => [
+                'user' => auth()->user(),
+                'roles' => auth()->user()->roles->pluck('name'),
+            ],
         ]);
     }
 
-    public function create($tenantId)
+    public function create()
     {
-        $tenant = Tenant::findOrFail($tenantId);
-        $properties = Property::where('company_id', $tenant->company_id)->get();
+        Gate::authorize('create', Contract::class);
+
+        $companies = Auth::user()->hasRole('super_admin') ? Company::all() : Company::where('id', Auth::user()->company_id)->get();
+        $properties = Property::with('landlord')->get(); // Include landlord relation
 
         return Inertia::render('Contracts/Create', [
-            'tenant' => $tenant,
+            'tenants' => Tenant::all(),
             'properties' => $properties,
+            'companies' => $companies,
         ]);
     }
 
     public function store(Request $request)
     {
+        Gate::authorize('create', Contract::class);
+
         $validated = $request->validate([
             'tenant_id' => 'required|exists:tenants,id',
             'property_id' => 'required|exists:properties,id',
-            'contract_type' => 'required|in:habitation,commercial',
+            'contract_type' => 'required|string|in:habitation,commercial',
             'start_date' => 'required|date',
-            'file_number' => 'required|string|max:255',
-            'caution_amount' => 'required|numeric',
-            'company_name' => 'nullable|string|max:255',
-            'representative_name' => 'nullable|string|max:255',
-            'trade_register' => 'nullable|string|max:255',
-            'duration' => 'required|integer',
-            'deposit_amount' => 'required|numeric',
+            'duration' => 'required|integer|min:1',
+            'file_number' => 'required|string|max:191',
+            'caution_amount' => 'nullable|numeric|min:0',
+            'company_id' => 'nullable|exists:companies,id',
+            'landlord_id' => 'required|exists:landlords,id', // Ensure landlord_id is validated
         ]);
 
-        // Ajouter l'ID de l'entreprise pour les utilisateurs non super_admin
-        if (!auth()->user()->hasRole('super_admin')) {
-            $validated['company_id'] = auth()->user()->company_id;
+        // Récupérer le prix de la propriété
+        $property = Property::findOrFail($validated['property_id']);
+        $validated['rent_amount'] = $property->price;
+
+        // Calculer la commission de l'agence immobilière
+        $landlord = $property->landlord;
+        $commissionRent = $validated['rent_amount'] * ($landlord->agency_percentage / 100);
+        $commissionCaution = 0;
+
+        if (isset($validated['caution_amount']) && $validated['caution_amount'] > 0) {
+            $commissionCaution = $validated['caution_amount'] * ($landlord->agency_percentage / 100);
         }
 
+        $validated['commission_amount'] = $commissionRent + $commissionCaution;
+
         // Calculer la date de fin
-        $startDate = Carbon::parse($validated['start_date']);
-        $endDate = $startDate->copy()->addMonths($validated['duration']);
+        $validated['end_date'] = date('Y-m-d', strtotime("+{$validated['duration']} months", strtotime($validated['start_date'])));
 
-        // Créez le contrat
-        $contract = Contract::create($validated);
+        if (!Auth::user()->hasRole('super_admin')) {
+            $validated['company_id'] = Auth::user()->company_id;
+        }
 
-        // Enregistrer les informations dans la table rental_applications
-        RentalApplication::create([
-            'tenant_id' => $validated['tenant_id'],
-            'property_id' => $validated['property_id'],
-            'contract_type' => $validated['contract_type'],
-            'start_date' => $validated['start_date'],
-            'end_date' => $endDate,
-            'duration' => $validated['duration'],
-            'deposit_amount' => $validated['deposit_amount'],
-        ]);
+        // Créer le contrat
+        Contract::create($validated);
+
+        // Mettre à jour le solde du bailleur
+        $landlord->balance += $validated['caution_amount'] - $commissionCaution;
+        $landlord->save();
+
+        // Diminuer le nombre disponible de la propriété
+        $property->decrementAvailableCount();
 
         return redirect()->route('contracts.index')->with('success', 'Contrat créé avec succès.');
     }
 
     public function show(Contract $contract)
     {
-        $contract->load('tenant', 'property', 'property.landlord');
-        $companies = Company::all();
-        $rentalApplication = RentalApplication::where('tenant_id', $contract->tenant_id)
-            ->where('property_id', $contract->property_id)
-            ->first();
+        Gate::authorize('view', $contract);
+
+        // Charger les relations nécessaires
+        $contract->load(['property.landlord', 'tenant']);
+
+        // Calcul de la commission sur les loyers
+        $rentCommission = $contract->rent_amount * ($contract->property->landlord->agency_percentage / 100);
+
+        // Calcul de la commission sur la caution
+        $cautionCommission = $contract->caution_amount * ($contract->property->landlord->agency_percentage / 100);
+
+        // Calcul de la commission totale
+        $totalCommission = $rentCommission + $cautionCommission;
 
         return Inertia::render('Contracts/Show', [
             'contract' => $contract,
-            'rentalApplication' => $rentalApplication,
+            'totalCommission' => $totalCommission,
         ]);
     }
 
     public function edit(Contract $contract)
     {
-        $tenant = $contract->tenant;
-        $properties = Property::where('company_id', $tenant->company_id)->get();
-        $companies = Company::all();
+        Gate::authorize('update', $contract);
+
+        $companies = Auth::user()->hasRole('super_admin') ? Company::all() : Company::where('id', Auth::user()->company_id)->get();
 
         return Inertia::render('Contracts/Edit', [
-            'contract' => $contract->load('tenant', 'property'),
-            'properties' => $properties,
+            'contract' => $contract,
+            'tenants' => Tenant::all(),
+            'properties' => Property::all(),
             'companies' => $companies,
         ]);
     }
 
     public function update(Request $request, Contract $contract)
     {
+        Gate::authorize('update', $contract);
+
         $validated = $request->validate([
+            'tenant_id' => 'required|exists:tenants,id',
             'property_id' => 'required|exists:properties,id',
-            'contract_type' => 'required|in:habitation,commercial',
+            'contract_type' => 'required|string|in:habitation,commercial',
             'start_date' => 'required|date',
-            'file_number' => 'required|string|max:255',
-            'caution_amount' => 'required|numeric',
-            'company_name' => 'nullable|string|max:255',
-            'representative_name' => 'nullable|string|max:255',
-            'trade_register' => 'nullable|string|max:255',
-            'duration' => 'required|integer',
-            'deposit_amount' => 'required|numeric',
+            'duration' => 'required|integer|min:1',
+            'file_number' => 'required|string|max:191',
+            'caution_amount' => 'nullable|numeric|min:0',
+            'company_id' => 'nullable|exists:companies,id',
+            'landlord_id' => 'required|exists:landlords,id', // Ensure landlord_id is validated
         ]);
 
-        // Calculer la date de fin
-        $startDate = Carbon::parse($validated['start_date']);
-        $endDate = $startDate->copy()->addMonths($validated['duration']);
+        // Récupérer le prix de la propriété
+        $property = Property::findOrFail($validated['property_id']);
+        $validated['rent_amount'] = $property->price;
 
+        // Calculer la commission de l'agence immobilière
+        $landlord = $property->landlord;
+        $commissionRent = $validated['rent_amount'] * ($landlord->agency_percentage / 100);
+        $commissionCaution = 0;
+
+        if (isset($validated['caution_amount']) && $validated['caution_amount'] > 0) {
+            $commissionCaution = $validated['caution_amount'] * ($landlord->agency_percentage / 100);
+        }
+
+        $validated['commission_amount'] = $commissionRent + $commissionCaution;
+
+        // Calculer la date de fin
+        $validated['end_date'] = date('Y-m-d', strtotime("+{$validated['duration']} months", strtotime($validated['start_date'])));
+
+        if (!Auth::user()->hasRole('super_admin')) {
+            $validated['company_id'] = Auth::user()->company_id;
+        }
+
+        // Mettre à jour le contrat
         $contract->update($validated);
 
-        // Mettre à jour les informations dans la table rental_applications
-        $rentalApplication = RentalApplication::where('tenant_id', $contract->tenant_id)
-            ->where('property_id', $contract->property_id)
-            ->first();
-
-        if ($rentalApplication) {
-            $rentalApplication->update([
-                'contract_type' => $validated['contract_type'],
-                'start_date' => $validated['start_date'],
-                'end_date' => $endDate,
-                'duration' => $validated['duration'],
-                'deposit_amount' => $validated['deposit_amount'],
-            ]);
-        }
+        // Mettre à jour le solde du bailleur
+        $landlord->balance += $validated['caution_amount'] - $commissionCaution;
+        $landlord->save();
 
         return redirect()->route('contracts.index')->with('success', 'Contrat mis à jour avec succès.');
     }
 
     public function destroy(Contract $contract)
     {
+        Gate::authorize('delete', $contract);
+
         $contract->delete();
 
         return redirect()->route('contracts.index')->with('success', 'Contrat supprimé avec succès.');
+    }
+
+    public function restore($id)
+    {
+        $contract = Contract::withTrashed()->findOrFail($id);
+        Gate::authorize('restore', $contract);
+
+        $contract->restore();
+
+        return redirect()->route('contracts.index')->with('success', 'Contrat restauré avec succès.');
     }
 }

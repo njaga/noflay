@@ -7,12 +7,12 @@
                 <i class="bi bi-list text-2xl"></i>
             </button>
         </div>
-        <nav class="mt-8">
+        <nav class="mt-2">
             <SidebarItem :href="route('dashboard')" icon="bi-house" text="Tableau de bord" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
 
             <SidebarDropdown icon="bi-briefcase" text="Entreprises" :is-collapsed="isCollapsed" :is-mobile="isMobile">
-                <SidebarItem :href="route('landlords.index')" icon="bi-buildings" text="Gérer les entreprises" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
-                <SidebarItem :href="route('landlords.create')" icon="bi-building-add" text="Ajouter une entreprise" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
+                <SidebarItem :href="route('companies.index')" icon="bi-buildings" text="Gérer les entreprises" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
+                <SidebarItem :href="route('companies.create')" icon="bi-building-add" text="Ajouter une entreprise" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
             </SidebarDropdown>
 
             <SidebarDropdown icon="bi-building" text="Bailleurs" :is-collapsed="isCollapsed" :is-mobile="isMobile">
@@ -30,15 +30,15 @@
                 <SidebarItem :href="route('properties.create')" icon="bi-plus-circle" text="Ajouter un logement" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
             </SidebarDropdown>
 
-            <SidebarDropdown icon="bi-file-earmark-text" text="Contrats" :is-collapsed="isCollapsed" :is-mobile="isMobile">
-                <SidebarItem :href="route('contracts.index')" icon="bi-list-ul" text="Liste des contrats" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
-                <SidebarItem href="route('contracts.create')" icon="bi-file-earmark-plus" text="Nouveau contrat" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
+            <SidebarDropdown icon="bi-file-earmark-text" text="Locations" :is-collapsed="isCollapsed" :is-mobile="isMobile">
+                <SidebarItem :href="route('contracts.index')" icon="bi-list-ul" text="Liste des dossiers" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
+                <SidebarItem :href="route('contracts.create')" icon="bi-file-earmark-plus" text="Nouveau dossier" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
             </SidebarDropdown>
 
             <SidebarDropdown icon="bi-cash-coin" text="Finances" :is-collapsed="isCollapsed" :is-mobile="isMobile">
-                <SidebarItem href="route('loyers.index')" icon="bi-currency-euro" text="Loyers" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
-                <SidebarItem href="route('factures.index')" icon="bi-receipt" text="Factures" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
-                <SidebarItem href="route('rapports.index')" icon="bi-graph-up" text="Rapports" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
+                <SidebarItem :href="route('finance.index')" icon="bi-graph-up" text="Vue d'ensemble" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
+                <SidebarItem :href="route('expenses.index')" icon="bi-cart-check" text="Dépenses" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
+                <SidebarItem :href="route('payments.index')" icon="bi bi-cash-stack" text="Mensualités" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
             </SidebarDropdown>
 
             <SidebarItem :href="route('users.index')" icon="bi-gear" text="Paramètres" :is-collapsed="isCollapsed" :is-mobile="isMobile" />

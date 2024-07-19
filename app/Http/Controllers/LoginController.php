@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
-
 class LoginController extends Controller
 {
     protected $redirectTo = '/dashboard';
@@ -50,7 +49,7 @@ class LoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return Inertia::location('/');
+        return Inertia::location(route('welcome'));
     }
 
     public function showLoginForm(): Response

@@ -18,15 +18,15 @@
                                     <i class="bi bi-building me-2"></i>
                                     Ajouter bailleur
                                 </NavLink>
-                                <NavLink href="#" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-indigo-700 hover:border-indigo-300 focus:outline-none focus:text-indigo-700 focus:border-indigo-700 transition duration-150 ease-in-out">
+                                <NavLink :href="route('tenants.create')" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-indigo-700 hover:border-indigo-300 focus:outline-none focus:text-indigo-700 focus:border-indigo-700 transition duration-150 ease-in-out">
                                     <i class="bi bi-people me-2"></i>
                                     Ajouter locataire
                                 </NavLink>
-                                <NavLink href="#" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-indigo-700 hover:border-indigo-300 focus:outline-none focus:text-indigo-700 focus:border-indigo-700 transition duration-150 ease-in-out">
+                                <NavLink :href="route('properties.create')" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-indigo-700 hover:border-indigo-300 focus:outline-none focus:text-indigo-700 focus:border-indigo-700 transition duration-150 ease-in-out">
                                     <i class="bi bi-house me-2"></i>
                                     Ajouter logement
                                 </NavLink>
-                                <NavLink href="#" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-indigo-700 hover:border-indigo-300 focus:outline-none focus:text-indigo-700 focus:border-indigo-700 transition duration-150 ease-in-out">
+                                <NavLink :href="route('contracts.create')" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-indigo-700 hover:border-indigo-300 focus:outline-none focus:text-indigo-700 focus:border-indigo-700 transition duration-150 ease-in-out">
                                     <i class="bi bi-file-earmark-text me-2"></i>
                                     Nouveau dossier
                                 </NavLink>

@@ -44,4 +44,22 @@ class Property extends Model
     {
         return $this->hasMany(Tenant::class);
     }
+
+    public function contracts()
+    {
+        return $this->hasMany(Contract::class);
+    }
+
+    public function expenses()
+    {
+        return $this->hasMany(Expense::class);
+    }
+
+    public function decrementAvailableCount()
+    {
+        if ($this->available_count > 0) {
+            $this->available_count--;
+            $this->save();
+        }
+    }
 }

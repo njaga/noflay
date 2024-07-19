@@ -6,15 +6,16 @@
         "build": "vite build"
     },
     "devDependencies": {
+        "@iconify/tailwind": "^1.1.1",
         "@inertiajs/vue3": "^1.0.14",
         "@tailwindcss/forms": "^0.5.7",
         "@tailwindcss/typography": "^0.5.10",
         "@vitejs/plugin-vue": "^5.0.0",
-        "autoprefixer": "^10.4.16",
+        "autoprefixer": "^10.4.19",
         "axios": "^1.6.4",
         "laravel-vite-plugin": "^1.0",
-        "postcss": "^8.4.32",
-        "tailwindcss": "^3.4.0",
+        "postcss": "^8.4.39",
+        "tailwindcss": "^3.4.6",
         "vite": "^5.0",
         "vue": "^3.3.13"
     },
@@ -24,15 +25,22 @@
         "@fortawesome/free-solid-svg-icons": "^6.5.2",
         "@fortawesome/vue-fontawesome": "^3.0.8",
         "@headlessui/vue": "^1.7.22",
-        "@heroicons/vue": "^2.1.4",
+        "@heroicons/vue": "^2.1.5",
         "bootstrap": "^5.3.3",
         "bootstrap-icons": "^1.11.3",
+        "chart.js": "^4.4.3",
+        "datatables.net": "^2.0.8",
+        "datatables.net-dt": "^2.0.8",
         "date-fns": "^3.6.0",
+        "echarts": "^5.5.1",
         "element-plus": "^2.7.6",
+        "html2canvas": "^1.4.1",
         "jspdf": "^2.5.1",
         "jspdf-autotable": "^3.8.2",
         "lucide-vue-next": "^0.396.0",
         "recharts": "^2.12.7",
-        "vue-router": "^4.3.3"
+        "vee-validate": "^4.13.2",
+        "vue-router": "^4.3.3",
+        "yup": "^1.4.0"
     }
 }

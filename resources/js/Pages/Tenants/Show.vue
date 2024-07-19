@@ -34,7 +34,7 @@
                                         <InfoCard icon="fa-map" title="Adresse de la propriété"
                                             :value="tenant.property.address" />
                                         <InfoCard icon="fa-user-tie" title="Nom du bailleur"
-                                            :value="tenant.property.landlord_first_name" />
+                                            :value="tenant.property.landlord_fist_name" />
                                     </div>
                                 </template>
                             </Tab>
