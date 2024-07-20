@@ -37,6 +37,16 @@ class Company extends Model
         return $this->hasMany(Landlord::class);
     }
 
+    public function tenants()
+    {
+        return $this->hasMany(Tenant::class);
+    }
+
+    public function properties()
+    {
+        return $this->hasMany(Property::class);
+    }
+
     public function isActive()
     {
         return $this->is_active;

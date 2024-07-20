@@ -10,30 +10,56 @@ class Property extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name',
-        'type',
-        'address',
-        'price',
-        'company_id',
-        'designation',
-        'number',
-        'rental_price',
-        'sale_price',
         'landlord_id',
+        'property_type',
+        'name',
+        'description',
+        'price',
+        'address',
+        'available_count',
+        'company_id',
+        'photos',
     ];
 
     protected $casts = [
-        'rental_price' => 'decimal:2',
-        'sale_price' => 'decimal:2',
+        'photos' => 'array',
     ];
+
+    public function landlord()
+    {
+        return $this->belongsTo(Landlord::class);
+    }
 
     public function company()
     {
         return $this->belongsTo(Company::class);
     }
 
-    public function landlord()
+    public function rentalApplications()
     {
-        return $this->belongsTo(Landlord::class);
+        return $this->hasMany(RentalApplication::class);
+    }
+
+    public function tenants()
+    {
+        return $this->hasMany(Tenant::class);
+    }
+
+    public function contracts()
+    {
+        return $this->hasMany(Contract::class);
+    }
+
+    public function expenses()
+    {
+        return $this->hasMany(Expense::class);
+    }
+
+    public function decrementAvailableCount()
+    {
+        if ($this->available_count > 0) {
+            $this->available_count--;
+            $this->save();
+        }
     }
 }

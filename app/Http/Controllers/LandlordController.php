@@ -4,257 +4,381 @@ namespace App\Http\Controllers;
 
 use App\Models\Landlord;
 use App\Models\Company;
+use App\Models\Property;
+use App\Models\Contract;
+use App\Models\Payment;
+use App\Models\Expense;
+use App\Models\LandlordTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
+use Carbon\Carbon;
 
 class LandlordController extends Controller
 {
-    /**
-     * Display a listing of the landlords.
-     *
-     * @return \Inertia\Response
-     */
+    const TVA_RATE = 0.18; // Taux de TVA à 18%
+
     public function index()
     {
         $user = Auth::user();
-        $landlords = [];
 
-        if (in_array($user->role, ['super_admin', 'admin_entreprise', 'user_entreprise'])) {
-            if ($user->role === 'super_admin') {
-                $landlords = Landlord::with('company')->get();
-            } else {
-                $landlords = Landlord::where('company_id', $user->company_id)
-                                     ->with('company')
-                                     ->get();
-            }
+        if ($user->hasRole('super_admin')) {
+            $landlords = Landlord::with('company')->get();
+        } elseif ($user->hasRole('admin_entreprise')) {
+            $landlords = Landlord::where('company_id', $user->company_id)->with('company')->get();
+        } else {
+            abort(403, 'THIS ACTION IS UNAUTHORIZED.');
         }
 
         return Inertia::render('Landlords/Index', [
             'landlords' => $landlords,
+            'auth' => [
+                'user' => $user,
+                'roles' => $user->roles->pluck('name')
+            ]
         ]);
     }
 
-    /**
-     * Show the form for creating a new landlord.
-     *
-     * @return \Inertia\Response
-     */
+
     public function create()
     {
-        $user = Auth::user();
-        $companies = [];
+        Gate::authorize('create', Landlord::class);
 
-        if ($user->role === 'super_admin') {
-            $companies = Company::all();
-        } else {
-            $companies = [$user->company];
-        }
+        $companies = Auth::user()->hasRole('super_admin')
+            ? Company::all()
+            : Company::where('id', Auth::user()->company_id)->get();
 
         return Inertia::render('Landlords/Create', [
             'companies' => $companies,
+            'auth' => [
+                'user' => Auth::user(),
+                'isSuperAdmin' => Auth::user()->hasRole('super_admin')
+            ],
         ]);
     }
 
-    /**
-     * Store a newly created landlord in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function store(Request $request)
     {
-        $user = Auth::user();
+        Gate::authorize('create', Landlord::class);
 
-        $request->validate([
-            'prenom' => 'required|string|max:191',
-            'nom' => 'required|string|max:191',
-            'telephone' => 'required|string|max:191',
-            'email' => 'required|string|email|max:191|unique:landlords',
-            'adresse' => 'required|string|max:191',
-            'numero_cni_passport' => 'required|string|max:191',
-            'date_expiration' => 'required|date',
-            'pourcentage_agence' => 'required|numeric|min:0|max:100',
-            'company_id' => 'required|exists:companies,id',
+        $validatedData = $request->validate([
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'address' => 'required|string|max:255',
+            'phone' => 'required|string|max:15',
+            'email' => 'required|string|email|max:255|unique:landlords',
+            'identity_number' => 'required|string|max:255',
+            'identity_expiry_date' => 'required|date',
+            'agency_percentage' => 'required|numeric|min:0|max:100',
+            'contract_duration' => 'required|integer|min:1',
+            'company_id' => 'required|integer|exists:companies,id',
+            'attachments.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
         ]);
 
-        if (!$this->canPerformAction($user->company_id)) {
-            abort(403, 'Unauthorized action.');
+        if ($request->hasFile('attachments')) {
+            $attachments = [];
+            foreach ($request->file('attachments') as $file) {
+                $attachments[] = $file->store('attachments');
+            }
+            $validatedData['attachments'] = json_encode($attachments);
         }
 
-        $landlord = Landlord::create([
-            'prenom' => $request->prenom,
-            'nom' => $request->nom,
-            'telephone' => $request->telephone,
-            'email' => $request->email,
-            'adresse' => $request->adresse,
-            'numero_cni_passport' => $request->numero_cni_passport,
-            'date_expiration' => $request->date_expiration,
-            'pourcentage_agence' => $request->pourcentage_agence,
-            'company_id' => $user->company_id,
-        ]);
+        if (!Auth::user()->hasRole('super_admin')) {
+            $validatedData['company_id'] = Auth::user()->company_id;
+        }
+
+        Landlord::create($validatedData);
 
         return redirect()->route('landlords.index')->with('success', 'Bailleur créé avec succès.');
     }
 
-    /**
-     * Display the specified landlord.
-     *
-     * @param  \App\Models\Landlord  $landlord
-     * @return \Inertia\Response
-     */
-    public function show(Landlord $landlord)
+    public function show($id)
     {
-        if (!$this->canViewLandlord($landlord)) {
-            abort(403, 'Unauthorized action.');
-        }
+        $landlord = Landlord::with(['properties.contracts.tenant', 'company'])->findOrFail($id);
+        Gate::authorize('view', $landlord);
+
+        // Récupérer les transactions récentes
+        $transactions = LandlordTransaction::where('landlord_id', $id)
+            ->orderBy('transaction_date', 'desc')
+            ->take(10)
+            ->get();
+
+        // Récupérer les dépenses récentes
+        $expenses = Expense::whereHas('property', function ($query) use ($landlord) {
+            $query->where('landlord_id', $landlord->id);
+        })
+        ->orderBy('expense_date', 'desc')
+        ->take(10)
+        ->get();
+
+        // Récupérer les contrats récents
+        $contracts = Contract::whereHas('property', function ($query) use ($landlord) {
+            $query->where('landlord_id', $landlord->id);
+        })
+        ->orderBy('created_at', 'desc')
+        ->take(10)
+        ->get()
+        ->map(function ($contract) {
+            $contract->type = 'contract';
+            if ($contract->commission_amount) {
+                $contract->sub_type = 'contract_commission';
+                $contract->amount = $contract->commission_amount;
+            } elseif ($contract->caution_amount) {
+                $contract->sub_type = 'contract_caution';
+                $contract->amount = $contract->caution_amount;
+            }
+            $contract->transaction_date = $contract->created_at;
+            return $contract;
+        });
+
+        // Récupérer les paiements récents
+        $payments = Payment::whereHas('contract.property', function ($query) use ($landlord) {
+            $query->where('landlord_id', $landlord->id);
+        })
+        ->orderBy('payment_date', 'desc')
+        ->take(10)
+        ->get();
+
+        // Fusionner toutes les transactions dans un seul tableau
+        $recentTransactions = $transactions->concat($expenses)->concat($contracts)->concat($payments)->sortByDesc(function ($item) {
+            return $item->transaction_date ?? $item->expense_date ?? $item->created_at ?? $item->payment_date;
+        })->take(10);
+
+        // Ajouter un type par défaut si absent
+        $recentTransactions->each(function ($item) {
+            if (!isset($item->type)) {
+                if ($item instanceof LandlordTransaction) {
+                    $item->type = 'transaction';
+                } elseif ($item instanceof Expense) {
+                    $item->type = 'expense';
+                    $item->transaction_date = $item->expense_date;
+                } elseif ($item instanceof Contract) {
+                    $item->type = 'contract';
+                } elseif ($item instanceof Payment) {
+                    $item->type = 'payment';
+                    $item->transaction_date = $item->payment_date;
+                } else {
+                    $item->type = 'unknown';
+                }
+            }
+        });
+
+        $financialInfo = $this->calculateFinancialInfo($landlord, Carbon::now());
 
         return Inertia::render('Landlords/Show', [
-            'landlord' => $landlord->load('company'),
+            'landlord' => $landlord,
+            'transactions' => $recentTransactions->values(),
+            'financialInfo' => $financialInfo,
+            'company' => $landlord->company,
+            'auth' => [
+                'user' => Auth::user(),
+                'roles' => Auth::user()->roles->pluck('name')
+            ]
         ]);
     }
 
-    /**
-     * Show the form for editing the specified landlord.
-     *
-     * @param  \App\Models\Landlord  $landlord
-     * @return \Inertia\Response
-     */
+
     public function edit(Landlord $landlord)
     {
-        if (!$this->canEditLandlord($landlord)) {
-            abort(403, 'Unauthorized action.');
-        }
+        Gate::authorize('update', $landlord);
 
-        $companies = [];
-        $currentUser = Auth::user();
-
-        if ($currentUser->role === 'super_admin') {
-            $companies = Company::all();
-        } else {
-            $companies = [$currentUser->company];
-        }
+        $companies = Auth::user()->hasRole('super_admin')
+            ? Company::all()
+            : Company::where('id', Auth::user()->company_id)->get();
 
         return Inertia::render('Landlords/Edit', [
-            'landlord' => $landlord,
+            'landlord' => $landlord->load('company'),
             'companies' => $companies,
+            'auth' => [
+                'user' => Auth::user(),
+                'isSuperAdmin' => Auth::user()->hasRole('super_admin')
+            ],
         ]);
     }
 
-    /**
-     * Update the specified landlord in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Landlord  $landlord
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function update(Request $request, Landlord $landlord)
     {
-        if (!$this->canEditLandlord($landlord)) {
-            abort(403, 'Unauthorized action.');
-        }
+        Gate::authorize('update', $landlord);
 
-        $request->validate([
-            'prenom' => 'required|string|max:191',
-            'nom' => 'required|string|max:191',
-            'telephone' => 'required|string|max:191',
-            'email' => 'required|string|email|max:191|unique:landlords,email,' . $landlord->id,
-            'adresse' => 'required|string|max:191',
-            'numero_cni_passport' => 'required|string|max:191',
-            'date_expiration' => 'required|date',
-            'pourcentage_agence' => 'required|numeric|min:0|max:100',
-            'company_id' => $request->company_id,
+        $validatedData = $request->validate([
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'address' => 'required|string|max:255',
+            'phone' => 'required|string|max:15',
+            'email' => 'required|string|email|max:255|unique:landlords,email,' . $landlord->id,
+            'identity_number' => 'required|string|max:255',
+            'identity_expiry_date' => 'required|date',
+            'agency_percentage' => 'required|numeric|min:0|max:100',
+            'contract_duration' => 'required|integer|min:1',
+            'company_id' => 'required|integer|exists:companies,id',
+            'attachments.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
         ]);
 
-        if (!$this->canPerformAction($request->user()->company_id)) {
-            abort(403, 'Unauthorized action.');
+        if ($request->hasFile('attachments')) {
+            $attachments = json_decode($landlord->attachments) ?? [];
+            foreach ($request->file('attachments') as $file) {
+                $attachments[] = $file->store('attachments');
+            }
+            $validatedData['attachments'] = json_encode($attachments);
         }
 
-        $landlord->update([
-            'prenom' => $request->prenom,
-            'nom' => $request->nom,
-            'telephone' => $request->telephone,
-            'email' => $request->email,
-            'adresse' => $request->adresse,
-            'numero_cni_passport' => $request->numero_cni_passport,
-            'date_expiration' => $request->date_expiration,
-            'pourcentage_agence' => $request->pourcentage_agence,
-            'company_id' => $request->company_id,
-        ]);
+        if (!Auth::user()->hasRole('super_admin')) {
+            $validatedData['company_id'] = Auth::user()->company_id;
+        }
+
+        $landlord->update($validatedData);
 
         return redirect()->route('landlords.index')->with('success', 'Bailleur mis à jour avec succès.');
     }
 
-    /**
-     * Remove the specified landlord from storage.
-     *
-     * @param  \App\Models\Landlord  $landlord
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function destroy(Landlord $landlord)
+    public function destroy($id)
     {
-        if (!$this->canDeleteLandlord($landlord)) {
-            abort(403, 'Unauthorized action.');
-        }
+        $transaction = LandlordTransaction::findOrFail($id);
+        Gate::authorize('delete', $transaction);
+        $transaction->delete();
 
-        $landlord->delete();
-
-        return redirect()->route('landlords.index')->with('success', 'Bailleur supprimé avec succès.');
+        return back()->with('success', 'Transaction deleted successfully.');
     }
 
-    /**
-     * Check if the current user can perform the action.
-     *
-     * @param int $companyId
-     * @return bool
-     */
-    private function canPerformAction($companyId)
+    public function export()
     {
-        $user = Auth::user();
-        if ($user->role === 'super_admin') {
-            return true;
-        } elseif (in_array($user->role, ['admin_entreprise', 'user_entreprise'])) {
-            return $user->company_id === $companyId;
-        }
-        return false;
+        Gate::authorize('viewAny', Landlord::class);
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="landlords.csv"',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0'
+        ];
+
+        $callback = function () {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Company']);
+
+            $query = Landlord::with('company');
+
+            if (!Auth::user()->hasRole('super_admin')) {
+                $query->where('company_id', Auth::user()->company_id);
+            }
+
+            $landlords = $query->get();
+
+            foreach ($landlords as $landlord) {
+                fputcsv($file, [
+                    $landlord->id,
+                    $landlord->first_name,
+                    $landlord->last_name,
+                    $landlord->email,
+                    $landlord->phone,
+                    $landlord->company->name
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
-    /**
-     * Check if the current user can view the specified landlord.
-     *
-     * @param  \App\Models\Landlord  $landlord
-     * @return bool
-     */
-    private function canViewLandlord(Landlord $landlord)
-    {
-        $currentUser = Auth::user();
-        if ($currentUser->role === 'super_admin') {
-            return true;
-        } elseif (in_array($currentUser->role, ['admin_entreprise', 'user_entreprise'])) {
-            return $currentUser->company_id === $landlord->company_id;
-        }
-        return false;
-    }
 
-    /**
-     * Check if the current user can edit the specified landlord.
-     *
-     * @param  \App\Models\Landlord  $landlord
-     * @return bool
-     */
-    private function canEditLandlord(Landlord $landlord)
+    private function calculateFinancialInfo(Landlord $landlord, Carbon $date)
     {
-        return $this->canViewLandlord($landlord);
-    }
+        $monthlyRent = Payment::whereHas('contract.property', function ($query) use ($landlord) {
+            $query->where('landlord_id', $landlord->id);
+        })->whereYear('payment_date', $date->year)
+            ->whereMonth('payment_date', $date->month)
+            ->where('is_reversed', false)
+            ->sum('amount');
 
-    /**
-     * Check if the current user can delete the specified landlord.
-     *
-     * @param  \App\Models\Landlord  $landlord
-     * @return bool
-     */
-    private function canDeleteLandlord(Landlord $landlord)
-    {
-        return $this->canViewLandlord($landlord);
+        $monthlyExpenses = Expense::whereHas('property', function ($query) use ($landlord) {
+            $query->where('landlord_id', $landlord->id);
+        })->where('is_repay', false)
+            ->whereYear('expense_date', $date->year)
+            ->whereMonth('expense_date', $date->month)
+            ->sum('amount');
+
+        $totalCautionAmount = Contract::whereHas('property', function ($query) use ($landlord) {
+            $query->where('landlord_id', $landlord->id);
+        })->where('is_reversed', false)
+            ->sum('caution_amount');
+
+        $agencyPercentage = $landlord->agency_percentage / 100;
+        $rentCommission = $monthlyRent * $agencyPercentage;
+        $cautionCommission = $totalCautionAmount * $agencyPercentage;
+
+        $totalCommissions = $rentCommission + $cautionCommission;
+
+        $totalTva = ($monthlyRent + $totalCautionAmount) * self::TVA_RATE;
+
+        $netBalance = ($monthlyRent + $totalCautionAmount - $monthlyExpenses - $totalCommissions - $totalTva);
+
+        return [
+            'monthlyRent' => $monthlyRent,
+            'totalCautionAmount' => $totalCautionAmount,
+            'monthlyExpenses' => $monthlyExpenses,
+            'totalCommissions' => $totalCommissions,
+            'netBalance' => $netBalance,
+            'totalTva' => $totalTva,
+            'monthlyRentDetails' => Payment::whereHas('contract.property', function ($query) use ($landlord) {
+                $query->where('landlord_id', $landlord->id);
+            })->whereYear('payment_date', $date->year)
+                ->whereMonth('payment_date', $date->month)
+                ->where('is_reversed', false)
+                ->get(['tenant_id', 'contract_id', 'amount'])
+                ->map(function ($payment) {
+                    return [
+                        'tenant' => $payment->contract->tenant->first_name . ' ' . $payment->contract->tenant->last_name,
+                        'property' => $payment->contract->property->name,
+                        'amount' => round($payment->amount, 2)
+                    ];
+                }),
+            'cautionDetails' => Contract::whereHas('property', function ($query) use ($landlord) {
+                $query->where('landlord_id', $landlord->id);
+            })->where('is_reversed', false)
+                ->get(['tenant_id', 'property_id', 'caution_amount'])
+                ->map(function ($contract) {
+                    return [
+                        'tenant' => $contract->tenant->first_name . ' ' . $contract->tenant->last_name,
+                        'property' => $contract->property->name,
+                        'amount' => round($contract->caution_amount, 2)
+                    ];
+                }),
+            'expenseDetails' => Expense::whereHas('property', function ($query) use ($landlord) {
+                $query->where('landlord_id', $landlord->id);
+            })->where('is_repay', false)
+                ->whereYear('expense_date', $date->year)
+                ->whereMonth('expense_date', $date->month)
+                ->get(['type', 'description', 'amount'])
+                ->map(function ($expense) {
+                    return [
+                        'type' => $expense->type,
+                        'description' => $expense->description,
+                        'amount' => round($expense->amount, 2)
+                    ];
+                }),
+            'commissionDetails' => [
+                [
+                    'type' => 'Caution Commission',
+                    'amount' => round($cautionCommission, 2)
+                ],
+                [
+                    'type' => 'Rent Commission',
+                    'amount' => round($rentCommission, 2)
+                ]
+            ],
+            'payoutDetails' => LandlordTransaction::where('landlord_id', $landlord->id)
+                ->where('type', 'payout')
+                ->whereYear('transaction_date', $date->year)
+                ->whereMonth('transaction_date', $date->month)
+                ->get(['amount', 'transaction_date'])
+                ->map(function ($transaction) {
+                    return [
+                        'amount' => round($transaction->amount, 2),
+                        'date' => Carbon::parse($transaction->transaction_date)->format('Y-m-d')
+                    ];
+                })
+        ];
     }
 }

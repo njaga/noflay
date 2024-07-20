@@ -20,8 +20,9 @@ const emit = defineEmits(['close']);
 const dialog = ref();
 const showSlot = ref(props.show);
 
-watch(() => props.show, () => {
-    if (props.show) {
+watch(() => props.show, (newValue) => {
+    console.log('Modal show prop changed:', newValue); // Debug log
+    if (newValue) {
         document.body.style.overflow = 'hidden';
         showSlot.value = true;
         dialog.value?.showModal();
@@ -35,6 +36,7 @@ watch(() => props.show, () => {
 });
 
 const close = () => {
+    console.log('Modal close method called'); // Debug log
     if (props.closeable) {
         emit('close');
     }

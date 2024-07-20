@@ -1,193 +1,302 @@
 <template>
     <AppLayout title="Créer un bailleur">
-        <div class="py-12 bg-gray-100">
-            <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
-                    <div class="p-8">
-                        <h1 class="text-3xl font-bold text-gray-900 mb-6">Créer un nouveau bailleur</h1>
-                        <form @submit.prevent="submit" class="space-y-6">
-                            <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
-                                <div>
-                                    <label for="prenom" class="block text-sm font-medium text-gray-700">Prénom</label>
-                                    <input type="text" id="prenom" v-model="form.prenom"
-                                        class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                                        required>
-                                    <div v-if="form.errors.prenom" class="text-red-500 text-sm mt-1">{{
-                                        form.errors.prenom }}</div>
-                                </div>
+        <div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+            <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
+                <div class="p-8 sm:p-12">
+                    <h1
+                        class="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-8 animate-gradient">
+                        Créer un bailleur
+                    </h1>
 
-                                <div>
-                                    <label for="nom" class="block text-sm font-medium text-gray-700">Nom</label>
-                                    <input type="text" id="nom" v-model="form.nom"
-                                        class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                                        required>
-                                    <div v-if="form.errors.nom" class="text-red-500 text-sm mt-1">{{ form.errors.nom }}
-                                    </div>
-                                </div>
+                    <form @submit.prevent="submit" class="space-y-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label for="first_name" class="text-sm font-medium text-gray-700">Prénom</label>
+                                <input id="first_name" v-model="form.first_name" type="text" required
+                                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 ease-in-out transform hover:scale-105" />
+                            </div>
 
-                                <div>
-                                    <label for="telephone" class="block text-sm font-medium text-gray-700">Numéro de
-                                        téléphone</label>
-                                    <input type="tel" id="telephone" v-model="form.telephone"
-                                        class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                                        required>
-                                    <div v-if="form.errors.telephone" class="text-red-500 text-sm mt-1">{{
-                                        form.errors.telephone }}</div>
-                                </div>
+                            <div class="space-y-2">
+                                <label for="last_name" class="text-sm font-medium text-gray-700">Nom</label>
+                                <input id="last_name" v-model="form.last_name" type="text" required
+                                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 ease-in-out transform hover:scale-105" />
+                            </div>
 
-                                <div>
-                                    <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                                    <input type="email" id="email" v-model="form.email"
-                                        class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                                        required>
-                                    <div v-if="form.errors.email" class="text-red-500 text-sm mt-1">{{ form.errors.email
-                                        }}</div>
-                                </div>
+                            <div class="space-y-2">
+                                <label for="address" class="text-sm font-medium text-gray-700">Adresse</label>
+                                <input id="address" v-model="form.address" type="text" required
+                                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 ease-in-out transform hover:scale-105" />
+                            </div>
 
-                                <div class="sm:col-span-2">
-                                    <label for="adresse" class="block text-sm font-medium text-gray-700">Adresse</label>
-                                    <textarea id="adresse" v-model="form.adresse" rows="3"
-                                        class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                                        required></textarea>
-                                    <div v-if="form.errors.adresse" class="text-red-500 text-sm mt-1">{{
-                                        form.errors.adresse }}</div>
-                                </div>
+                            <div class="space-y-2">
+                                <label for="phone" class="text-sm font-medium text-gray-700">Téléphone</label>
+                                <input id="phone" v-model="form.phone" type="text" required
+                                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 ease-in-out transform hover:scale-105" />
+                            </div>
 
-                                <div>
-                                    <label for="numero_cni_passport"
-                                        class="block text-sm font-medium text-gray-700">Numéro CNI ou passport</label>
-                                    <input type="text" id="numero_cni_passport" v-model="form.numero_cni_passport"
-                                        class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                                        required>
-                                    <div v-if="form.errors.numero_cni_passport" class="text-red-500 text-sm mt-1">{{
-                                        form.errors.numero_cni_passport }}</div>
-                                </div>
+                            <div class="space-y-2">
+                                <label for="email" class="text-sm font-medium text-gray-700">Email</label>
+                                <input id="email" v-model="form.email" type="email" required
+                                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 ease-in-out transform hover:scale-105" />
+                            </div>
 
-                                <div>
-                                    <label for="date_expiration" class="block text-sm font-medium text-gray-700">Date
-                                        d'expiration</label>
-                                    <input type="date" id="date_expiration" v-model="form.date_expiration"
-                                        class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                                        required>
-                                    <div v-if="form.errors.date_expiration" class="text-red-500 text-sm mt-1">{{
-                                        form.errors.date_expiration }}</div>
-                                </div>
+                            <div class="space-y-2">
+                                <label for="identity_number" class="text-sm font-medium text-gray-700">Numéro CNI ou
+                                    passeport</label>
+                                <input id="identity_number" v-model="form.identity_number" type="text" required
+                                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 ease-in-out transform hover:scale-105" />
+                            </div>
 
-                                <div>
-                                    <label for="pourcentage_agence"
-                                        class="block text-sm font-medium text-gray-700">Pourcentage agence</label>
-                                    <div class="mt-1 relative rounded-md shadow-sm">
-                                        <input type="number" id="pourcentage_agence" v-model="form.pourcentage_agence"
-                                            class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md"
-                                            min="0" max="100" step="0.01" required>
-                                        <div
-                                            class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                            <span class="text-gray-500 sm:text-sm">%</span>
+                            <div class="space-y-2">
+                                <label for="identity_expiry_date" class="text-sm font-medium text-gray-700">Date
+                                    d'expiration CNI ou passeport</label>
+                                <input id="identity_expiry_date" v-model="form.identity_expiry_date" type="date"
+                                    required
+                                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 ease-in-out transform hover:scale-105" />
+                            </div>
+
+                            <div class="space-y-2">
+                                <label for="agency_percentage" class="text-sm font-medium text-gray-700">Pourcentage à
+                                    donner à l'agence</label>
+                                <input id="agency_percentage" v-model="form.agency_percentage" type="number" step="0.01"
+                                    required
+                                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 ease-in-out transform hover:scale-105" />
+                            </div>
+
+                            <div class="space-y-2">
+                                <label for="contract_duration" class="text-sm font-medium text-gray-700">Durée de
+                                    contrat avec l'agence (en mois)</label>
+                                <input id="contract_duration" v-model="form.contract_duration" type="number" required
+                                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 ease-in-out transform hover:scale-105" />
+                            </div>
+
+                            <div v-if="auth.isSuperAdmin" class="space-y-2">
+                                <label for="company_id" class="text-sm font-medium text-gray-700">Entreprise</label>
+                                <select id="company_id" v-model="form.company_id" required
+                                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 ease-in-out transform hover:scale-105">
+                                    <option value="">Sélectionnez une entreprise</option>
+                                    <option v-for="company in companies" :key="company.id" :value="company.id">
+                                        {{ company.name }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="space-y-2 sm:col-span-2">
+                                <label for="attachments"
+                                    class="text-sm font-medium text-gray-700">Pièces-jointes</label>
+                                <div class="flex items-center justify-center w-full">
+                                    <label for="attachments"
+                                        class="flex flex-col items-center justify-center w-full h-32 border-2 border-indigo-300 border-dashed rounded-lg cursor-pointer bg-indigo-50 hover:bg-indigo-100 transition duration-300 ease-in-out">
+                                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                            <svg class="w-10 h-10 mb-3 text-indigo-500" fill="none"
+                                                stroke="currentColor" viewBox="0 0 24 24"
+                                                xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                                                </path>
+                                            </svg>
+                                            <p class="mb-2 text-sm text-indigo-600"><span class="font-bold">Cliquez pour
+                                                    télécharger</span> ou glissez-déposez</p>
+                                            <p class="text-xs text-indigo-500">PNG, JPG, PDF, DOCX jusqu'à 10MB (max 5
+                                                fichiers)</p>
                                         </div>
+                                        <input id="attachments" type="file" @change="handleFileUpload" multiple
+                                            class="hidden" accept=".png,.jpg,.jpeg,.pdf,.docx" />
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- File preview section -->
+                        <div v-if="previewFiles.length > 0" class="mt-6 bg-gray-50 p-4 rounded-lg">
+                            <h3 class="text-lg font-medium text-gray-900 mb-3">Fichiers joints:</h3>
+                            <ul class="space-y-3">
+                                <li v-for="(file, index) in previewFiles" :key="index"
+                                    class="flex items-center justify-between p-3 bg-white rounded-md shadow-sm">
+                                    <div class="flex items-center space-x-3">
+                                        <span v-if="file.type.startsWith('image')"
+                                            class="flex-shrink-0 h-10 w-10 rounded-full overflow-hidden">
+                                            <img :src="file.preview" :alt="file.name"
+                                                class="h-full w-full object-cover" />
+                                        </span>
+                                        <span v-else
+                                            class="flex-shrink-0 h-10 w-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                                            <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24"
+                                                stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                            </svg>
+                                        </span>
+                                        <span class="flex-1 text-sm font-medium text-gray-900 truncate">
+                                            {{ file.name }}
+                                        </span>
                                     </div>
-                                    <div v-if="form.errors.pourcentage_agence" class="text-red-500 text-sm mt-1">{{
-                                        form.errors.pourcentage_agence }}</div>
-                                </div>
+                                    <button @click="removeFile(index)" type="button"
+                                        class="ml-4 flex-shrink-0 text-sm font-medium text-red-600 hover:text-red-500 transition duration-150 ease-in-out">
+                                        Supprimer
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
 
-                                <div v-if="companies.length > 1">
-                                    <label for="company_id"
-                                        class="block text-sm font-medium text-gray-700">Entreprise</label>
-                                    <select id="company_id" v-model="form.company_id"
-                                        class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                        required>
-                                        <option v-for="company in companies" :key="company.id" :value="company.id">
-                                            {{ company.name }}
-                                        </option>
-                                    </select>
-                                    <div v-if="form.errors.company_id" class="text-red-500 text-sm mt-1">{{
-                                        form.errors.company_id }}</div>
-                                </div>
-                            </div>
-
-                            <div class="flex justify-end mt-6">
-                                <button type="button" @click="cancel"
-                                    class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                    Annuler
-                                </button>
-                                <button type="submit"
-                                    class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                                    :disabled="form.processing">
-                                    {{ form.processing ? 'Création en cours...' : 'Créer le bailleur' }}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+                        <div class="flex justify-end">
+                            <button type="submit" :disabled="form.processing"
+                                class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transition duration-300 ease-in-out transform hover:-translate-y-1 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                <span class="flex items-center">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4">
+                                        </path>
+                                    </svg>
+                                    Enregistrer
+                                </span>
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
 
-        <Modal :show="showModal" @close="closeModal">
-            <div class="p-6">
-                <h2 class="text-lg font-medium text-gray-900 mb-4">
-                    Bailleur créé avec succès
-                </h2>
-                <p class="text-sm text-gray-600 mb-4">
-                    Le bailleur "{{ createdLandlordName }}" a été ajouté à la base de données.
-                </p>
-                <div class="mt-6 flex justify-end">
-                    <button type="button" @click="closeModal"
-                        class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        Fermer
-                    </button>
+        <!-- Modal de succès -->
+        <Transition name="modal">
+            <div v-if="showSuccessModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title"
+                role="dialog" aria-modal="true">
+                <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+                    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                    <div
+                        class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-sm sm:w-full sm:p-6">
+                        <div>
+                            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
+                                <svg class="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <div class="mt-3 text-center sm:mt-5">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                    Bailleur créé avec succès
+                                </h3>
+                                <div class="mt-2">
+                                    <p class="text-sm text-gray-500">
+                                        Le nouveau bailleur a été ajouté à votre liste avec succès.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-5 sm:mt-6">
+                            <button type="button" @click="showSuccessModal = false"
+                                class="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm">
+                                Fermer
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </Modal>
+        </Transition>
     </AppLayout>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import { useForm } from '@inertiajs/vue3';
+import { useForm, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import Modal from '@/Components/Modal.vue';
 
-const props = defineProps({
-    companies: {
-        type: Array,
-        required: true
-    }
-});
+const { auth, companies } = usePage().props;
 
 const form = useForm({
-    prenom: '',
-    nom: '',
-    telephone: '',
+    first_name: '',
+    last_name: '',
+    address: '',
+    phone: '',
     email: '',
-    adresse: '',
-    numero_cni_passport: '',
-    date_expiration: '',
-    pourcentage_agence: '',
-    company_id: props.companies.length === 1 ? props.companies[0].id : '',
+    identity_number: '',
+    identity_expiry_date: '',
+    agency_percentage: '',
+    contract_duration: '',
+    company_id: auth.isSuperAdmin ? '' : auth.user.company_id,
+    attachments: [],
 });
 
-const showModal = ref(false);
-const createdLandlordName = ref('');
+const previewFiles = ref([]);
+const showSuccessModal = ref(false);
+
+const handleFileUpload = (event) => {
+    const files = Array.from(event.target.files);
+    if (files.length + form.attachments.length > 5) {
+        alert('Vous ne pouvez ajouter que 5 documents maximum.');
+        return;
+    }
+
+    const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png'];
+    const validFiles = files.filter(file => allowedTypes.includes(file.type));
+
+    if (validFiles.length !== files.length) {
+        alert('Certains fichiers ont été ignorés. Seuls les fichiers PDF, DOCX et images sont autorisés.');
+    }
+
+    form.attachments = [...form.attachments, ...validFiles];
+    previewFiles.value = [...previewFiles.value, ...validFiles.map(file => ({
+        name: file.name,
+        type: file.type,
+        preview: file.type.startsWith('image') ? URL.createObjectURL(file) : null
+    }))];
+};
+
+const removeFile = (index) => {
+    form.attachments.splice(index, 1);
+    if (previewFiles.value[index].preview) {
+        URL.revokeObjectURL(previewFiles.value[index].preview);
+    }
+    previewFiles.value.splice(index, 1);
+};
 
 const submit = () => {
     form.post(route('landlords.store'), {
-        preserveState: true,
         preserveScroll: true,
-        onSuccess: (response) => {
-            createdLandlordName.value = `${form.prenom} ${form.nom}`;
-            showModal.value = true;
+        preserveState: true,
+        onSuccess: () => {
             form.reset();
+            previewFiles.value = [];
+            showSuccessModal.value = true; // Afficher le modal au lieu de l'alerte
         },
         onError: (errors) => {
-            console.error('Errors:', errors);
+            console.error(errors);
+            alert('Une erreur est survenue lors de la création du bailleur');
         },
     });
 };
-
-const cancel = () => {
-    window.history.back()
-};
-
-const closeModal = () => {
-    showModal.value = false;
-};
 </script>
+
+<style scoped>
+@keyframes gradient {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient 5s ease infinite;
+}
+
+.modal-enter-active,
+.modal-leave-active {
+    transition: opacity 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+    opacity: 0;
+}
+</style>
