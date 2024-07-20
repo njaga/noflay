@@ -9,7 +9,7 @@
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-12">
                             <div class="flex items-center space-x-4">
                                 <div
-                                    class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+                                    class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-full flex items-center justify-center">
                                     <i class="fas fa-building text-3xl text-white"></i>
                                 </div>
                                 <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">
@@ -29,7 +29,7 @@
                         </div>
 
                         <!-- Informations de l'entreprise -->
-                        <div class="bg-gradient-to-br from-indigo-50 to-purple-50 p-8 rounded-2xl mb-12 shadow-inner">
+                        <div class="bg-gradient-to-br from-indigo-50 to-indigo-50 p-8 rounded-2xl mb-12 shadow-inner">
                             <h2 class="text-2xl font-semibold text-indigo-800 mb-6 flex items-center">
                                 <i class="fas fa-info-circle mr-3 text-indigo-600"></i> Informations de l'entreprise
                             </h2>
@@ -244,7 +244,7 @@ export default defineComponent({
 
 <style scoped>
 .btn-primary {
-    @apply inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:from-indigo-600 hover:to-purple-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring focus:ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150;
+    @apply inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-500 to-indigo-700 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:from-indigo-600 hover:to-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring focus:ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150;
 }
 
 .btn-danger {

@@ -1,4 +1,3 @@
-<!-- Components/LandlordPayouts/NewPayoutModal.vue -->
 <template>
     <Modal :show="show" @close="$emit('close')">
       <div class="p-6 sm:p-10">
@@ -6,20 +5,25 @@
           <i class="bi bi-plus-circle-fill text-indigo-500 mr-3"></i>
           Nouveau versement
         </h3>
-        <form @submit.prevent="$emit('submit', newPayout)">
+        <form @submit.prevent="handleSubmit">
           <div class="space-y-4">
+            <!-- Sélection du bailleur -->
             <div>
               <label for="landlord" class="block text-sm font-medium text-gray-700">Bailleur</label>
               <select
                 id="landlord"
                 v-model="newPayout.landlord_id"
                 class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                required
               >
+                <option value="" disabled>Sélectionnez un bailleur</option>
                 <option v-for="landlord in landlords" :key="landlord.id" :value="landlord.id">
                   {{ landlord.first_name }} {{ landlord.last_name }}
                 </option>
               </select>
             </div>
+
+            <!-- Montant -->
             <div>
               <label for="amount" class="block text-sm font-medium text-gray-700">Montant</label>
               <input
@@ -32,6 +36,8 @@
                 class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
               />
             </div>
+
+            <!-- Date de paiement -->
             <div>
               <label for="payment_date" class="block text-sm font-medium text-gray-700">Date de paiement</label>
               <input
@@ -42,12 +48,15 @@
                 class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
               />
             </div>
+
+            <!-- Méthode de paiement -->
             <div>
               <label for="payment_method" class="block text-sm font-medium text-gray-700">Méthode de paiement</label>
               <select
                 id="payment_method"
                 v-model="newPayout.payment_method"
                 class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                required
               >
                 <option value="bank">Virement bancaire</option>
                 <option value="cash">Espèces</option>
@@ -55,7 +64,11 @@
               </select>
             </div>
           </div>
-          <button type="submit" class="mt-6 w-full px-6 py-3 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center justify-center">
+
+          <button
+            type="submit"
+            class="mt-6 w-full px-6 py-3 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center justify-center"
+          >
             <i class="bi bi-check-lg mr-2"></i>
             Créer le versement
           </button>
@@ -65,7 +78,7 @@
   </template>
 
   <script setup>
-  import { defineProps, defineEmits, ref } from 'vue';
+  import { ref, defineEmits, defineProps } from 'vue';
   import Modal from "@/Components/Modal.vue";
 
   const props = defineProps({
@@ -79,6 +92,8 @@
     }
   });
 
+  const emit = defineEmits(['close', 'submit']);
+
   const newPayout = ref({
     landlord_id: "",
     amount: 0,
@@ -86,5 +101,17 @@
     payment_method: "bank",
   });
 
-  defineEmits(['close', 'submit']);
+  const handleSubmit = () => {
+    if (newPayout.value.landlord_id && newPayout.value.amount && newPayout.value.payment_date && newPayout.value.payment_method) {
+      emit('submit', newPayout.value);
+    } else {
+      alert('Veuillez remplir tous les champs.');
+    }
+  };
   </script>
+
+  <style scoped>
+  .bg-gradient-to-br {
+    background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
+  }
+  </style>

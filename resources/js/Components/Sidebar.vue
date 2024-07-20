@@ -17,6 +17,7 @@
 
             <SidebarDropdown icon="bi-building" text="Bailleurs" :is-collapsed="isCollapsed" :is-mobile="isMobile">
                 <SidebarItem :href="route('landlords.index')" icon="bi-people" text="Gérer les bailleurs" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
+                <SidebarItem :href="route('landlord-payouts.index')" icon="bi-person-plus" text="Versements" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
                 <SidebarItem :href="route('landlords.create')" icon="bi-person-plus" text="Ajouter un bailleur" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
             </SidebarDropdown>
 

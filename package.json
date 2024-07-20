@@ -41,6 +41,7 @@
         "recharts": "^2.12.7",
         "vee-validate": "^4.13.2",
         "vue-router": "^4.3.3",
+        "vue-select": "^4.0.0-beta.6",
         "yup": "^1.4.0"
     }
 }
