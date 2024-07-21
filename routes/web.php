@@ -19,6 +19,7 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Middleware\CheckUserStatus;
 use App\Http\Controllers\DemoRequestController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\TenantAccountController;
 
 // Route pour la page de bienvenue disponible sans authentification
 Route::get('/', function () {
@@ -60,13 +61,17 @@ Route::middleware([
     Route::resource('landlords', LandlordController::class);
     Route::get('/landlords/{landlord}/account', [LandlordController::class, 'show'])->name('landlords.account.show');
     Route::get('/mandat', [MandatController::class, 'create'])->name('mandat.create');
+    Route::post('/landlords/{id}/create-account', [LandlordController::class, 'createAccount'])->name('landlords.create-account');
+
 
     // Routes pour la gestion des propriétés
     Route::resource('properties', PropertyController::class);
+    Route::get('properties/{property}/report', [PropertyController::class, 'report'])->name('properties.report');
 
     // Routes pour la gestion des locataires
     Route::resource('tenants', TenantController::class);
     Route::get('/tenants/{tenant}/lease-contracts/create', [TenantController::class, 'createLeaseContract'])->name('tenants.createLeaseContract');
+    Route::post('/tenants/{id}/create-account', [TenantAccountController::class, 'createTenantAccount'])->name('tenants.create-account');
 
     // Routes pour la gestion des contrats
     Route::resource('contracts', ContractController::class);

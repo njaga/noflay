@@ -1,17 +1,17 @@
 <template>
-    <div class="flex items-center space-x-2 mb-2">
-      <component :is="icon" class="w-5 h-5 text-gray-500" />
-      <span class="font-semibold">{{ label }}:</span>
-      <span>{{ value }}</span>
+    <div class="flex items-center">
+      <i :class="[icon, 'text-indigo-500 mr-2']"></i>
+      <div>
+        <span class="text-sm text-gray-500">{{ label }}</span>
+        <p class="font-medium">{{ value }}</p>
+      </div>
     </div>
   </template>
 
   <script setup>
-  import { defineProps } from 'vue';
-
   defineProps({
-    icon: Object,
+    icon: String,
     label: String,
-    value: [String, Number],
+    value: [String, Number]
   });
   </script>

@@ -11,7 +11,7 @@
 
                         <!-- Onglets d'information -->
                         <div class="mt-8">
-                            <Tab :titles="['Coordonnées', 'Informations personnelles', 'Propriété']" :default-index="0">
+                            <Tab :titles="['Coordonnées', 'Informations personnelles', 'Propriétés']" :default-index="0">
                                 <template v-slot:tab0>
                                     <div class="space-y-4">
                                         <InfoCard icon="fa-phone" title="Téléphone" :value="tenant.phone_number" />
@@ -29,12 +29,17 @@
                                 </template>
                                 <template v-slot:tab2>
                                     <div class="space-y-4">
-                                        <InfoCard icon="fa-home" title="Nom de la propriété"
-                                            :value="tenant.property.name" />
-                                        <InfoCard icon="fa-map" title="Adresse de la propriété"
-                                            :value="tenant.property.address" />
-                                        <InfoCard icon="fa-user-tie" title="Nom du bailleur"
-                                            :value="tenant.property.landlord_fist_name" />
+                                        <div v-if="tenant.contracts.length">
+                                            <div v-for="contract in tenant.contracts" :key="contract.id">
+                                                <InfoCard icon="fa-home" title="Nom de la propriété"
+                                                    :value="contract.property.name" />
+                                                <InfoCard icon="fa-map" title="Adresse de la propriété"
+                                                    :value="contract.property.address" />
+                                                <InfoCard icon="fa-user-tie" title="Nom du bailleur"
+                                                    :value="`${contract.property.landlord.first_name} ${contract.property.landlord.last_name}`" />
+                                            </div>
+                                        </div>
+                                        <p v-else class="text-gray-500 italic">Aucune propriété associée</p>
                                     </div>
                                 </template>
                             </Tab>
@@ -43,13 +48,11 @@
                         <!-- Actions -->
                         <div class="mt-12 flex justify-center space-x-4">
                             <Button @click="$emit('edit')" variant="primary" size="md" class="flex items-center">
-                                <i class="fas fa-edit mr-2"></i>
-                                Modifier le profil
+                                <i class="fas fa-edit mr-2"></i> Modifier le profil
                             </Button>
                             <Button @click="showDeleteModal = true" variant="danger" size="md"
                                 class="flex items-center">
-                                <i class="fas fa-trash-alt mr-2"></i>
-                                Supprimer le compte
+                                <i class="fas fa-trash-alt mr-2"></i> Supprimer le compte
                             </Button>
                         </div>
                     </div>

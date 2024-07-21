@@ -46,6 +46,11 @@ class User extends Authenticatable
         return $this->belongsTo(Company::class);
     }
 
+    public function landlords()
+    {
+        return $this->hasMany(Landlord::class);
+    }
+
     public function isActive()
     {
         return $this->is_active;

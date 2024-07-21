@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\LandlordAccountCreated;
 use App\Models\Landlord;
 use App\Models\Company;
 use App\Models\Property;
@@ -9,11 +10,17 @@ use App\Models\Contract;
 use App\Models\Payment;
 use App\Models\Expense;
 use App\Models\LandlordTransaction;
+use App\Models\Role;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class LandlordController extends Controller
 {
@@ -108,37 +115,37 @@ class LandlordController extends Controller
         $expenses = Expense::whereHas('property', function ($query) use ($landlord) {
             $query->where('landlord_id', $landlord->id);
         })
-        ->orderBy('expense_date', 'desc')
-        ->take(10)
-        ->get();
+            ->orderBy('expense_date', 'desc')
+            ->take(10)
+            ->get();
 
         // Récupérer les contrats récents
         $contracts = Contract::whereHas('property', function ($query) use ($landlord) {
             $query->where('landlord_id', $landlord->id);
         })
-        ->orderBy('created_at', 'desc')
-        ->take(10)
-        ->get()
-        ->map(function ($contract) {
-            $contract->type = 'contract';
-            if ($contract->commission_amount) {
-                $contract->sub_type = 'contract_commission';
-                $contract->amount = $contract->commission_amount;
-            } elseif ($contract->caution_amount) {
-                $contract->sub_type = 'contract_caution';
-                $contract->amount = $contract->caution_amount;
-            }
-            $contract->transaction_date = $contract->created_at;
-            return $contract;
-        });
+            ->orderBy('created_at', 'desc')
+            ->take(10)
+            ->get()
+            ->map(function ($contract) {
+                $contract->type = 'contract';
+                if ($contract->commission_amount) {
+                    $contract->sub_type = 'contract_commission';
+                    $contract->amount = $contract->commission_amount;
+                } elseif ($contract->caution_amount) {
+                    $contract->sub_type = 'contract_caution';
+                    $contract->amount = $contract->caution_amount;
+                }
+                $contract->transaction_date = $contract->created_at;
+                return $contract;
+            });
 
         // Récupérer les paiements récents
         $payments = Payment::whereHas('contract.property', function ($query) use ($landlord) {
             $query->where('landlord_id', $landlord->id);
         })
-        ->orderBy('payment_date', 'desc')
-        ->take(10)
-        ->get();
+            ->orderBy('payment_date', 'desc')
+            ->take(10)
+            ->get();
 
         // Fusionner toutes les transactions dans un seul tableau
         $recentTransactions = $transactions->concat($expenses)->concat($contracts)->concat($payments)->sortByDesc(function ($item) {
@@ -381,4 +388,53 @@ class LandlordController extends Controller
                 })
         ];
     }
+
+    public function createAccount($id)
+    {
+        try {
+            $landlord = Landlord::findOrFail($id);
+
+            // Vérifier si le bailleur a déjà un compte
+            if ($landlord->user_id) {
+                return response()->json(['error' => 'Ce bailleur a déjà un compte'], 400);
+            }
+
+            // Générer le mot de passe
+            $password = Str::random(8);
+
+            // Créer l'utilisateur
+            $user = User::create([
+                'name' => $landlord->first_name . ' ' . $landlord->last_name,
+                'email' => $landlord->email,
+                'password' => Hash::make($password),
+                'company_id' => auth()->user()->company_id, // Associer l'utilisateur à l'entreprise de l'utilisateur actuel
+            ]);
+
+            // Assigner le rôle "bailleur"
+            $role = Role::where('name', 'bailleur')->first();
+            if ($role) {
+                $user->assignRole($role);
+            } else {
+                Log::error('Erreur: le rôle "bailleur" n\'existe pas.');
+                return response()->json(['error' => 'Echec lors de la création du compte'], 500);
+            }
+
+            // Associer l'utilisateur au bailleur
+            $landlord->user_id = $user->id;
+            $landlord->save();
+
+            // Envoyer un email avec les détails du compte
+            Mail::to($landlord->email)->send(new LandlordAccountCreated($user, $password));
+
+            return response()->json([
+                'email' => $user->email,
+                'password' => $password
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la création du compte du bailleur: ' . $e->getMessage());
+            return response()->json(['error' => 'Echec lors de la création du compte'], 500);
+        }
+    }
+
+
 }

@@ -131,11 +131,13 @@ class LandlordPayoutController extends Controller
                 ->whereMonth('expense_date', $selectedDate->month)
                 ->update(['is_repay' => true]);
 
-            // Mettre à jour les cautions pour indiquer qu'elles ont été reversées
-            Contract::whereHas('property', function ($query) use ($landlord) {
-                $query->where('landlord_id', $landlord->id);
-            })->where('is_reversed', false)
-                ->update(['is_reversed' => true]);
+            // Mettre à jour les cautions pour indiquer qu'elles ont été reversées uniquement si c'est "full_balance"
+            if ($validatedData['payment_type'] === 'full_balance') {
+                Contract::whereHas('property', function ($query) use ($landlord) {
+                    $query->where('landlord_id', $landlord->id);
+                })->where('is_reversed', false)
+                    ->update(['is_reversed' => true]);
+            }
 
             return redirect()->route('landlord-payouts.index')->with('success', 'Versement créé avec succès.');
         } catch (\Exception $e) {

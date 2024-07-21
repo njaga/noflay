@@ -6,6 +6,7 @@ use App\Models\Tenant;
 use App\Models\Company;
 use App\Models\Property;
 use App\Models\Contract;
+use App\Models\Landlord;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -20,53 +21,33 @@ class TenantController extends Controller
     {
         Gate::authorize('viewAny', Tenant::class);
 
-        $query = Tenant::with(['property', 'rentalApplications.property']);
+        // Charger les locataires avec leurs contrats, propriétés et bailleurs
+        $tenants = Tenant::with(['contracts.property.landlord'])->get();
 
-        if (!Auth::user()->hasRole('super_admin')) {
-            $query->where('company_id', Auth::user()->company_id);
-        }
-
-        $tenants = $query->get()->map(function ($tenant) {
-            $rentalApplication = $tenant->rentalApplications->first();  
-
-            $start_date = $rentalApplication ? $this->formatDate($rentalApplication->start_date) : 'N/A';
-            $end_date = $rentalApplication ? $this->formatDate($rentalApplication->end_date) : 'N/A';
-            $status = $rentalApplication && $rentalApplication->end_date && new \DateTime($rentalApplication->end_date) > new \DateTime() ? 'active' : 'inactive';
-
-            return [
-                'id' => $tenant->id,
-                'first_name' => $tenant->first_name,
-                'last_name' => $tenant->last_name,
-                'email' => $tenant->email,
-                'property' => $rentalApplication && $rentalApplication->property ? $rentalApplication->property->name : 'N/A',
-                'property_address' => $rentalApplication && $rentalApplication->property ? $rentalApplication->property->address : 'N/A',
-                'status' => $status,
-                'start_date' => $start_date,
-                'end_date' => $end_date,
-            ];
+        // Filtrer les locataires actifs et inactifs
+        $activeTenants = $tenants->filter(function ($tenant) {
+            return $tenant->contracts->where('end_date', '>', now())->isNotEmpty();
         });
 
-        $propertiesQuery = Property::query();
-        if (!Auth::user()->hasRole('super_admin')) {
-            $propertiesQuery->where('company_id', Auth::user()->company_id);
-        }
-
-        $properties = $propertiesQuery->get()->map(function ($property) {
-            return [
-                'id' => $property->id,
-                'name' => $property->name,
-            ];
+        $inactiveTenants = $tenants->filter(function ($tenant) {
+            return $tenant->contracts->where('end_date', '<=', now())->isNotEmpty();
         });
+
+        // Charger les bailleurs
+        $landlords = Landlord::all();
 
         return Inertia::render('Tenants/Index', [
-            'tenants' => $tenants,
-            'properties' => $properties,
+            'activeTenants' => $activeTenants->values(),
+            'inactiveTenants' => $inactiveTenants->values(),
+            'landlords' => $landlords,
             'auth' => [
                 'user' => auth()->user(),
                 'roles' => auth()->user()->roles->pluck('name'),
             ],
         ]);
     }
+
+
 
     private function formatDate($date)
     {
@@ -117,15 +98,18 @@ class TenantController extends Controller
     }
 
 
-
     public function show(Tenant $tenant)
     {
         Gate::authorize('view', $tenant);
+
+        $tenant->load('contracts.property.landlord');
 
         return Inertia::render('Tenants/Show', [
             'tenant' => $tenant,
         ]);
     }
+
+
 
     public function edit(Tenant $tenant)
     {

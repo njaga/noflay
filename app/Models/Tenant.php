@@ -26,11 +26,22 @@ class Tenant extends Model
         return $this->hasMany(RentalApplication::class);
     }
 
+    public function contracts()
+    {
+        return $this->hasMany(Contract::class);
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
+
     public function properties()
     {
         return $this->hasManyThrough(
             Property::class,
             RentalApplication::class,
+            Contract::class,
             'tenant_id', // Foreign key on RentalApplication table
             'id', // Foreign key on Property table
             'id', // Local key on Tenant table
