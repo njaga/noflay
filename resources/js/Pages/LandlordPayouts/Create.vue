@@ -2,7 +2,7 @@
     <AppLayout title="Créer un versement">
         <div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
             <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-xl">
-                <h2 class="text-3xl font-extrabold text-indigo-800 mb-6">
+                <h2 class="text-3xl font-extrabold text-indigo-600 mb-6">
                     Nouveau versement
                 </h2>
                 <form @submit.prevent="showConfirmModal = true" class="space-y-8">

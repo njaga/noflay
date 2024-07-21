@@ -62,4 +62,9 @@ class Property extends Model
             $this->save();
         }
     }
+
+    public function payments()
+    {
+        return $this->hasManyThrough(Payment::class, Contract::class);
+    }
 }

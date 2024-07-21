@@ -70,7 +70,8 @@
                             :viewUrl="route('landlords.show', landlord.id)"
                             :canManage="canManageLandlords"
                             @delete="openDeleteModal(landlord)"
-                            @toggleStatus="toggleLandlordStatus(landlord)">
+                            @toggleStatus="toggleLandlordStatus(landlord)"
+                            @createAccount="openCreateAccountModal(landlord)">
                             <template #extra-info>
                                 <p class="text-sm text-gray-600">{{ landlord.company.name }}</p>
                             </template>
@@ -123,6 +124,10 @@
                                         <button @click="openDeleteModal(landlord)"
                                             class="text-red-600 hover:text-red-900 mr-2">
                                             <i class="fas fa-trash"></i>
+                                        </button>
+                                        <button @click="openCreateAccountModal(landlord)"
+                                            class="text-green-600 hover:text-green-900">
+                                            <i class="fas fa-user-plus"></i>
                                         </button>
                                     </td>
                                 </tr>
@@ -189,6 +194,9 @@
                 </div>
             </div>
         </Modal>
+
+        <!-- Create account modal -->
+        <CreateAccountModal :show="showCreateAccountModal" :landlord="selectedLandlord" @close="showCreateAccountModal = false" />
     </AppLayout>
 </template>
 
@@ -199,6 +207,7 @@ import axios from 'axios';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Card from '@/Components/Card.vue';
 import Modal from '@/Components/Modal.vue';
+import CreateAccountModal from '@/Components/Landlords/CreateAccountModal.vue';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
@@ -218,6 +227,8 @@ const showStatusModal = ref(false);
 const landlordStatusUpdated = ref(null);
 const currentPage = ref(1);
 const itemsPerPage = 10;
+const showCreateAccountModal = ref(false);
+const selectedLandlord = ref(null);
 
 const filteredLandlords = computed(() => {
     let filtered = landlords.value.filter(landlord =>
@@ -327,5 +338,10 @@ const handleDownloadPDF = () => {
         ]),
     });
     doc.save('liste_bailleurs.pdf');
+};
+
+const openCreateAccountModal = (landlord) => {
+    selectedLandlord.value = landlord;
+    showCreateAccountModal.value = true;
 };
 </script>

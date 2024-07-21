@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Property;
 use App\Models\Landlord;
 use App\Models\Company;
+use App\Models\Payment;
+use App\Models\Contract;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -105,10 +107,38 @@ class PropertyController extends Controller
     {
         Gate::authorize('view', $property);
 
+        $property->load('company', 'landlord', 'contracts.tenant');
+
+        $rentAmount = $property->contracts->first() ? $property->contracts->first()->rent_amount : 0;
+        $commissionCautions = $this->getCommissionCautions($property->id);
+        $commissionLoyers = $this->getCommissionLoyers($property->id);
+        $totalRentAmount = $this->getTotalRentAmount($property->id);
+
         return Inertia::render('Properties/Show', [
-            'property' => $property->load('company', 'landlord'),
+            'property' => $property,
+            'rentAmount' => $rentAmount,
+            'commissionCautions' => $commissionCautions,
+            'commissionLoyers' => $commissionLoyers,
+            'totalRentAmount' => $totalRentAmount,
         ]);
     }
+
+
+    private function getCommissionCautions($propertyId)
+    {
+        return Contract::where('property_id', $propertyId)->sum('caution_amount');
+    }
+
+    private function getCommissionLoyers($propertyId)
+    {
+        return Contract::where('property_id', $propertyId)->sum('commission_amount');
+    }
+
+    private function getTotalRentAmount($propertyId)
+    {
+        return Contract::where('property_id', $propertyId)->sum('rent_amount');
+    }
+
 
     public function edit(Property $property)
     {
@@ -222,5 +252,31 @@ class PropertyController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    public function report($id)
+    {
+        $property = Property::with('contracts.tenant')->findOrFail($id);
+
+        $cautionAmounts = Contract::where('property_id', $id)
+            ->sum('caution_amount');
+
+        $rentAmounts = Contract::where('property_id', $id)
+            ->sum('rent_amount');
+
+        $totalPayments = Payment::whereHas('contract', function ($query) use ($id) {
+            $query->where('property_id', $id);
+        })->sum('amount');
+
+        $commissionAmounts = Contract::where('property_id', $id)
+            ->sum('commission_amount');
+
+        return Inertia::render('Properties/Report', [
+            'property' => $property,
+            'cautionAmounts' => $cautionAmounts,
+            'rentAmounts' => $rentAmounts,
+            'totalPayments' => $totalPayments,
+            'commissionAmounts' => $commissionAmounts,
+        ]);
     }
 }
