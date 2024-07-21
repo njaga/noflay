@@ -200,6 +200,7 @@ class LandlordPayoutController extends Controller
 
             // Mettre à jour la transaction de versement
             $payout = LandlordTransaction::findOrFail($id);
+            $oldAmountWithTVA = $payout->total_amount; // Garder l'ancien montant pour ajuster le solde
             $payout->update([
                 'landlord_id' => $landlord->id,
                 'amount' => $amount,
@@ -217,8 +218,9 @@ class LandlordPayoutController extends Controller
                 'month' => $validatedData['month'],
             ]);
 
-            // Mettre à jour le solde du bailleur
-            $landlord->balance -= $amountWithTVA;
+            // Ajuster le solde du bailleur
+            $landlord->balance += $oldAmountWithTVA; // Remboursement de l'ancien montant
+            $landlord->balance -= $amountWithTVA; // Déduction du nouveau montant
             $landlord->save();
 
             return redirect()->route('landlord-payouts.index')->with('success', 'Versement mis à jour avec succès.');
@@ -232,8 +234,48 @@ class LandlordPayoutController extends Controller
     {
         try {
             $payout = LandlordTransaction::findOrFail($id);
-            $payout->delete();
+            // Remboursement du montant au bailleur
+            $landlord = Landlord::findOrFail($payout->landlord_id);
+            $landlord->balance += $payout->total_amount;
+            $landlord->save();
 
+            // Remboursement des paiements et des contrats concernés
+            if ($payout->payment_type === 'full_balance') {
+                // Mise à jour des paiements pour indiquer qu'ils ne sont plus reversés
+                Payment::whereHas('contract.property', function ($query) use ($landlord) {
+                    $query->where('landlord_id', $landlord->id);
+                })->update(['is_reversed' => false]);
+
+                // Mise à jour des contrats pour indiquer que la caution n'est plus reversée
+                Contract::whereHas('property', function ($query) use ($landlord) {
+                    $query->where('landlord_id', $landlord->id);
+                })->update(['is_reversed' => false]);
+            } else {
+                $selectedDate = Carbon::createFromFormat('Y-m', $payout->month);
+                // Mise à jour des paiements pour indiquer qu'ils ne sont plus reversés
+                Payment::whereHas('contract.property', function ($query) use ($landlord) {
+                    $query->where('landlord_id', $landlord->id);
+                })->whereYear('payment_date', $selectedDate->year)
+                  ->whereMonth('payment_date', $selectedDate->month)
+                  ->update(['is_reversed' => false]);
+
+                // Mise à jour des contrats pour le mois spécifique
+                Contract::whereHas('property', function ($query) use ($landlord) {
+                    $query->where('landlord_id', $landlord->id);
+                })->whereYear('start_date', '<=', $selectedDate->year)
+                  ->whereMonth('start_date', '<=', $selectedDate->month)
+                  ->whereYear('end_date', '>=', $selectedDate->year)
+                  ->whereMonth('end_date', '>=', $selectedDate->month)
+                  ->update(['is_reversed' => false]);
+            }
+
+            // Mise à jour des dépenses pour indiquer qu'elles ne sont plus remboursées
+            Expense::whereHas('property', function ($query) use ($landlord) {
+                $query->where('landlord_id', $landlord->id);
+            })->update(['is_repay' => false]);
+
+            // Supprimer le versement
+            $payout->delete();
             return redirect()->route('landlord-payouts.index')->with('success', 'Versement supprimé avec succès.');
         } catch (\Exception $e) {
             Log::error('Erreur lors de la suppression du versement: ' . $e->getMessage());

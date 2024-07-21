@@ -4,17 +4,11 @@
             <SummaryCards :summaryStats="summaryStats" />
 
             <div class="bg-white shadow-xl rounded-lg overflow-hidden">
-                <div
-                    class="p-6 sm:p-10 bg-gradient-to-r from-indigo-600 to-indigo-700"
-                >
-                    <div
-                        class="flex flex-col sm:flex-row justify-between items-center"
-                    >
+                <div class="p-6 sm:p-10 bg-gradient-to-r from-indigo-600 to-indigo-700">
+                    <div class="flex flex-col sm:flex-row justify-between items-center">
                         <div class="text-white mb-4 sm:mb-0">
                             <h2 class="text-3xl font-bold flex items-center">
-                                <i
-                                    class="bi bi-graph-up-arrow text-white mr-3 text-4xl"
-                                ></i>
+                                <i class="bi bi-graph-up-arrow text-white mr-3 text-4xl"></i>
                                 Versements des Bailleurs
                             </h2>
                             <p class="mt-2 text-blue-100 font-light">
@@ -22,7 +16,7 @@
                             </p>
                         </div>
                         <button
-                            @click="showNewPayoutModal = true"
+                            @click="goToCreatePayout"
                             class="px-6 py-3 bg-white text-indigo-900 rounded-full shadow-lg hover:bg-gray-100 transition-all duration-200 flex items-center font-semibold text-sm"
                         >
                             <i class="bi bi-plus-circle-fill mr-2"></i>
@@ -41,17 +35,11 @@
                 />
 
                 <div class="p-6 sm:p-10">
-                    <div
-                        v-if="filteredPayouts.length === 0"
-                        class="text-center py-10"
-                    >
+                    <div v-if="filteredPayouts.length === 0" class="text-center py-10">
                         <i class="bi bi-inbox text-5xl text-gray-400"></i>
-                        <p class="mt-4 text-xl font-semibold text-gray-500">
-                            Aucun versement
-                        </p>
+                        <p class="mt-4 text-xl font-semibold text-gray-500">Aucun versement</p>
                         <p class="mt-2 text-gray-400">
-                            Il n'y a pas de versements correspondant à vos
-                            critères de recherche.
+                            Il n'y a pas de versements correspondant à vos critères de recherche.
                         </p>
                     </div>
                     <PayoutGrid
@@ -84,15 +72,9 @@
 
         <DeletePayoutModal
             :show="showDeleteModal"
+            :payout-id="payoutToDelete?.id"
             @close="showDeleteModal = false"
             @confirm="deletePayout"
-        />
-
-        <NewPayoutModal
-            :show="showNewPayoutModal"
-            :landlords="landlords"
-            @close="showNewPayoutModal = false"
-            @submit="createPayout"
         />
     </AppLayout>
 </template>
@@ -107,13 +89,11 @@ import PayoutGrid from "@/Components/LandlordPayouts/PayoutGrid.vue";
 import PayoutList from "@/Components/LandlordPayouts/PayoutList.vue";
 import Pagination from "@/Components/LandlordPayouts/Pagination.vue";
 import DeletePayoutModal from "@/Components/LandlordPayouts/DeletePayoutModal.vue";
-import NewPayoutModal from "@/Components/LandlordPayouts/NewPayoutModal.vue";
 
 const { props } = usePage();
 const payouts = ref(props.payouts || []);
 const landlords = ref(props.landlords || []);
 const showDeleteModal = ref(false);
-const showNewPayoutModal = ref(false);
 const payoutToDelete = ref(null);
 const viewMode = ref("grid");
 const currentPage = ref(1);
@@ -235,8 +215,8 @@ const confirmDelete = (payout) => {
     showDeleteModal.value = true;
 };
 
-const deletePayout = () => {
-    router.delete(route("landlord-payouts.destroy", payoutToDelete.value.id), {
+const deletePayout = (payoutId) => {
+    router.delete(route("landlord-payouts.destroy", payoutId), {
         preserveState: true,
         preserveScroll: true,
         onSuccess: () => {
@@ -246,20 +226,8 @@ const deletePayout = () => {
     });
 };
 
-const createPayout = () => {
-    router.post(route("landlord-payouts.store"), newPayout.value, {
-        preserveState: true,
-        preserveScroll: true,
-        onSuccess: () => {
-            showNewPayoutModal.value = false;
-            newPayout.value = {
-                landlord_id: "",
-                amount: 0,
-                payment_date: "",
-                payment_method: "bank",
-            };
-        },
-    });
+const goToCreatePayout = () => {
+    router.get(route('landlord-payouts.create'));
 };
 
 const downloadPayoutsList = () => {
