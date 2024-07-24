@@ -21,7 +21,7 @@ class LandlordPolicy
             return true;
         }
         return $user->company_id === $landlord->company_id &&
-               ($user->hasRole('admin_entreprise') || $user->hasRole('user_entreprise'));
+            ($user->hasRole('admin_entreprise') || $user->hasRole('user_entreprise'));
     }
 
     public function create(User $user)
@@ -48,5 +48,15 @@ class LandlordPolicy
     public function viewLandlordName(User $user, Landlord $landlord)
     {
         return $user->hasRole('tenant') && $user->company_id === $landlord->company_id;
+    }
+
+    public function restore(User $user, Landlord $landlord)
+    {
+        return $user->hasRole('super_admin') || $user->hasRole('admin_entreprise');
+    }
+
+    public function forceDelete(User $user, Landlord $landlord)
+    {
+        return $user->hasRole('super_admin') || $user->hasRole('admin_entreprise');
     }
 }

@@ -346,11 +346,11 @@ const closeDeleteErrorModal = () => {
 };
 
 const canManageCompanies = computed(() => {
-    return props.auth.user.roles.some(role => ['super_admin', 'admin_entreprise'].includes(role.name));
+    return props.auth?.user?.roles?.some(role => ['super_admin', 'admin_entreprise'].includes(role.name)) ?? false;
 });
 
 const canToggleCompanyStatus = (company) => {
-    return props.auth.user.roles.some(role => ['super_admin', 'admin_entreprise'].includes(role.name));
+    return props.auth?.user?.roles?.some(role => ['super_admin', 'admin_entreprise'].includes(role.name)) ?? false;
 };
 
 const toggleCompanyStatus = async (company) => {

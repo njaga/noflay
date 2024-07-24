@@ -3,7 +3,7 @@
         <div class="p-4">
             <h3 class="text-2xl font-semibold text-gray-800 mb-6">Propriétés</h3>
             <TransitionGroup name="property-list" tag="div" class="space-y-3">
-                <div v-for="property in landlord.properties" :key="property.id"
+                <div v-if="landlord.properties && landlord.properties.length > 0" v-for="property in landlord.properties" :key="property.id"
                     class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
                     <div class="p-3">
                         <h2 class="text-base font-bold text-indigo-800 mb-4 relative">
@@ -13,24 +13,15 @@
                         <p class="text-sm text-gray-600 mb-2 line-clamp-4">
                             {{ property.description }}
                         </p>
-                        <div v-if="
-                            property.contracts &&
-                            property.contracts.length > 0
-                        " class="bg-indigo-50 p-2 rounded-md mb-2 text-sm">
+                        <div v-if="property.contracts && property.contracts.length > 0" class="bg-indigo-50 p-2 rounded-md mb-2 text-sm">
                             <p class="font-medium text-indigo-700">
                                 Locataire actuel
                             </p>
                             <p class="text-gray-800 font-semibold">
-                                {{ property.contracts[0].tenant.first_name }}
-                                {{ property.contracts[0].tenant.last_name }}
+                                {{ property.contracts[0].tenant.first_name }} {{ property.contracts[0].tenant.last_name }}
                             </p>
                             <p class="text-indigo-600 font-medium">
-                                Loyer:
-                                {{
-                                    formatCurrency(
-                                        property.contracts[0].rent_amount
-                                    )
-                                }}
+                                Loyer: {{ formatCurrency(property.contracts[0].rent_amount) }}
                             </p>
                         </div>
                         <div class="flex justify-between items-center">
@@ -44,6 +35,10 @@
                             </button>
                         </div>
                     </div>
+                </div>
+                <div v-else class="text-center p-10">
+                    <i class="bi bi-house-door text-6xl text-indigo-600 mb-3"></i>
+                    <h4 class="text-xl font-semibold">Aucune propriété trouvée</h4>
                 </div>
             </TransitionGroup>
             <button @click="addNewProperty"
@@ -88,13 +83,11 @@ const addNewProperty = () => {
 <style scoped>
 @import "bootstrap-icons/font/bootstrap-icons.css";
 
-.property-list-enter-active,
-.property-list-leave-active {
+.property-list-enter-active, .property-list-leave-active {
     transition: all 0.5s ease;
 }
 
-.property-list-enter-from,
-.property-list-leave-to {
+.property-list-enter-from, .property-list-leave-to {
     opacity: 0;
     transform: translateY(20px);
 }

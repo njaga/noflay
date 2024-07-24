@@ -34,4 +34,14 @@ class TenantPolicy
     {
         return $user->hasRole('super_admin') || $user->hasRole('admin_entreprise');
     }
+
+    public function restore(User $user, Tenant $tenant)
+    {
+        return $user->hasRole('super_admin') || $user->hasRole('admin_entreprise');
+    }
+
+    public function forceDelete(User $user, Tenant $tenant)
+    {
+        return $user->hasRole('super_admin') || $user->hasRole('admin_entreprise');
+    }
 }

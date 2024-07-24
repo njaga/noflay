@@ -375,7 +375,7 @@ const payments = ref(props.payments.data || []);
 const tenants = ref(props.tenants || []);
 const contracts = ref(props.contracts || []);
 const user = props.auth.user;
-const userRoles = computed(() => props.auth.roles || []);
+const userRoles = computed(() => props.auth?.user?.roles?.map(role => role.name) ?? []);
 
 const showDeleteModal = ref(false);
 const paymentToDelete = ref(null);

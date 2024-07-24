@@ -34,4 +34,14 @@ class ContractPolicy
     {
         return $user->hasRole('super_admin') || $user->company_id === $contract->company_id;
     }
+
+    public function restore(User $user, Contract $contract)
+    {
+        return $user->hasRole('super_admin') || ($user->company_id === $contract->tenant->company_id);
+    }
+
+    public function forceDelete(User $user, Contract $contract)
+    {
+        return $user->hasRole('super_admin') || ($user->company_id === $contract->tenant->company_id);
+    }
 }

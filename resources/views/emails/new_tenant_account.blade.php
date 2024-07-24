@@ -10,6 +10,7 @@
     <p>Bonjour {{ $user->name }},</p>
     <p>Votre compte a été créé avec succès. Voici vos informations de connexion :</p>
     <ul>
+        <li><strong>Lien de connexion :</strong> https://www.noflay.sn</li>
         <li><strong>Email :</strong> {{ $user->email }}</li>
         <li><strong>Mot de passe :</strong> {{ $password }}</li>
     </ul>

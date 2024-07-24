@@ -55,7 +55,7 @@
 
   <script setup>
   const props = defineProps(['filters', 'landlords', 'viewMode']);
-  const emit = defineEmits(['apply-filters', 'download', 'change-view']);
+  const emit =  defineEmits(['apply-filters', 'download', 'change-view']);
 
   const applyFilters = () => {
     emit('apply-filters');

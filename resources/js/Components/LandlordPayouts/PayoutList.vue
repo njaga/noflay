@@ -57,7 +57,7 @@
   </template>
 
   <script setup>
-  import { defineProps, defineEmits } from 'vue';
+  import { defineProps} from 'vue';
 
   const props = defineProps({
     payouts: {

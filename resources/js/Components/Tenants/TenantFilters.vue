@@ -58,14 +58,14 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from 'vue';
+import { defineProps } from 'vue';
 
 const props = defineProps({
     filters: Object,
     landlords: Array
 });
 
-const emit = defineEmits(['apply-filters', 'reset-filters']);
+const emit =  defineEmits(['apply-filters', 'reset-filters']);
 
 const applyFilters = () => {
     emit('apply-filters');

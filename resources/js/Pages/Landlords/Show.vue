@@ -1,7 +1,7 @@
 <template>
     <AppLayout title="Compte Bailleur">
         <div class="bg-gray-100 min-h-screen">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-12">
                 <LandlordProfile
                     :landlord="landlord"
                     :attachments="attachments"
@@ -11,8 +11,8 @@
                     @open-add-expense-modal="openAddExpenseModal"
                     @open-add-payment-modal="openAddPaymentModal"
                 />
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div class="lg:col-span-2 space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                    <div class="col-span-1 md:col-span-2 lg:col-span-2 space-y-8">
                         <FinancialOverview :financialInfo="financialInfo" />
                         <RecentTransactions
                             :transactions="transactions"
@@ -78,6 +78,7 @@
         />
     </AppLayout>
 </template>
+
 
 <script setup>
 import { ref, onMounted } from "vue";

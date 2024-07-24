@@ -15,7 +15,7 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from 'vue';
+import { defineProps  } from 'vue';
 import Button from '@/Components/UI/Button.vue';
 
 defineProps({
@@ -29,7 +29,7 @@ defineProps({
     }
 });
 
-defineEmits(['close']);
+ (['close']);
 </script>
 
 <style scoped>

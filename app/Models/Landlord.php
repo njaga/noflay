@@ -6,10 +6,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 
 class Landlord extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'first_name',
@@ -83,4 +85,24 @@ class Landlord extends Model
         return $this->hasMany(LandlordPayout::class);
     }
 
+    protected static function booted()
+    {
+        static::deleting(function ($landlord) {
+            if ($landlord->isForceDeleting()) {
+                $landlord->properties()->withTrashed()->get()->each(function ($property) {
+                    $property->forceDelete();
+                });
+            } else {
+                $landlord->properties()->get()->each(function ($property) {
+                    $property->delete();
+                });
+            }
+        });
+
+        static::restoring(function ($landlord) {
+            $landlord->properties()->withTrashed()->get()->each(function ($property) {
+                $property->restore();
+            });
+        });
+    }
 }

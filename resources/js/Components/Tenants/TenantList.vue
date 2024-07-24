@@ -68,7 +68,7 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from 'vue';
+import { defineProps } from 'vue';
 import { Link } from '@inertiajs/vue3';
 
 const props = defineProps({
@@ -77,7 +77,7 @@ const props = defineProps({
     canDeleteTenant: Boolean,
 });
 
-const emit = defineEmits(['open-delete-modal']);
+const emit =  defineEmits(['open-delete-modal']);
 
 const openDeleteModal = (tenant) => {
     emit('open-delete-modal', tenant);

@@ -18,7 +18,7 @@ class PropertyPolicy
      */
     public function viewAny(User $user)
     {
-        return $user->hasRole('super_admin') || $user->hasRole('admin_entreprise') || $user->hasRole('user_entreprise');
+        return $user->hasRole('super_admin') || $user->hasRole('admin_entreprise') || $user->hasRole('bailleur');
     }
 
     /**

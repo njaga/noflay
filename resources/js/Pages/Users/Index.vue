@@ -160,7 +160,7 @@
                 </div>
 
                 <!-- Pagination -->
-                <div class="mt-6">
+                <div v-if="totalPages > 1" class="mt-6">
                     <div class="flex justify-between items-center">
                         <button @click="prevPage" :disabled="currentPage === 1"
                             class="px-4 py-2 bg-indigo-600 text-white rounded-md disabled:opacity-50">
@@ -320,6 +320,7 @@ const currentPage = ref(1);
 const itemsPerPage = 10;
 const showDeleteSuccessModal = ref(false);
 const showDeleteErrorModal = ref(false);
+const showUserDeletionModal = ref(false);
 
 const filteredUsers = computed(() => {
     let filtered = users.value.filter(user =>
@@ -396,6 +397,10 @@ const closeDeleteErrorModal = () => {
     showDeleteErrorModal.value = false;
 };
 
+const closeUserDeletionModal = () => {
+    showUserDeletionModal.value = false;
+};
+
 const getUserRoles = (user) => {
     return user.roles.map(role => getRoleLabel(role.name)).join(', ');
 };
@@ -418,13 +423,14 @@ const getRoleLabel = (roleName) => {
 };
 
 const canManageUsers = computed(() => {
-    return props.auth.user.roles.some(role => ['super_admin', 'admin_entreprise'].includes(role.name));
+    return props.auth?.user?.roles?.some(role => ['super_admin', 'admin_entreprise'].includes(role.name)) ?? false;
 });
 
 const canToggleUserStatus = (user) => {
-    return props.auth.user.roles.some(role => ['super_admin', 'admin_entreprise'].includes(role.name)) &&
-        user.id !== props.auth.user.id && !user.roles.some(role => role.name === 'super_admin');
+    return (props.auth?.user?.roles?.some(role => ['super_admin', 'admin_entreprise'].includes(role.name)) ?? false) &&
+        user.id !== props.auth?.user?.id && !user.roles?.some(role => role.name === 'super_admin');
 };
+
 
 const toggleUserStatus = async (user) => {
     try {

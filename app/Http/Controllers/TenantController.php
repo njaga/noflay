@@ -7,21 +7,20 @@ use App\Models\Company;
 use App\Models\Property;
 use App\Models\Contract;
 use App\Models\Landlord;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
-
+use Illuminate\Support\Facades\Log;
 
 class TenantController extends Controller
 {
-
     public function index()
     {
         Gate::authorize('viewAny', Tenant::class);
 
-        // Charger les locataires avec leurs contrats, propriétés et bailleurs
+        // Charger les locataires actifs avec leurs contrats, propriétés et bailleurs
         $tenants = Tenant::with(['contracts.property.landlord'])->get();
 
         // Filtrer les locataires actifs et inactifs
@@ -47,21 +46,46 @@ class TenantController extends Controller
         ]);
     }
 
-
-
-    private function formatDate($date)
+    public function archives()
     {
-        if (!$date) {
-            return 'N/A';
-        }
-
         try {
-            return (new \DateTime($date))->format('Y-m-d');
+            Log::info('Starting archives method');
+
+            $user = auth()->user();
+
+            // Récupérer les locataires supprimés en fonction du rôle de l'utilisateur
+            if ($user->hasRole('super_admin')) {
+                $tenants = Tenant::onlyTrashed()->with(['contracts.property.landlord'])->get();
+            } elseif ($user->hasRole('admin_entreprise') || $user->hasRole('user_entreprise')) {
+                $tenants = Tenant::onlyTrashed()
+                    ->where('company_id', $user->company_id)
+                    ->with(['contracts.property.landlord'])
+                    ->get();
+            } else {
+                abort(403);
+            }
+
+            Log::info('Retrieved archived tenants', ['count' => $tenants->count()]);
+
+            return Inertia::render('Tenants/Archives', [
+                'tenants' => $tenants,
+                'auth' => [
+                    'user' => $user,
+                    'roles' => $user->roles->pluck('name'),
+                ],
+            ]);
         } catch (\Exception $e) {
-            return 'Invalid Date';
+            Log::error('Error in archives method', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return Inertia::render('Error', [
+                'status' => 500,
+                'message' => 'Une erreur est survenue lors du chargement des archives.'
+            ]);
         }
     }
-
 
     public function create()
     {
@@ -97,7 +121,6 @@ class TenantController extends Controller
         return redirect()->route('contracts.create', $tenant->id)->with('success', 'Locataire créé avec succès. Veuillez créer un contrat.');
     }
 
-
     public function show(Tenant $tenant)
     {
         Gate::authorize('view', $tenant);
@@ -108,8 +131,6 @@ class TenantController extends Controller
             'tenant' => $tenant,
         ]);
     }
-
-
 
     public function edit(Tenant $tenant)
     {
@@ -146,6 +167,16 @@ class TenantController extends Controller
         $tenant->delete();
 
         return redirect()->route('tenants.index')->with('success', 'Tenant deleted successfully.');
+    }
+
+    public function restore($id)
+    {
+        $tenant = Tenant::withTrashed()->findOrFail($id);
+        Gate::authorize('restore', $tenant);
+
+        $tenant->restore();
+
+        return redirect()->route('tenants.archives')->with('success', 'Tenant restored successfully.');
     }
 
     public function createContract(Request $request, Tenant $tenant)
@@ -207,4 +238,74 @@ class TenantController extends Controller
 
         return redirect()->route('tenants.index')->with('success', 'Contract created successfully.');
     }
+
+    public function forceDelete($id)
+    {
+        $tenant = Tenant::withTrashed()->findOrFail($id);
+        Gate::authorize('forceDelete', $tenant);
+
+        $tenant->forceDelete();
+
+        return redirect()->route('tenants.archives')->with('success', 'Locataire supprimé définitivement.');
+    }
+
+    public function showArchived($id)
+    {
+        $tenant = Tenant::withTrashed()->find($id);
+
+        if (!$tenant) {
+            // Handle the case where the tenant is not found
+            return Inertia::render('Tenants/ShowArchived', [
+                'tenant' => null,
+                'properties' => [],
+                'payments' => [],
+                'auth' => [
+                    'user' => Auth::user(),
+                    'roles' => Auth::user()->roles->pluck('name')
+                ]
+            ]);
+        }
+
+        Gate::authorize('view', $tenant);
+
+        $tenant->load([
+            'contracts' => function($query) {
+                $query->withTrashed();
+            },
+            'contracts.property' => function($query) {
+                $query->withTrashed();
+            },
+            'contracts.property.landlord' => function($query) {
+                $query->withTrashed();
+            },
+            'company'
+        ]);
+
+        // Récupérer les propriétés associées
+        $properties = Property::with(['contracts' => function($query) use ($tenant) {
+            $query->where('tenant_id', $tenant->id)->withTrashed();
+        }, 'landlord'])->whereHas('contracts', function ($query) use ($tenant) {
+            $query->where('tenant_id', $tenant->id);
+        })->withTrashed()->get();
+
+        // Récupérer les paiements associés
+        $payments = Payment::with(['contract' => function($query) {
+            $query->withTrashed();
+        }, 'contract.property' => function($query) {
+            $query->withTrashed();
+        }])->whereHas('contract', function ($query) use ($tenant) {
+            $query->where('tenant_id', $tenant->id);
+        })->withTrashed()->orderBy('payment_date', 'desc')->get();
+
+        return Inertia::render('Tenants/ShowArchived', [
+            'tenant' => $tenant,
+            'properties' => $properties,
+            'payments' => $payments,
+            'auth' => [
+                'user' => Auth::user(),
+                'roles' => Auth::user()->roles->pluck('name')
+            ]
+        ]);
+    }
+
 }

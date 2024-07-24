@@ -19,13 +19,19 @@
                             </div>
                         </div>
 
-                        <!-- Sélection du locataire -->
-                        <div class="relative">
+                        <!-- Afficher le nom du locataire -->
+                        <div v-if="tenant" class="relative">
+                            <label for="tenant_name" class="block text-sm font-medium text-gray-700 mb-1">Locataire</label>
+                            <input type="text" id="tenant_name" :value="tenantName" class="block w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" disabled />
+                        </div>
+
+                        <!-- Sélection du locataire (si pas de tenantId dans l'URL) -->
+                        <div v-else class="relative">
                             <label for="tenant_id" class="block text-sm font-medium text-gray-700 mb-1">Locataire</label>
                             <div class="relative">
                                 <select id="tenant_id" v-model="form.tenant_id"
                                     class="block w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                    required>
+                                    required @change="fetchTenantName">
                                     <option value="" disabled>Sélectionnez un locataire</option>
                                     <option v-for="tenant in tenants" :key="tenant.id" :value="tenant.id">
                                         {{ tenant.first_name }} {{ tenant.last_name }}
@@ -50,7 +56,7 @@
                                     class="block w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                                     required @change="updateFinancialDetails">
                                     <option value="" disabled>Sélectionnez une propriété</option>
-                                    <option v-for="property in properties" :key="property.id" :value="property.id">
+                                    <option v-for="property in availableProperties" :key="property.id" :value="property.id">
                                         {{ property.name }}
                                     </option>
                                 </select>
@@ -58,7 +64,7 @@
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor"
                                         class="bi bi-house-add-fill text-gray-400 w-5 h-5" viewBox="0 0 16 16">
                                         <path
-                                            d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 1 1-1 0v-1h-1a.5.5 0 1 1 0-1h1v-1a.5.5 0 0 1 1 0" />
+                                            d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 0 1-1 0v-1h-1a.5.5 0 1 1 0-1h1v-1a.5.5 0 0 1 1 0" />
                                         <path
                                             d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L8 2.207l6.646 6.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293z" />
                                         <path
@@ -133,18 +139,60 @@
             </div>
         </div>
     </AppLayout>
+    <!-- Modal -->
+    <div v-if="showModal" class="fixed z-10 inset-0 overflow-y-auto">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10" v-if="modalSuccess">
+                            <svg class="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10" v-else>
+                            <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                {{ modalSuccess ? 'Succès' : 'Échec' }}
+                            </h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-500">
+                                    {{ modalSuccess ? 'Dossier de location créé avec succès.' : 'Échec lors de la création du dossier location.' }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button @click="closeModal" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Fermer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
 import { usePage, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import axios from 'axios';
 
 const { props } = usePage();
 const tenants = ref(props.tenants || []);
 const properties = ref(props.properties || []);
 const companies = ref(props.companies || []);
 const tenant = ref(props.tenant || null);
+const tenantName = ref('');
 
 const form = ref({
     tenant_id: tenant.value ? tenant.value.id : '',
@@ -164,11 +212,13 @@ const form = ref({
     caution_amount: 0
 });
 
+const showModal = ref(false);
+const modalSuccess = ref(true);
+
 const isSuperAdmin = computed(() => props.auth?.user?.roles?.includes('super_admin'));
 
-const cautionAmount = computed(() => {
-    const selectedProperty = properties.value.find(property => property.id === form.value.property_id);
-    return selectedProperty ? selectedProperty.price * 2 : 0;
+const availableProperties = computed(() => {
+    return properties.value.filter(property => property.available_count > 0 && property.company_id === form.value.company_id);
 });
 
 const setContractType = (type) => {
@@ -207,7 +257,7 @@ const calculateEndDate = () => {
     }
 };
 
-const submit = () => {
+const submit = async () => {
     if (form.value.contract_type !== 'commercial') {
         delete form.value.company;
         delete form.value.representative;
@@ -217,35 +267,58 @@ const submit = () => {
     // Include the computed caution amount in the form submission
     const formData = {
         ...form.value,
-        caution_amount: cautionAmount.value
+        caution_amount: form.value.caution_amount
     };
 
-    router.post(route('contracts.store'), formData, {
-        onSuccess: () => {
-            form.value = {
-                tenant_id: tenant.value ? tenant.value.id : '',
-                property_id: '',
-                contract_type: 'habitation',
-                start_date: '',
-                end_date: '',
-                file_number: '',
-                company: '',
-                representative: '',
-                trade_register: '',
-                company_id: isSuperAdmin.value ? '' : props.auth.user.company_id,
-                duration: 0,
-                rent_amount: 0,
-                commission_amount: 0,
-                landlord_id: '',
-                caution_amount: 0
-            };
-            generateFileNumber();
+    try {
+        await router.post(route('contracts.store'), formData);
+        modalSuccess.value = true;
+    } catch (error) {
+        modalSuccess.value = false;
+    } finally {
+        showModal.value = true;
+        form.value = {
+            tenant_id: tenant.value ? tenant.value.id : '',
+            property_id: '',
+            contract_type: 'habitation',
+            start_date: '',
+            end_date: '',
+            file_number: '',
+            company: '',
+            representative: '',
+            trade_register: '',
+            company_id: isSuperAdmin.value ? '' : props.auth.user.company_id,
+            duration: 0,
+            rent_amount: 0,
+            commission_amount: 0,
+            landlord_id: '',
+            caution_amount: 0
+        };
+        generateFileNumber();
+    }
+};
+
+const fetchTenantName = async () => {
+    if (tenant.value) {
+        tenantName.value = `${tenant.value.first_name} ${tenant.value.last_name}`;
+    } else if (form.value.tenant_id) {
+        try {
+            const response = await axios.get(`/api/tenants/${form.value.tenant_id}`);
+            tenantName.value = `${response.data.first_name} ${response.data.last_name}`;
+        } catch (error) {
+            console.error('Erreur lors de la récupération du nom du locataire:', error);
         }
-    });
+    }
+};
+
+const closeModal = () => {
+    showModal.value = false;
+    router.visit(route('contracts.index'));
 };
 
 onMounted(() => {
     generateFileNumber();
+    fetchTenantName();
 });
 
 watch(() => form.value.property_id, updateFinancialDetails);

@@ -58,7 +58,7 @@ const props = defineProps({
     tenant: Object,
 });
 
-const emit = defineEmits(['close']);
+const emit =  defineEmits(['close']);
 const accountCreated = ref(false);
 const accountDetails = ref({});
 const errorMessage = ref('');

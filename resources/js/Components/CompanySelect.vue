@@ -18,7 +18,7 @@
   </template>
 
   <script setup>
-  import { defineProps, defineEmits } from 'vue';
+  import { defineProps  } from 'vue';
 
   const props = defineProps({
     modelValue: [Number, String],
@@ -38,5 +38,5 @@
     error: String
   });
 
-  defineEmits(['update:modelValue']);
+   (['update:modelValue']);
   </script>

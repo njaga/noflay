@@ -137,7 +137,7 @@
                 </div>
 
                 <!-- Pagination -->
-                <div class="mt-6">
+                <div v-if="totalPages > 1" class="mt-6">
                     <div class="flex justify-between items-center">
                         <button @click="prevPage" :disabled="currentPage === 1"
                             class="px-4 py-2 bg-indigo-600 text-white rounded-md disabled:opacity-50">
@@ -196,7 +196,7 @@
         </Modal>
 
         <!-- Create account modal -->
-        <CreateAccountModal :show="showCreateAccountModal" :landlord="selectedLandlord" @close="showCreateAccountModal = false" />
+        <CreateAccountModal :show="showCreateAccountModal" :landlord="selectedLandlord" @close="closeCreateAccountModal" />
     </AppLayout>
 </template>
 
@@ -263,7 +263,7 @@ const paginatedLandlords = computed(() => {
 });
 
 const canManageLandlords = computed(() => {
-    return props.auth.user.roles.some(role => ['super_admin', 'admin_entreprise'].includes(role.name));
+    return props.auth?.user?.roles?.some(role => ['super_admin', 'admin_entreprise'].includes(role.name)) ?? false;
 });
 
 const toggleView = () => {
@@ -343,5 +343,9 @@ const handleDownloadPDF = () => {
 const openCreateAccountModal = (landlord) => {
     selectedLandlord.value = landlord;
     showCreateAccountModal.value = true;
+};
+
+const closeCreateAccountModal = () => {
+    showCreateAccountModal.value = false;
 };
 </script>

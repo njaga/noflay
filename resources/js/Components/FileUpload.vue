@@ -19,7 +19,7 @@
   </template>
 
   <script setup>
-  import { defineProps, defineEmits } from 'vue';
+  import { defineProps } from 'vue';
 
   const props = defineProps({
     modelValue: Array,
@@ -33,7 +33,7 @@
     error: String
   });
 
-  const emit = defineEmits(['update:modelValue']);
+  const emit =  (['update:modelValue']);
 
   const handleFileChange = (event) => {
     const files = Array.from(event.target.files);
