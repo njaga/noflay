@@ -15,14 +15,14 @@
 
 <script setup>
 import Modal from '@/Components/Modal.vue';
-import { defineProps, defineEmits } from 'vue';
+import { defineProps  } from 'vue';
 
 const props = defineProps({
     show: Boolean,
     tenant: Object,
 });
 
-const emit = defineEmits(['close', 'confirm']);
+const emit =  defineEmits(['close', 'confirm']);
 
 const close = () => {
     emit('close');

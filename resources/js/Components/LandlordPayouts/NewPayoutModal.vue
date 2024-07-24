@@ -78,7 +78,7 @@
   </template>
 
   <script setup>
-  import { ref, defineEmits, defineProps } from 'vue';
+  import { ref, defineProps } from 'vue';
   import Modal from "@/Components/Modal.vue";
 
   const props = defineProps({
@@ -92,7 +92,7 @@
     }
   });
 
-  const emit = defineEmits(['close', 'submit']);
+  const emit =  defineEmits(['close', 'submit']);
 
   const newPayout = ref({
     landlord_id: "",

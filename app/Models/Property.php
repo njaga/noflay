@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Property extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'landlord_id',
@@ -20,6 +21,8 @@ class Property extends Model
         'company_id',
         'photos',
     ];
+
+    protected $dates = ['deleted_at'];
 
     protected $casts = [
         'photos' => 'array',
@@ -66,5 +69,31 @@ class Property extends Model
     public function payments()
     {
         return $this->hasManyThrough(Payment::class, Contract::class);
+    }
+
+    protected static function booted()
+    {
+        static::deleting(function ($property) {
+            if ($property->isForceDeleting()) {
+                $property->contracts()->withTrashed()->get()->each(function ($contract) {
+                    $contract->forceDelete();
+                });
+            } else {
+                $property->contracts()->get()->each(function ($contract) {
+                    $contract->delete();
+                });
+            }
+        });
+
+        static::restoring(function ($property) {
+            $property->contracts()->withTrashed()->get()->each(function ($contract) {
+                $contract->restore();
+            });
+        });
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
     }
 }

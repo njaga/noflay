@@ -19,7 +19,7 @@ class DashboardController extends Controller
         $user = auth()->user();
 
         if ($user->hasRole('super_admin')) {
-            return $this->superAdminDashboard();
+            return $this->superAdminDashboard($user);
         }
 
         if ($user->hasRole('admin_entreprise')) {
@@ -35,10 +35,10 @@ class DashboardController extends Controller
         }
 
         // Default case: user has no recognized role
-        return $this->defaultDashboard();
+        return $this->defaultDashboard($user);
     }
 
-    private function superAdminDashboard()
+    private function superAdminDashboard($user)
     {
         return Inertia::render('Dashboard/SuperAdmin', [
             'companies' => Company::all(),
@@ -56,6 +56,12 @@ class DashboardController extends Controller
                     User::role('super_admin')->count(),
                     User::role('admin_entreprise')->count(),
                     User::role('user_entreprise')->count(),
+                ],
+            ],
+            'auth' => [
+                'user' => [
+                    'name' => $user->name,
+                    'role' => $user->roles->first()->name,
                 ],
             ],
         ]);
@@ -87,23 +93,31 @@ class DashboardController extends Controller
                     Property::where('company_id', $company->id)->where('property_type', 'magasin')->count(),
                 ],
             ],
+            'auth' => [
+                'user' => [
+                    'name' => $user->name,
+                    'role' => $user->roles->first()->name,
+                ],
+            ],
         ]);
     }
 
     private function bailleurDashboard($user)
     {
-        // Vérifier si l'utilisateur a un bailleur associé
         $landlord = $user->landlord;
 
         if (!$landlord) {
-            // Si aucun bailleur n'est associé, rendre une vue spéciale au lieu de rediriger
             return Inertia::render('Dashboard/BailleurIncomplete', [
                 'message' => 'Votre profil de bailleur n\'est pas encore configuré.',
-                'user' => $user
+                'auth' => [
+                    'user' => [
+                        'name' => $user->name,
+                        'role' => $user->roles->first()->name,
+                    ],
+                ],
             ]);
         }
 
-        // Récupérer les données avec des vérifications supplémentaires
         $properties = Property::where('landlord_id', $landlord->id)->get();
         $contracts = Contract::whereHas('property', function ($query) use ($landlord) {
             $query->where('landlord_id', $landlord->id);
@@ -118,18 +132,21 @@ class DashboardController extends Controller
             $query->where('landlord_id', $landlord->id);
         })->get();
 
-        // Vérifier si des données existent
         $hasData = $properties->isNotEmpty() || $contracts->isNotEmpty() || $tenants->isNotEmpty() || $payments->isNotEmpty() || $expenses->isNotEmpty();
 
         if (!$hasData) {
-            // Si aucune donnée n'existe, rendre une vue spéciale
             return Inertia::render('Dashboard/BailleurEmpty', [
                 'message' => 'Aucune donnée disponible pour le moment.',
-                'landlord' => $landlord
+                'landlord' => $landlord,
+                'auth' => [
+                    'user' => [
+                        'name' => $user->name,
+                        'role' => $user->roles->first()->name,
+                    ],
+                ],
             ]);
         }
 
-        // Si tout est en ordre, rendre le tableau de bord normal
         return Inertia::render('Dashboard/Bailleur', [
             'landlord' => $landlord,
             'properties' => $properties,
@@ -137,27 +154,40 @@ class DashboardController extends Controller
             'tenants' => $tenants,
             'payments' => $payments,
             'expenses' => $expenses,
+            'auth' => [
+                'user' => [
+                    'name' => $user->name,
+                    'role' => $user->roles->first()->name,
+                ],
+            ],
         ]);
     }
 
     private function locataireDashboard($user)
     {
-        // Implement logic for tenant dashboard
         return Inertia::render('Dashboard/Locataire', [
-            // Add necessary data for the tenant dashboard
             'user' => $user,
             'contracts' => $user->contracts,
             'payments' => $user->payments,
-            // Add more relevant data as needed
+            'auth' => [
+                'user' => [
+                    'name' => $user->name,
+                    'role' => $user->roles->first()->name,
+                ],
+            ],
         ]);
     }
 
-    private function defaultDashboard()
+    private function defaultDashboard($user)
     {
-        // Render a default dashboard or show an error message
         return Inertia::render('Dashboard/Default', [
             'message' => 'Bienvenue ! Votre rôle n\'a pas de tableau de bord spécifique.',
-            'user' => auth()->user()
+            'auth' => [
+                'user' => [
+                    'name' => $user->name,
+                    'role' => $user->roles->first()->name,
+                ],
+            ],
         ]);
     }
 }

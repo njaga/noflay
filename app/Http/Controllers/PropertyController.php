@@ -9,7 +9,9 @@ use App\Models\Payment;
 use App\Models\Contract;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 
@@ -30,10 +32,12 @@ class PropertyController extends Controller
         $properties = $query->get();
 
         $landlords = Landlord::all(); // Ou filtrez selon les permissions de l'utilisateur si nécessaire
+        $propertyTypes = DB::table('properties')->distinct()->pluck('property_type');
 
         return Inertia::render('Properties/Index', [
             'properties' => $properties,
             'landlords' => $landlords,
+            'propertyTypes' => $propertyTypes,
             'auth' => [
                 'user' => Auth::user(),
                 'roles' => Auth::user()->roles->pluck('name')
@@ -41,6 +45,46 @@ class PropertyController extends Controller
         ]);
     }
 
+    public function update(Request $request, Property $property)
+    {
+        Gate::authorize('update', $property);
+
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'property_type' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'address' => 'required|string|max:255',
+            'price' => 'required|numeric',
+            'available_count' => 'required|integer|min:0',
+            'landlord_id' => 'required|integer|exists:landlords,id',
+            'company_id' => 'required|integer|exists:companies,id',
+            'photos.*' => 'nullable|image|max:10240',
+        ]);
+
+        if (!Auth::user()->hasRole('super_admin')) {
+            $validatedData['company_id'] = Auth::user()->company_id;
+        }
+
+        $landlord = Landlord::findOrFail($validatedData['landlord_id']);
+        $company = Company::findOrFail($validatedData['company_id']);
+
+        $directory = "public/properties/{$company->name}/{$landlord->first_name}_{$landlord->last_name}/" . str_replace(' ', '_', $validatedData['name']);
+        Storage::makeDirectory($directory);
+
+        $photos = json_decode($property->photos) ?? [];
+
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $file) {
+                $path = $file->store($directory);
+                $photos[] = $path;
+            }
+            $validatedData['photos'] = json_encode($photos);
+        }
+
+        $property->update($validatedData);
+
+        return redirect()->route('properties.index')->with('success', 'Propriété mise à jour avec succès.');
+    }
 
     public function create()
     {
@@ -123,7 +167,6 @@ class PropertyController extends Controller
         ]);
     }
 
-
     private function getCommissionCautions($propertyId)
     {
         return Contract::where('property_id', $propertyId)->sum('caution_amount');
@@ -138,7 +181,6 @@ class PropertyController extends Controller
     {
         return Contract::where('property_id', $propertyId)->sum('rent_amount');
     }
-
 
     public function edit(Property $property)
     {
@@ -162,53 +204,29 @@ class PropertyController extends Controller
         ]);
     }
 
-    public function update(Request $request, Property $property)
-    {
-        Gate::authorize('update', $property);
-
-        $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
-            'property_type' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'address' => 'required|string|max:255',
-            'price' => 'required|numeric',
-            'available_count' => 'required|integer|min:0',
-            'landlord_id' => 'required|integer|exists:landlords,id',
-            'company_id' => 'required|integer|exists:companies,id',
-            'photos.*' => 'nullable|image|max:10240',
-        ]);
-
-        if (!Auth::user()->hasRole('super_admin')) {
-            $validatedData['company_id'] = Auth::user()->company_id;
-        }
-
-        $landlord = Landlord::findOrFail($validatedData['landlord_id']);
-        $company = Company::findOrFail($validatedData['company_id']);
-
-        $directory = "public/properties/{$company->name}/{$landlord->first_name}_{$landlord->last_name}/" . str_replace(' ', '_', $validatedData['name']);
-        Storage::makeDirectory($directory);
-
-        $photos = json_decode($property->photos) ?? [];
-        if ($request->hasFile('photos')) {
-            foreach ($request->file('photos') as $file) {
-                $path = $file->store($directory);
-                $photos[] = $path;
-            }
-            $validatedData['photos'] = json_encode($photos);
-        }
-
-        $property->update($validatedData);
-
-        return redirect()->route('properties.index')->with('success', 'Propriété mise à jour avec succès.');
-    }
-
     public function destroy(Property $property)
     {
         Gate::authorize('delete', $property);
 
         $property->delete();
 
-        return redirect()->route('properties.index')->with('success', 'Propriété supprimée avec succès.');
+        return redirect()->route('properties.index')->with('flash', [
+            'message' => 'Propriété supprimée avec succès',
+            'type' => 'success'
+        ]);
+    }
+
+    private function getFilteredProperties()
+    {
+        $query = Property::with('company', 'landlord');
+
+        if (Auth::user()->hasRole('admin_entreprise') || Auth::user()->hasRole('user_entreprise') || Auth::user()->hasRole('bailleur')) {
+            $query->where('company_id', Auth::user()->company_id);
+        } elseif (!Auth::user()->hasRole('super_admin')) {
+            $query->where('company_id', Auth::user()->company_id);
+        }
+
+        return $query->get();
     }
 
     public function export()
@@ -258,18 +276,12 @@ class PropertyController extends Controller
     {
         $property = Property::with('contracts.tenant')->findOrFail($id);
 
-        $cautionAmounts = Contract::where('property_id', $id)
-            ->sum('caution_amount');
-
-        $rentAmounts = Contract::where('property_id', $id)
-            ->sum('rent_amount');
-
+        $cautionAmounts = Contract::where('property_id', $id)->sum('caution_amount');
+        $rentAmounts = Contract::where('property_id', $id)->sum('rent_amount');
         $totalPayments = Payment::whereHas('contract', function ($query) use ($id) {
             $query->where('property_id', $id);
         })->sum('amount');
-
-        $commissionAmounts = Contract::where('property_id', $id)
-            ->sum('commission_amount');
+        $commissionAmounts = Contract::where('property_id', $id)->sum('commission_amount');
 
         return Inertia::render('Properties/Report', [
             'property' => $property,
@@ -279,4 +291,48 @@ class PropertyController extends Controller
             'commissionAmounts' => $commissionAmounts,
         ]);
     }
+
+// app/Http/Controllers/PropertyController.php
+
+public function showArchived($id)
+{
+    $property = Property::withTrashed()->with(['landlord', 'tenants', 'payments'])->findOrFail($id);
+    return Inertia::render('Properties/ShowArchived', ['property' => $property]);
+}
+
+public function archives()
+{
+    $company_id = Auth::user()->company_id;
+    $query = Property::onlyTrashed();
+
+    if (!Auth::user()->hasRole('super_admin')) {
+        $query->where('company_id', $company_id);
+    }
+
+    $properties = $query->with(['landlord', 'tenants', 'payments'])->get();
+    return Inertia::render('Properties/Archives', ['archivedProperties' => $properties]);
+}
+
+public function restore($id)
+{
+    $property = Property::withTrashed()->findOrFail($id);
+    $property->restore();
+
+    return redirect()->route('properties.archives')->with('success', 'Propriété restaurée avec succès.');
+}
+
+public function forceDelete($id)
+{
+    try {
+        $property = Property::withTrashed()->findOrFail($id);
+        $property->forceDelete();
+
+        return redirect()->route('properties.archives')->with('success', 'Propriété supprimée définitivement.');
+    } catch (\Exception $e) {
+        Log::error('Erreur lors de la suppression de la propriété : ' . $e->getMessage());
+        return redirect()->route('properties.archives')->with('error', 'Une erreur est survenue lors de la suppression de la propriété.');
+    }
+}
+
+
 }

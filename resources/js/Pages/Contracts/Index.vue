@@ -259,7 +259,7 @@
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
                                         >
-                                            {{ contract.property.name }}
+                                            {{ contract.property?.name || 'Propriété supprimée' }}
                                         </td>
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
@@ -369,6 +369,45 @@
                         </div>
                     </div>
                 </Modal>
+
+                <Modal :show="showSuccessModal" @close="closeSuccessModal">
+            <div class="p-6 bg-white rounded-lg shadow-xl">
+                <h3 class="text-lg font-medium text-green-indigo mb-4">
+                    Opération réussie
+                </h3>
+                <p class="text-sm text-gray-500 mb-4">
+                    {{ successMessage }}
+                </p>
+                <div class="mt-6 flex justify-end">
+                    <button
+                        @click="closeSuccessModal"
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition duration-150 ease-in-out"
+                    >
+                        Fermer
+                    </button>
+                </div>
+            </div>
+        </Modal>
+
+        <Modal :show="showErrorModal" @close="closeErrorModal">
+            <div class="p-6 bg-white rounded-lg shadow-xl">
+                <h3 class="text-lg font-medium text-red-600 mb-4">
+                    Erreur
+                </h3>
+                <p class="text-sm text-gray-500 mb-4">
+                    {{ errorMessage }}
+                </p>
+                <div class="mt-6 flex justify-end">
+                    <button
+                        @click="closeErrorModal"
+                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition duration-150 ease-in-out"
+                    >
+                        Fermer
+                    </button>
+                </div>
+            </div>
+        </Modal>
+
             </div>
         </div>
     </AppLayout>
@@ -385,13 +424,18 @@ const contracts = ref(props.contracts.data || []);
 const tenants = ref(props.tenants || []);
 const properties = ref(props.properties || []);
 const user = props.auth.user;
-const userRoles = computed(() => props.auth.roles || []);
+const userRoles = computed(() => props.auth?.user?.roles?.map(role => role.name) ?? []);
 
 const showDeleteModal = ref(false);
 const contractToDelete = ref(null);
 const currentPage = ref(props.contracts.current_page || 1);
 const totalPages = ref(props.contracts.last_page || 1);
 const itemsPerPage = 10;
+
+const showSuccessModal = ref(false);
+const showErrorModal = ref(false);
+const successMessage = ref('');
+const errorMessage = ref('');
 
 const filters = ref({
     tenant: "",
@@ -400,24 +444,10 @@ const filters = ref({
     end_date: "",
 });
 
-const totalContracts = computed(() => contracts.value.length);
-const rentedProperties = computed(() => {
-    const rented = new Set();
-    contracts.value.forEach((contract) => rented.add(contract.property.id));
-    return rented.size;
-});
-const expiringContracts = computed(() => {
-    const oneMonthFromNow = new Date();
-    oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
-    return contracts.value.filter((contract) => {
-        const endDate = new Date(contract.end_date);
-        return endDate <= oneMonthFromNow && endDate >= new Date();
-    }).length;
-});
-
-onMounted(() => {
-    // Initialize data if needed
-});
+// Transformer les computed en refs
+const totalContracts = ref(contracts.value.length);
+const rentedProperties = ref(0);
+const expiringContracts = ref(0);
 
 const canCreateContract = computed(() => {
     return (
@@ -433,7 +463,7 @@ const filteredContracts = computed(() => {
             contract.tenant.id === filters.value.tenant;
         const matchesProperty =
             !filters.value.property ||
-            contract.property.id === filters.value.property;
+            contract.property?.id === filters.value.property;
         const matchesStartDate =
             !filters.value.start_date ||
             new Date(contract.start_date).toISOString().split("T")[0] ===
@@ -456,6 +486,29 @@ const paginatedContracts = computed(() => {
     const end = start + itemsPerPage;
     return filteredContracts.value.slice(start, end);
 });
+
+onMounted(() => {
+    updateStatistics();
+});
+
+const updateStatistics = () => {
+    totalContracts.value = contracts.value.length;
+
+    const rentedSet = new Set();
+    contracts.value.forEach((contract) => {
+        if (contract.property) {
+            rentedSet.add(contract.property.id);
+        }
+    });
+    rentedProperties.value = rentedSet.size;
+
+    const oneMonthFromNow = new Date();
+    oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
+    expiringContracts.value = contracts.value.filter((contract) => {
+        const endDate = new Date(contract.end_date);
+        return endDate <= oneMonthFromNow && endDate >= new Date();
+    }).length;
+};
 
 const applyFilters = () => {
     currentPage.value = 1;
@@ -495,17 +548,36 @@ const closeDeleteModal = () => {
 
 const confirmDelete = () => {
     if (contractToDelete.value) {
-        router.delete(route("contracts.destroy", contractToDelete.value.id), {
+        const contractId = contractToDelete.value.id;
+        router.delete(route("contracts.destroy", contractId), {
             preserveState: true,
             preserveScroll: true,
-            onSuccess: () => {
+            onSuccess: (page) => {
                 closeDeleteModal();
                 contracts.value = contracts.value.filter(
-                    (c) => c.id !== contractToDelete.value.id
+                    (c) => c && c.id !== contractId
                 );
+                updateStatistics();
+                successMessage.value = "Le contrat a été supprimé avec succès.";
+                showSuccessModal.value = true;
+            },
+            onError: (errors) => {
+                closeDeleteModal();
+                errorMessage.value = "Une erreur est survenue lors de la suppression du contrat.";
+                showErrorModal.value = true;
             },
         });
     }
+};
+
+const closeSuccessModal = () => {
+    showSuccessModal.value = false;
+    successMessage.value = '';
+};
+
+const closeErrorModal = () => {
+    showErrorModal.value = false;
+    errorMessage.value = '';
 };
 
 const formatDate = (dateString) => {
@@ -557,11 +629,11 @@ const formatDate = (dateString) => {
 
 .shadow-md {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-        0 2px 4px -1px rgba(0, 0, 0, 0.06);
+         0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .shadow-lg {
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-        0 4px 6px -2px rgba(0, 0, 0, 0.05);
+         0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 </style>

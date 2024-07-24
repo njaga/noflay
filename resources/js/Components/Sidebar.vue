@@ -1,70 +1,21 @@
 <!-- Sidebar.vue -->
-<template>
-    <div class="sidebar bg-indigo-800 text-white h-screen transition-all duration-300 fixed left-0 top-16 z-10"
-         :class="[isCollapsed || isMobile ? 'w-14' : 'w-52']">
-        <div class="p-4" v-if="!isMobile">
-            <button @click="$emit('toggle')" class="text-white focus:outline-none">
-                <i class="bi bi-list text-2xl"></i>
-            </button>
-        </div>
-        <nav class="mt-2">
-            <SidebarItem :href="route('dashboard')" icon="bi-house" text="Tableau de bord" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
-
-            <SidebarDropdown icon="bi-briefcase" text="Entreprises" :is-collapsed="isCollapsed" :is-mobile="isMobile">
-                <SidebarItem :href="route('companies.index')" icon="bi-buildings" text="Gérer les entreprises" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
-                <SidebarItem :href="route('companies.create')" icon="bi-building-add" text="Ajouter une entreprise" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
-            </SidebarDropdown>
-
-            <SidebarDropdown icon="bi-building" text="Bailleurs" :is-collapsed="isCollapsed" :is-mobile="isMobile">
-                <SidebarItem :href="route('landlords.index')" icon="bi-people" text="Gérer les bailleurs" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
-                <SidebarItem :href="route('landlord-payouts.index')" icon="bi-person-plus" text="Versements" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
-                <SidebarItem :href="route('landlords.create')" icon="bi-person-plus" text="Ajouter un bailleur" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
-            </SidebarDropdown>
-
-            <SidebarDropdown icon="bi-person-check" text="Locataires" :is-collapsed="isCollapsed" :is-mobile="isMobile">
-                <SidebarItem :href="route('tenants.index')" icon="bi-people" text="Gérer les locataires" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
-                <SidebarItem :href="route('tenants.create')" icon="bi-person-plus" text="Ajouter un locataire" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
-            </SidebarDropdown>
-
-            <SidebarDropdown icon="bi-house-door" text="Logements" :is-collapsed="isCollapsed" :is-mobile="isMobile">
-                <SidebarItem :href="route('properties.index')" icon="bi-list" text="Liste des logements" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
-                <SidebarItem :href="route('properties.create')" icon="bi-plus-circle" text="Ajouter un logement" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
-            </SidebarDropdown>
-
-            <SidebarDropdown icon="bi-file-earmark-text" text="Locations" :is-collapsed="isCollapsed" :is-mobile="isMobile">
-                <SidebarItem :href="route('contracts.index')" icon="bi-list-ul" text="Liste des dossiers" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
-                <SidebarItem :href="route('contracts.create')" icon="bi-file-earmark-plus" text="Nouveau dossier" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
-            </SidebarDropdown>
-
-            <SidebarDropdown icon="bi-cash-coin" text="Finances" :is-collapsed="isCollapsed" :is-mobile="isMobile">
-                <SidebarItem :href="route('finance.index')" icon="bi-graph-up" text="Vue d'ensemble" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
-                <SidebarItem :href="route('expenses.index')" icon="bi-cart-check" text="Dépenses" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
-                <SidebarItem :href="route('payments.index')" icon="bi bi-cash-stack" text="Mensualités" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
-            </SidebarDropdown>
-
-            <SidebarItem :href="route('users.index')" icon="bi-gear" text="Paramètres" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
-
-            <SidebarItem href="route('help')" icon="bi-question-circle" text="Aide" :is-collapsed="isCollapsed" :is-mobile="isMobile" />
-        </nav>
-    </div>
-</template>
-
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-import SidebarItem from './SidebarItem.vue';
-import SidebarDropdown from './SidebarDropdown.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { Link, usePage } from "@inertiajs/vue3";
+import SidebarItem from "./SidebarItem.vue";
+import SidebarDropdown from "./SidebarDropdown.vue";
 
 const props = defineProps({
     isCollapsed: {
         type: Boolean,
-        default: false
-    }
+        required: true,
+    },
 });
 
-const emit = defineEmits(['toggle']);
+const emit = defineEmits(["toggle"]);
 
 const isMobile = ref(false);
+const userRole = computed(() => usePage().props.auth.role[0]);
 
 const checkMobile = () => {
     isMobile.value = window.innerWidth < 768;
@@ -72,10 +23,214 @@ const checkMobile = () => {
 
 onMounted(() => {
     checkMobile();
-    window.addEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
 });
 
 onUnmounted(() => {
-    window.removeEventListener('resize', checkMobile);
+    window.removeEventListener("resize", checkMobile);
 });
+
+const toggleSidebar = () => {
+    emit("toggle");
+};
+
+watch(isMobile, (newValue) => {
+    if (newValue) {
+        emit("toggle", true);
+    }
+});
+
+
+const navItems = computed(() => {
+    const items = [
+        {
+            name: "Tableau de bord",
+            href: route("dashboard"),
+            icon: "bi-house",
+            roles: ["super_admin", "admin_entreprise", "user_entreprise", "bailleur", "locataire"],
+        },
+        {
+            name: "Entreprises",
+            icon: "bi-briefcase",
+            roles: ["super_admin"],
+            children: [
+                {
+                    name: "Gérer les entreprises",
+                    href: route("companies.index"),
+                    icon: "bi-buildings",
+                },
+                {
+                    name: "Ajouter une entreprise",
+                    href: route("companies.create"),
+                    icon: "bi-building-add",
+                },
+            ],
+        },
+        {
+            name: "Bailleurs",
+            icon: "bi-building",
+            roles: ["super_admin", "admin_entreprise", "user_entreprise"],
+            children: [
+                {
+                    name: "Gérer les bailleurs",
+                    href: route("landlords.index"),
+                    icon: "bi-people",
+                },
+                {
+                    name: "Versements",
+                    href: route("landlord-payouts.index"),
+                    icon: "bi-person-plus",
+                },
+                {
+                    name: "Archives",
+                    href: route("landlords.archives"),
+                    icon: "bi-archive",
+                },
+                {
+                    name: "Ajouter un bailleur",
+                    href: route("landlords.create"),
+                    icon: "bi-person-plus",
+                },
+            ],
+        },
+        {
+            name: "Locataires",
+            icon: "bi-person-check",
+            roles: ["super_admin", "admin_entreprise", "user_entreprise", "bailleur"],
+            children: [
+                {
+                    name: "Gérer les locataires",
+                    href: route("tenants.index"),
+                    icon: "bi-people",
+                },
+                {
+                    name: "Archives",
+                    href: route("tenants.archives"),
+                    icon: "bi-archive",
+                },
+                {
+                    name: "Ajouter un locataire",
+                    href: route("tenants.create"),
+                    icon: "bi-person-plus",
+                },
+            ],
+        },
+        {
+            name: "Logements",
+            icon: "bi-house-door",
+            roles: ["super_admin", "admin_entreprise", "user_entreprise", "bailleur", "locataire"],
+            children: [
+                {
+                    name: "Liste des logements",
+                    href: route("properties.index"),
+                    icon: "bi-list",
+                },
+                {
+                    name: "Ajouter un logement",
+                    href: route("properties.create"),
+                    icon: "bi-plus-circle",
+                },
+            ],
+        },
+        {
+            name: "Locations",
+            icon: "bi-file-earmark-text",
+            roles: ["super_admin", "admin_entreprise", "user_entreprise", "bailleur", "locataire"],
+            children: [
+                {
+                    name: "Liste des dossiers",
+                    href: route("contracts.index"),
+                    icon: "bi-list-ul",
+                },
+                {
+                    name: "Nouveau dossier",
+                    href: route("contracts.create"),
+                    icon: "bi-file-earmark-plus",
+                },
+            ],
+        },
+        {
+            name: "Finances",
+            icon: "bi-cash-coin",
+            roles: ["super_admin", "admin_entreprise", "user_entreprise", "bailleur", "locataire"],
+            children: [
+                {
+                    name: "Vue d'ensemble",
+                    href: route("finance.index"),
+                    icon: "bi-graph-up",
+                },
+                {
+                    name: "Dépenses",
+                    href: route("expenses.index"),
+                    icon: "bi-cart-check",
+                },
+                {
+                    name: "Mensualités",
+                    href: route("payments.index"),
+                    icon: "bi-cash-stack",
+                },
+            ],
+        },
+        {
+            name: "Paramètres",
+            href: route("users.index"),
+            icon: "bi-gear",
+            roles: ["super_admin", "admin_entreprise", "user_entreprise"],
+        },
+        {
+            name: "Aide",
+            href: route("help"),
+            icon: "bi-question-circle",
+            roles: ["super_admin", "admin_entreprise", "user_entreprise", "bailleur", "locataire"],
+        },
+    ];
+
+    return items.filter(item => item.roles.includes(userRole.value));
+});
+
+const singleItems = computed(() => navItems.value.filter((item) => !item.children));
+const groupItems = computed(() => navItems.value.filter((item) => item.children));
 </script>
+
+<template>
+    <div
+        class="sidebar bg-indigo-800 text-white h-[calc(100vh-4rem)] transition-all duration-300 fixed left-0 top-16 z-10 overflow-y-auto"
+        :class="[isCollapsed ? 'w-14' : 'w-52']"
+    >
+        <div class="p-4">
+            <button
+                @click="toggleSidebar"
+                class="text-white focus:outline-none"
+            >
+                <i class="bi bi-list text-2xl"></i>
+            </button>
+        </div>
+        <nav class="mt-2">
+            <SidebarItem
+                v-for="item in singleItems"
+                :key="item.name"
+                :href="item.href"
+                :icon="item.icon"
+                :text="item.name"
+                :is-collapsed="isCollapsed"
+            />
+
+            <SidebarDropdown
+                v-for="group in groupItems"
+                :key="group.name"
+                :icon="group.icon"
+                :text="group.name"
+                :is-collapsed="isCollapsed"
+            >
+                <SidebarItem
+                    v-for="subItem in group.children"
+                    :key="subItem.name"
+                    :href="subItem.href"
+                    :icon="subItem.icon"
+                    :text="subItem.name"
+                    :is-collapsed="isCollapsed"
+                />
+            </SidebarDropdown>
+        </nav>
+    </div>
+</template>

@@ -6,6 +6,7 @@ use App\Models\Contract;
 use App\Models\Property;
 use App\Models\Tenant;
 use App\Models\Company;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -13,11 +14,13 @@ use Inertia\Inertia;
 
 class ContractController extends Controller
 {
+    use AuthorizesRequests;
+
     public function index()
     {
         Gate::authorize('viewAny', Contract::class);
 
-        $query = Contract::with(['property', 'tenant'])->withTrashed();
+        $query = Contract::with(['property', 'tenant']);
 
         if (!Auth::user()->hasRole('super_admin')) {
             $query->whereHas('tenant', function ($q) {
@@ -38,17 +41,42 @@ class ContractController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
         Gate::authorize('create', Contract::class);
 
         $companies = Auth::user()->hasRole('super_admin') ? Company::all() : Company::where('id', Auth::user()->company_id)->get();
-        $properties = Property::with('landlord')->get(); // Include landlord relation
+        $properties = Property::with('landlord')
+            ->where('company_id', Auth::user()->company_id)
+            ->get();
 
         return Inertia::render('Contracts/Create', [
             'tenants' => Tenant::all(),
             'properties' => $properties,
             'companies' => $companies,
+            'tenant' => null,
+        ]);
+    }
+
+    public function createWithTenant($tenantId)
+    {
+        Gate::authorize('create', Contract::class);
+
+        $tenant = Tenant::find($tenantId);
+        if (!$tenant) {
+            return redirect()->route('contracts.create')->withErrors('Tenant not found.');
+        }
+
+        $companies = Auth::user()->hasRole('super_admin') ? Company::all() : Company::where('id', Auth::user()->company_id)->get();
+        $properties = Property::with('landlord')
+            ->where('company_id', Auth::user()->company_id)
+            ->get();
+
+        return Inertia::render('Contracts/Create', [
+            'tenants' => Tenant::all(),
+            'properties' => $properties,
+            'companies' => $companies,
+            'tenant' => $tenant,
         ]);
     }
 
@@ -65,14 +93,12 @@ class ContractController extends Controller
             'file_number' => 'required|string|max:191',
             'caution_amount' => 'nullable|numeric|min:0',
             'company_id' => 'nullable|exists:companies,id',
-            'landlord_id' => 'required|exists:landlords,id', // Ensure landlord_id is validated
+            'landlord_id' => 'required|exists:landlords,id',
         ]);
 
-        // Récupérer le prix de la propriété
         $property = Property::findOrFail($validated['property_id']);
         $validated['rent_amount'] = $property->price;
 
-        // Calculer la commission de l'agence immobilière
         $landlord = $property->landlord;
         $commissionRent = $validated['rent_amount'] * ($landlord->agency_percentage / 100);
         $commissionCaution = 0;
@@ -82,22 +108,17 @@ class ContractController extends Controller
         }
 
         $validated['commission_amount'] = $commissionRent + $commissionCaution;
-
-        // Calculer la date de fin
         $validated['end_date'] = date('Y-m-d', strtotime("+{$validated['duration']} months", strtotime($validated['start_date'])));
 
         if (!Auth::user()->hasRole('super_admin')) {
             $validated['company_id'] = Auth::user()->company_id;
         }
 
-        // Créer le contrat
         Contract::create($validated);
 
-        // Mettre à jour le solde du bailleur
         $landlord->balance += $validated['caution_amount'] - $commissionCaution;
         $landlord->save();
 
-        // Diminuer le nombre disponible de la propriété
         $property->decrementAvailableCount();
 
         return redirect()->route('contracts.index')->with('success', 'Contrat créé avec succès.');
@@ -107,16 +128,10 @@ class ContractController extends Controller
     {
         Gate::authorize('view', $contract);
 
-        // Charger les relations nécessaires
         $contract->load(['property.landlord', 'tenant']);
 
-        // Calcul de la commission sur les loyers
         $rentCommission = $contract->rent_amount * ($contract->property->landlord->agency_percentage / 100);
-
-        // Calcul de la commission sur la caution
         $cautionCommission = $contract->caution_amount * ($contract->property->landlord->agency_percentage / 100);
-
-        // Calcul de la commission totale
         $totalCommission = $rentCommission + $cautionCommission;
 
         return Inertia::render('Contracts/Show', [
@@ -152,14 +167,12 @@ class ContractController extends Controller
             'file_number' => 'required|string|max:191',
             'caution_amount' => 'nullable|numeric|min:0',
             'company_id' => 'nullable|exists:companies,id',
-            'landlord_id' => 'required|exists:landlords,id', // Ensure landlord_id is validated
+            'landlord_id' => 'required|exists:landlords,id',
         ]);
 
-        // Récupérer le prix de la propriété
         $property = Property::findOrFail($validated['property_id']);
         $validated['rent_amount'] = $property->price;
 
-        // Calculer la commission de l'agence immobilière
         $landlord = $property->landlord;
         $commissionRent = $validated['rent_amount'] * ($landlord->agency_percentage / 100);
         $commissionCaution = 0;
@@ -169,27 +182,43 @@ class ContractController extends Controller
         }
 
         $validated['commission_amount'] = $commissionRent + $commissionCaution;
-
-        // Calculer la date de fin
         $validated['end_date'] = date('Y-m-d', strtotime("+{$validated['duration']} months", strtotime($validated['start_date'])));
 
         if (!Auth::user()->hasRole('super_admin')) {
             $validated['company_id'] = Auth::user()->company_id;
         }
 
-        // Mettre à jour le contrat
         $contract->update($validated);
 
-        // Mettre à jour le solde du bailleur
         $landlord->balance += $validated['caution_amount'] - $commissionCaution;
         $landlord->save();
 
         return redirect()->route('contracts.index')->with('success', 'Contrat mis à jour avec succès.');
     }
 
-    public function destroy(Contract $contract)
+    public function archives()
     {
-        Gate::authorize('delete', $contract);
+        $this->authorize('viewAny', Contract::class);
+
+        $query = Contract::onlyTrashed()->with(['property', 'tenant']);
+
+        if (!Auth::user()->hasRole('super_admin')) {
+            $query->whereHas('tenant', function ($q) {
+                $q->where('company_id', Auth::user()->company_id);
+            });
+        }
+
+        $contracts = $query->paginate(10);
+
+        return Inertia::render('Contracts/Archives', [
+            'contracts' => $contracts,
+        ]);
+    }
+
+    public function destroy($id)
+    {
+        $contract = Contract::withTrashed()->findOrFail($id);
+        $this->authorize('delete', $contract);
 
         $contract->delete();
 
@@ -199,10 +228,39 @@ class ContractController extends Controller
     public function restore($id)
     {
         $contract = Contract::withTrashed()->findOrFail($id);
-        Gate::authorize('restore', $contract);
+        $this->authorize('restore', $contract);
 
         $contract->restore();
 
-        return redirect()->route('contracts.index')->with('success', 'Contrat restauré avec succès.');
+        return redirect()->route('contracts.archives')->with('success', 'Contrat restauré avec succès.');
     }
+
+    public function forceDelete($id)
+    {
+        $contract = Contract::withTrashed()->findOrFail($id);
+        $this->authorize('forceDelete', $contract);
+
+        $contract->forceDelete();
+
+        return redirect()->route('contracts.archives')->with('success', 'Contrat supprimé définitivement avec succès.');
+    }
+
+    public function showArchived($id)
+    {
+        $contract = Contract::withTrashed()->with(['property.landlord', 'tenant'])->findOrFail($id);
+
+        if (!Auth::user()->hasRole('super_admin') && Auth::user()->company_id !== $contract->tenant->company_id) {
+            abort(403, 'This action is unauthorized.');
+        }
+
+        $rentCommission = $contract->rent_amount * ($contract->property->landlord->agency_percentage / 100);
+        $cautionCommission = $contract->caution_amount * ($contract->property->landlord->agency_percentage / 100);
+        $totalCommission = $rentCommission + $cautionCommission;
+
+        return Inertia::render('Contracts/ShowArchived', [
+            'contract' => $contract,
+            'totalCommission' => $totalCommission,
+        ]);
+    }
+
 }

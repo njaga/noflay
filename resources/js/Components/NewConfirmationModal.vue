@@ -23,7 +23,7 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from 'vue';
+import { defineProps } from 'vue';
 import Modal from './Modal.vue';
 
 const props = defineProps({
@@ -40,7 +40,7 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(['close', 'confirm']);
+const emit =  defineEmits(['close', 'confirm']);
 
 const close = () => {
     console.log('NewConfirmationModal close method called');

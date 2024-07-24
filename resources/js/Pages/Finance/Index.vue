@@ -7,7 +7,7 @@
                 <!-- Boutons de raccourcis -->
                 <div class="flex justify-end mb-8">
                     <Link :href="route('expenses.create')" class="btn-primary mr-2">Ajouter une Dépense</Link>
-                    <Link :href="route('expenses.create')" class="btn-primary mr-2">Ajouter une Paiement</Link>
+                    <Link :href="route('payments.create')" class="btn-primary mr-2">Ajouter une Paiement</Link>
                 </div>
 
                 <!-- Statistiques -->
@@ -171,15 +171,15 @@ const tabs = [
 
 const cautionColumns = [
     { key: 'id', label: 'ID' },
-    { key: 'tenant', label: 'Locataire', format: (value) => `${value.first_name} ${value.last_name}` },
-    { key: 'property', label: 'Propriété', format: (value) => value.name },
+    { key: 'tenant', label: 'Locataire', format: (value) => value ? `${value.first_name} ${value.last_name}` : 'N/A' },
+    { key: 'property', label: 'Propriété', format: (value) => value ? value.name : 'N/A' },
     { key: 'caution_amount', label: 'Montant', format: (value) => formatCurrency(value) },
 ];
 
 const paymentColumns = [
     { key: 'id', label: 'ID' },
-    { key: 'contract.tenant', label: 'Locataire', format: (value) => `${value.first_name} ${value.last_name}` },
-    { key: 'contract.property', label: 'Propriété', format: (value) => value.name },
+    { key: 'contract.tenant', label: 'Locataire', format: (value) => value ? `${value.first_name} ${value.last_name}` : 'N/A' },
+    { key: 'contract.property', label: 'Propriété', format: (value) => value ? value.name : 'N/A' },
     { key: 'amount', label: 'Montant', format: (value) => formatCurrency(value) },
     { key: 'payment_date', label: 'Date de Paiement', format: (value) => formatDate(value) },
 ];
@@ -187,15 +187,15 @@ const paymentColumns = [
 const expenseColumns = [
     { key: 'id', label: 'ID' },
     { key: 'description', label: 'Description' },
-    { key: 'property', label: 'Propriété', format: (value) => value.name },
+    { key: 'property', label: 'Propriété', format: (value) => value ? value.name : 'N/A' },
     { key: 'amount', label: 'Montant', format: (value) => formatCurrency(value) },
     { key: 'expense_date', label: 'Date de Dépense', format: (value) => formatDate(value) },
 ];
 
 const commissionColumns = [
     { key: 'id', label: 'ID' },
-    { key: 'tenant', label: 'Locataire', format: (value) => `${value.first_name} ${value.last_name}` },
-    { key: 'property', label: 'Propriété', format: (value) => value.name },
+    { key: 'tenant', label: 'Locataire', format: (value) => value ? `${value.first_name} ${value.last_name}` : 'N/A' },
+    { key: 'property', label: 'Propriété', format: (value) => value ? value.name : 'N/A' },
     { key: 'commission_amount', label: 'Montant', format: (value) => formatCurrency(value) },
 ];
 
@@ -215,8 +215,8 @@ const ventilationColumns = [
 
 const filteredContracts = computed(() => {
     return contracts.value.filter(contract => {
-        const matchesTenant = !filters.value.tenant || contract.tenant.id == filters.value.tenant;
-        const matchesProperty = !filters.value.property || contract.property.id == filters.value.property;
+        const matchesTenant = !filters.value.tenant || (contract.tenant && contract.tenant.id == filters.value.tenant);
+        const matchesProperty = !filters.value.property || (contract.property && contract.property.id == filters.value.property);
         const matchesDateFrom = !filters.value.date_from || new Date(contract.start_date) >= new Date(filters.value.date_from);
         const matchesDateTo = !filters.value.date_to || new Date(contract.end_date) <= new Date(filters.value.date_to);
         return matchesTenant && matchesProperty && matchesDateFrom && matchesDateTo;
@@ -225,8 +225,8 @@ const filteredContracts = computed(() => {
 
 const filteredPayments = computed(() => {
     return payments.value.filter(payment => {
-        const matchesTenant = !filters.value.tenant || payment.contract.tenant.id == filters.value.tenant;
-        const matchesProperty = !filters.value.property || payment.contract.property.id == filters.value.property;
+        const matchesTenant = !filters.value.tenant || (payment.contract.tenant && payment.contract.tenant.id == filters.value.tenant);
+        const matchesProperty = !filters.value.property || (payment.contract.property && payment.contract.property.id == filters.value.property);
         const matchesDateFrom = !filters.value.date_from || new Date(payment.payment_date) >= new Date(filters.value.date_from);
         const matchesDateTo = !filters.value.date_to || new Date(payment.payment_date) <= new Date(filters.value.date_to);
         return matchesTenant && matchesProperty && matchesDateFrom && matchesDateTo;
@@ -235,7 +235,7 @@ const filteredPayments = computed(() => {
 
 const filteredExpenses = computed(() => {
     return expenses.value.filter(expense => {
-        const matchesProperty = !filters.value.property || expense.property.id == filters.value.property;
+        const matchesProperty = !filters.value.property || (expense.property && expense.property.id == filters.value.property);
         const matchesDateFrom = !filters.value.date_from || new Date(expense.expense_date) >= new Date(filters.value.date_from);
         const matchesDateTo = !filters.value.date_to || new Date(expense.expense_date) <= new Date(filters.value.date_to);
         return matchesProperty && matchesDateFrom && matchesDateTo;

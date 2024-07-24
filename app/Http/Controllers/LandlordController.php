@@ -47,7 +47,6 @@ class LandlordController extends Controller
         ]);
     }
 
-
     public function create()
     {
         Gate::authorize('create', Landlord::class);
@@ -63,6 +62,57 @@ class LandlordController extends Controller
                 'isSuperAdmin' => Auth::user()->hasRole('super_admin')
             ],
         ]);
+    }
+
+    public function archives()
+    {
+        try {
+            Log::info('Starting archives method');
+
+            $user = auth()->user();
+
+            // Récupérer les bailleurs supprimés en fonction du rôle de l'utilisateur
+            if ($user->hasRole('super_admin')) {
+                $landlords = Landlord::onlyTrashed()->with('company')->get();
+            } elseif ($user->hasRole('admin_entreprise') || $user->hasRole('user_entreprise')) {
+                $landlords = Landlord::onlyTrashed()
+                    ->where('company_id', $user->company_id)
+                    ->with('company')
+                    ->get();
+            } else {
+                abort(403);
+            }
+
+            Log::info('Retrieved archived landlords', ['count' => $landlords->count()]);
+
+            return Inertia::render('Landlords/Archives', [
+                'landlords' => $landlords,
+                'auth' => [
+                    'user' => $user,
+                    'roles' => $user->roles->pluck('name'),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in archives method', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return Inertia::render('Error', [
+                'status' => 500,
+                'message' => 'Une erreur est survenue lors du chargement des archives.'
+            ]);
+        }
+    }
+
+    public function restore($id)
+    {
+        $landlord = Landlord::withTrashed()->findOrFail($id);
+        Gate::authorize('restore', $landlord);
+
+        $landlord->restore();
+
+        return redirect()->route('landlords.archives')->with('success', 'Bailleur restauré avec succès.');
     }
 
     public function store(Request $request)
@@ -139,7 +189,7 @@ class LandlordController extends Controller
                 return $contract;
             });
 
-        // Récupérer les paiements récents
+        // Récupérer les paiements récentes
         $payments = Payment::whereHas('contract.property', function ($query) use ($landlord) {
             $query->where('landlord_id', $landlord->id);
         })
@@ -184,7 +234,6 @@ class LandlordController extends Controller
             ]
         ]);
     }
-
 
     public function edit(Landlord $landlord)
     {
@@ -239,13 +288,13 @@ class LandlordController extends Controller
         return redirect()->route('landlords.index')->with('success', 'Bailleur mis à jour avec succès.');
     }
 
-    public function destroy($id)
+    public function destroy(Landlord $landlord)
     {
-        $transaction = LandlordTransaction::findOrFail($id);
-        Gate::authorize('delete', $transaction);
-        $transaction->delete();
+        Gate::authorize('delete', $landlord);
 
-        return back()->with('success', 'Transaction deleted successfully.');
+        $landlord->delete();
+
+        return redirect()->route('landlords.index')->with('success', 'Landlord deleted successfully.');
     }
 
     public function export()
@@ -288,7 +337,6 @@ class LandlordController extends Controller
 
         return response()->stream($callback, 200, $headers);
     }
-
 
     private function calculateFinancialInfo(Landlord $landlord, Carbon $date)
     {
@@ -436,5 +484,40 @@ class LandlordController extends Controller
         }
     }
 
+    public function forceDelete($id)
+    {
+        $landlord = Landlord::withTrashed()->findOrFail($id);
+        Gate::authorize('forceDelete', $landlord);
 
+        $landlord->forceDelete();
+
+        return redirect()->route('landlords.archives')->with('success', 'Bailleur supprimé définitivement.');
+    }
+
+
+    public function showArchived($id)
+    {
+        $landlord = Landlord::withTrashed()->with(['properties.contracts.tenant', 'company', 'properties.tenant'])->findOrFail($id);
+        Gate::authorize('view', $landlord);
+
+        $properties = Property::with(['contracts.tenant', 'expenses'])
+            ->where('landlord_id', $id)
+            ->withTrashed()
+            ->get();
+
+        $transactions = LandlordTransaction::where('landlord_id', $id)
+            ->withTrashed()
+            ->orderBy('transaction_date', 'desc')
+            ->get();
+
+        return Inertia::render('Landlords/ShowArchived', [
+            'landlord' => $landlord,
+            'properties' => $properties,
+            'transactions' => $transactions,
+            'auth' => [
+                'user' => Auth::user(),
+                'roles' => Auth::user()->roles->pluck('name')
+            ]
+        ]);
+    }
 }

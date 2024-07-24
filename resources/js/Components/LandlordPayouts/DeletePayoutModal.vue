@@ -21,7 +21,7 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from 'vue';
+import { defineProps } from 'vue';
 import Modal from "@/Components/Modal.vue";
 
 const props = defineProps({
@@ -35,7 +35,7 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(['close', 'confirm']);
+const emit =  (['close', 'confirm']);
 
 const confirmDelete = () => {
     emit('confirm', props.payoutId);

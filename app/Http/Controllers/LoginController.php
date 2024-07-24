@@ -7,14 +7,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
     protected $redirectTo = '/dashboard';
 
-    public function __construct()
+    public function showLoginForm(Request $request): Response
     {
-        // Removed middleware assignment from constructor
+        return Inertia::render('Auth/Login', [
+            'error' => $request->session()->get('error'),
+        ]);
     }
 
     public function login(Request $request)
@@ -24,21 +27,25 @@ class LoginController extends Controller
             'password' => ['required'],
         ]);
 
-        if (Auth::attempt($credentials)) {
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
+            $request->session()->put('last_activity', time());
 
             if (!$request->user()->isActive()) {
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
-                return Inertia::render('InactiveUser');
+                return Inertia::render('Error', [
+                    'status' => 403,
+                    'message' => 'Votre compte est inactif. Veuillez contacter l\'administrateur.'
+                ]);
             }
 
-            return Inertia::location($this->redirectTo);
+            return redirect()->intended($this->redirectTo);
         }
 
-        return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
+        throw ValidationException::withMessages([
+            'email' => __('auth.failed'),
         ]);
     }
 
@@ -49,11 +56,6 @@ class LoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return Inertia::location(route('welcome'));
-    }
-
-    public function showLoginForm(): Response
-    {
-        return Inertia::render('Auth/Login');
+        return redirect('/');
     }
 }

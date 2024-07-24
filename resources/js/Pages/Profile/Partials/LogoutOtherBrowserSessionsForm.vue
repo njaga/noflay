@@ -8,6 +8,7 @@ import InputError from '@/Components/InputError.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
+import Modal from '@/Components/Modal.vue';
 
 defineProps({
     sessions: Array,
@@ -43,99 +44,78 @@ const closeModal = () => {
 </script>
 
 <template>
-    <ActionSection>
-        <template #title>
-            Sessions de navigateur
-        </template>
+    <div class="bg-white p-8 rounded-lg shadow-xl max-w-3xl mx-auto">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6">Sessions de navigateur</h2>
 
-        <template #description>
-            Gérez et déconnectez-vous de vos sessions actives sur d'autres navigateurs et appareils.
-        </template>
+      <p class="text-sm text-gray-600 mb-4">
+        Gérez et déconnectez-vous de vos sessions actives sur d'autres navigateurs et appareils.
+      </p>
 
-        <template #content>
-            <div class="max-w-xl text-sm text-gray-600">
-                Pour votre sécurité, déconnectez-vous de toutes les sessions de navigateur sur tous vos appareils. Si vous soupçonnez une compromission de votre compte, changez immédiatement votre mot de passe.
+      <div v-if="sessions.length > 0" class="mb-6 space-y-4">
+        <div v-for="(session, i) in sessions" :key="i" class="flex items-center p-3 bg-gray-100 rounded-md">
+          <div class="mr-3">
+            <svg v-if="session.agent.is_desktop" class="w-8 h-8 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <svg v-else class="w-8 h-8 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div>
+            <div class="text-sm font-semibold text-gray-600">
+              {{ session.agent.platform ? session.agent.platform : 'Unknown' }} - {{ session.agent.browser ? session.agent.browser : 'Unknown' }}
             </div>
-
-            <!-- Other Browser Sessions -->
-            <div v-if="sessions.length > 0" class="mt-5 space-y-6">
-                <div v-for="(session, i) in sessions" :key="i" class="flex items-center">
-                    <div>
-                        <svg v-if="session.agent.is_desktop" class="w-8 h-8 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
-                        </svg>
-
-                        <svg v-else class="w-8 h-8 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
-                        </svg>
-                    </div>
-
-                    <div class="ms-3">
-                        <div class="text-sm text-gray-600">
-                            {{ session.agent.platform ? session.agent.platform : 'Unknown' }} - {{ session.agent.browser ? session.agent.browser : 'Unknown' }}
-                        </div>
-
-                        <div>
-                            <div class="text-xs text-gray-500">
-                                {{ session.ip_address }},
-
-                                <span v-if="session.is_current_device" class="text-green-500 font-semibold">Cet appareil</span>
-                                <span v-else>Last active {{ session.last_active }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="text-xs text-gray-500">
+              {{ session.ip_address }},
+              <span v-if="session.is_current_device" class="text-green-500 font-semibold">Cet appareil</span>
+              <span v-else>Dernière activité {{ session.last_active }}</span>
             </div>
+          </div>
+        </div>
+      </div>
 
-            <div class="flex items-center mt-5">
-                <PrimaryButton @click="confirmLogout">
-                    Se déconnecter des autres appareils
-                </PrimaryButton>
+      <button
+        @click="confirmLogout"
+        class="w-full bg-indigo-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-indigo-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+      >
+        Se déconnecter des autres appareils
+      </button>
 
-                <ActionMessage :on="form.recentlySuccessful" class="ms-3">
-                    Terminé.
-                </ActionMessage>
-            </div>
+      <Modal :show="confirmingLogout" @close="closeModal">
+        <div class="p-6">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Déconnexion des autres sessions de navigateur</h3>
+          <p class="text-sm text-gray-600 mb-4">
+            Veuillez saisir votre mot de passe pour confirmer que vous souhaitez vous déconnecter de vos autres sessions de navigateur sur tous vos appareils.
+          </p>
+          <div class="mt-4">
+            <input
+              ref="passwordInput"
+              v-model="form.password"
+              type="password"
+              class="w-full px-4 py-3 rounded-md bg-gray-100 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition duration-300"
+              placeholder="Mot de passe"
+              @keyup.enter="logoutOtherBrowserSessions"
+            />
+            <p v-if="form.errors.password" class="mt-1 text-sm text-red-600">{{ form.errors.password }}</p>
+          </div>
+          <div class="mt-6 flex justify-end space-x-3">
+            <button
+              @click="closeModal"
+              class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+            >
+              Annuler
+            </button>
+            <button
+              @click="logoutOtherBrowserSessions"
+              class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              :class="{ 'opacity-25': form.processing }"
+              :disabled="form.processing"
+            >
+              Se déconnecter
+            </button>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  </template>
 
-            <!-- Log Out Other Devices Confirmation Modal -->
-            <DialogModal :show="confirmingLogout" @close="closeModal">
-                <template #title>
-                    Déconnexion des autres sessions de navigateur
-                </template>
-
-                <template #content>
-                    Veuillez saisir votre mot de passe pour confirmer que vous souhaitez vous déconnecter de vos autres sessions de navigateur sur tous vos appareils.
-
-                    <div class="mt-4">
-                        <TextInput
-                            ref="passwordInput"
-                            v-model="form.password"
-                            type="password"
-                            class="mt-1 block w-3/4"
-                            placeholder="Mot de passe"
-                            autocomplete="current-password"
-                            @keyup.enter="logoutOtherBrowserSessions"
-                        />
-
-                        <InputError :message="form.errors.password" class="mt-2" />
-                    </div>
-                </template>
-
-                <template #footer>
-                    <SecondaryButton @click="closeModal">
-                        Annuler
-                    </SecondaryButton>
-
-                    <PrimaryButton
-                        class="ms-3"
-                        :class="{ 'opacity-25': form.processing }"
-                        :disabled="form.processing"
-                        @click="logoutOtherBrowserSessions"
-                    >
-                        Se déconnecter
-                    </PrimaryButton>
-                </template>
-            </DialogModal>
-        </template>
-    </ActionSection>
-</template>

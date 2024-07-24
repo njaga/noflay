@@ -51,4 +51,8 @@ class Company extends Model
     {
         return $this->is_active;
     }
+
+    public function contracts(){
+        return $this->hasMany(Contract::class);
+    }
 }

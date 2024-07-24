@@ -20,7 +20,5 @@
 </template>
 
 <script setup>
-import { defineEmits } from 'vue';
-
-const emit = defineEmits(['new-payout']);
+const emit =  defineEmits(['new-payout']);
 </script>
