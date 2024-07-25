@@ -1,6 +1,6 @@
 <template>
     <section id="avantages" class="py-20 bg-gradient-to-br from-blue-50 to-indigo-100 overflow-hidden">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative">
             <div class="text-center mb-16">
                 <h2 class="text-base text-indigo-600 font-semibold tracking-wide uppercase animate-fade-in">Avantages
                 </h2>

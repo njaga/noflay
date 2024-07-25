@@ -25,6 +25,8 @@ use App\Http\Controllers\SearchController;
 use App\Http\Middleware\CheckUserActivity;
 use App\Http\Middleware\CheckSessionExpiration;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Input;
+use Illuminate\Support\Facades\Log;
 
 // Route pour la page de bienvenue disponible sans authentification
 Route::get('/', function () {
@@ -151,4 +153,44 @@ Route::fallback(function () {
         'status' => 404,
         'message' => 'Page non trouvée.'
     ]);
+});
+
+Route::post('/api/my-ipn', function () {
+    $type_event = request('type_event');
+    $custom_field = json_decode(request('custom_field'), true);
+    $ref_command = request('ref_command');
+    $item_name = request('item_name');
+    $item_price = request('item_price');
+    $devise = request('devise');
+    $command_name = request('command_name');
+    $env = request('env');
+    $token = request('token');
+    $api_key_sha256 = request('api_key_sha256');
+    $api_secret_sha256 = request('api_secret_sha256');
+
+    $my_api_key = env('PAYTECH_API_KEY');
+    $my_api_secret = env('PAYTECH_API_SECRET');
+
+    if(hash('sha256', $my_api_secret) === $api_secret_sha256 && hash('sha256', $my_api_key) === $api_key_sha256)
+    {
+        // Paiement confirmé par Paytech
+        Log::info('Paiement Paytech confirmé', [
+            'ref_command' => $ref_command,
+            'item_name' => $item_name,
+            'item_price' => $item_price,
+            'devise' => $devise,
+        ]);
+
+        // Ajoutez ici la logique pour mettre à jour le statut de l'abonnement de l'utilisateur
+        // Par exemple :
+        // User::where('payment_ref', $ref_command)->update(['subscription_status' => 'active']);
+
+        return response()->json(['status' => 'success']);
+    }
+    else
+    {
+        // La requête ne provient pas de Paytech
+        Log::warning('Tentative de notification IPN non autorisée');
+        return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
+    }
 });
