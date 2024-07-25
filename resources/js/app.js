@@ -8,6 +8,8 @@ import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 import FontAwesomeIcon from './fontawesome';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import { MotionPlugin } from '@vueuse/motion';
+
 
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
@@ -18,7 +20,8 @@ createInertiaApp({
     setup({ el, App, props, plugin }) {
         const vueApp = createApp({ render: () => h(App, props) })
             .use(plugin)
-            .use(ZiggyVue);
+            .use(ZiggyVue)
+            .use(MotionPlugin);
         vueApp.component('font-awesome-icon', FontAwesomeIcon);
         return vueApp.mount(el);
     },
