@@ -1,6 +1,6 @@
 <template>
     <section id="contact" class="bg-white text-gray-800 py-12 relative mb-12">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
             <div class="text-center mb-12">
                 <h2 class="text-xl font-extrabold text-gray-900 sm:text-3xl">
                     <span class="block">Vous ne trouvez pas le plan qui vous convient ?</span>
@@ -14,7 +14,7 @@
                         class="p-10 bg-gradient-to-br from-indigo-600 to-purple-700 text-white flex flex-col justify-between">
                         <div>
                             <h3 class="text-2xl font-semibold mb-4">Informations de contact</h3>
-                            <p class="mb-4">Remplissez le formulaire et notre équipe vous répondra dans les 24 heures.
+                            <p class="mb-14">Remplissez le formulaire et notre équipe <br> vous répondra dans les 24 heures.
                             </p>
                             <div class="flex items-center mb-3">
                                 <i class="bi bi-geo-alt-fill mr-3 text-xl"></i>

@@ -4,7 +4,7 @@
     >
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col lg:flex-row items-center">
-                <div class="lg:w-1/2 mb-8 lg:mb-0">
+                <div class="lg:w-1/2 mb-8 p-2 lg:mb-0">
                     <h1
                         class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight mt-8 sm:mt-0"
                     >
