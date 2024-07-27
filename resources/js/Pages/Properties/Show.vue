@@ -40,8 +40,10 @@
                                 <InfoItem icon="fa fa-map-marker-alt" label="Adresse" :value="property.address" />
                                 <InfoItem icon="fa fa-home" label="Disponibles" :value="property.available_count" />
                                 <InfoItem icon="fa fa-building" label="Entreprise" :value="property.company.name" />
-                                <InfoItem icon="fa fa-user" label="Bailleur"
-                                    :value="`${property.landlord.first_name} ${property.landlord.last_name}`" />
+                                <InfoItem icon="fa fa-user" label="Bailleur" :value="property.landlord
+                                        ? `${property.landlord.first_name} ${property.landlord.last_name}`
+                                        : 'Non spécifié'
+                                    " />
                                 <InfoItem icon="fa fa-dollar-sign" label="Prix de la Propriété"
                                     :value="formatCurrency(rentAmount)" />
                             </div>
@@ -106,32 +108,21 @@
 
                         <!-- Tenants List -->
                         <div class="bg-white rounded-2xl shadow-lg p-6 animate-fade-in" style="animation-delay: 1.2s">
-                            <h2 class="text-2xl font-semibold mb-4 text-gray-800">
-                                Locataires
-                            </h2>
-                            <div v-if="
-                                property.contracts &&
-                                property.contracts.length
-                            " class="space-y-4">
+                            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Locataires</h2>
+                            <div v-if="property.contracts && property.contracts.length" class="space-y-4">
                                 <div v-for="contract in property.contracts" :key="contract.id"
                                     class="flex items-center p-4 bg-gray-50 rounded-lg transition duration-300 ease-in-out hover:bg-gray-100">
-                                    <img :src="`https://ui-avatars.com/api/?name=${contract.tenant.first_name}+${contract.tenant.last_name}&background=4F46E5&color=ffffff`"
-                                        :alt="contract.tenant.first_name"
+                                    <img :src="`https://ui-avatars.com/api/?name=${contract.tenant?.first_name || 'Unknown'}+${contract.tenant?.last_name || 'Tenant'}&background=4F46E5&color=ffffff`"
+                                        :alt="contract.tenant?.first_name || 'Unknown Tenant'"
                                         class="w-12 h-12 rounded-full mr-4 shadow-md" />
-                                    <Link :href="route(
-                                        'tenants.show',
-                                        contract.tenant.id
-                                    )
-                                        "
+                                    <Link v-if="contract.tenant" :href="route('tenants.show', contract.tenant.id)"
                                         class="text-base text-indigo-600 hover:text-indigo-800 transition duration-150 ease-in-out">
-                                    {{ contract.tenant.first_name }}
-                                    {{ contract.tenant.last_name }}
+                                    {{ contract.tenant.first_name }} {{ contract.tenant.last_name }}
                                     </Link>
+                                    <span v-else class="text-base text-gray-500">Locataire non spécifié</span>
                                 </div>
                             </div>
-                            <p v-else class="text-gray-500 italic text-center py-4">
-                                Aucun locataire pour le moment
-                            </p>
+                            <div v-else class="text-gray-500">Aucun locataire pour le moment.</div>
                         </div>
 
                         <!-- Actions -->
@@ -335,22 +326,22 @@ const formatCurrency = (amount) => {
 };
 
 onMounted(() => {
-    new Swiper('.swiper-container', {
+    new Swiper(".swiper-container", {
         loop: true,
         pagination: {
-            el: '.swiper-pagination',
+            el: ".swiper-pagination",
             clickable: true,
         },
         navigation: {
-            nextEl: '.swiper-button-next',
-            prevEl: '.swiper-button-prev',
+            nextEl: ".swiper-button-next",
+            prevEl: ".swiper-button-prev",
         },
         autoplay: {
             delay: 5000,
         },
-        effect: 'fade',
+        effect: "fade",
         fadeEffect: {
-            crossFade: true
+            crossFade: true,
         },
     });
 });
@@ -382,7 +373,7 @@ onMounted(() => {
 
 .swiper-button-prev,
 .swiper-button-next {
-    color: #4F46E5;
+    color: #4f46e5;
     width: 30px;
     /* Réduire la largeur */
     height: 30px;
@@ -421,13 +412,13 @@ onMounted(() => {
 .swiper-pagination-bullet {
     width: 8px;
     height: 8px;
-    background-color: #D1D5DB;
+    background-color: #d1d5db;
     opacity: 1;
     margin: 0 5px;
 }
 
 .swiper-pagination-bullet-active {
-    background-color: #4F46E5;
+    background-color: #4f46e5;
 }
 
 @keyframes fadeIn {

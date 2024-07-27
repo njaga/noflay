@@ -384,22 +384,22 @@ class LandlordController extends Controller
                 ->get(['tenant_id', 'contract_id', 'amount'])
                 ->map(function ($payment) {
                     return [
-                        'tenant' => $payment->contract->tenant->first_name . ' ' . $payment->contract->tenant->last_name,
+                        'tenant' => $payment->contract?->tenant?->first_name . ' ' . $payment->contract?->tenant?->last_name ?? 'Locataire non spécifié',
                         'property' => $payment->contract->property->name,
                         'amount' => round($payment->amount, 2)
                     ];
                 }),
-            'cautionDetails' => Contract::whereHas('property', function ($query) use ($landlord) {
-                $query->where('landlord_id', $landlord->id);
-            })->where('is_reversed', false)
-                ->get(['tenant_id', 'property_id', 'caution_amount'])
-                ->map(function ($contract) {
-                    return [
-                        'tenant' => $contract->tenant->first_name . ' ' . $contract->tenant->last_name,
-                        'property' => $contract->property->name,
-                        'amount' => round($contract->caution_amount, 2)
-                    ];
-                }),
+                'cautionDetails' => Contract::whereHas('property', function ($query) use ($landlord) {
+                    $query->where('landlord_id', $landlord->id);
+                })->where('is_reversed', false)
+                    ->get(['tenant_id', 'property_id', 'caution_amount'])
+                    ->map(function ($contract) {
+                        return [
+                            'tenant' => $contract->tenant ? $contract->tenant->first_name . ' ' . $contract->tenant->last_name : 'Locataire non spécifié',
+                            'property' => $contract->property->name,
+                            'amount' => round($contract->caution_amount, 2)
+                        ];
+                    }),
             'expenseDetails' => Expense::whereHas('property', function ($query) use ($landlord) {
                 $query->where('landlord_id', $landlord->id);
             })->where('is_repay', false)

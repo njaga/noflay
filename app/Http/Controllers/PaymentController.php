@@ -81,14 +81,23 @@ class PaymentController extends Controller
         Gate::authorize('view', $payment);
 
         $contract = $payment->contract;
-        $tenant = $contract->tenant;
-        $property = $contract->property;
+        $tenant = $contract ? $contract->tenant : null;
+        $property = $contract ? $contract->property : null;
 
         return Inertia::render('Payments/Show', [
             'payment' => $payment,
             'contract' => $contract,
-            'tenant' => $tenant,
-            'property' => $property,
+            'tenant' => $tenant ? [
+                'id' => $tenant->id,
+                'first_name' => $tenant->first_name,
+                'last_name' => $tenant->last_name,
+                // Ajoutez d'autres champs du locataire si nécessaire
+            ] : null,
+            'property' => $property ? [
+                'id' => $property->id,
+                'name' => $property->name,
+                // Ajoutez d'autres champs de la propriété si nécessaire
+            ] : null,
         ]);
     }
 

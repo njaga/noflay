@@ -68,7 +68,7 @@
 </template>
 
 <script setup>
-import { defineProps } from 'vue';
+
 import { Link } from '@inertiajs/vue3';
 
 const props = defineProps({

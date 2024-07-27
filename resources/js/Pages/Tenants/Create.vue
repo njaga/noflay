@@ -1,6 +1,6 @@
 <template>
     <AppLayout title="Ajouter un locataire">
-        <div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
             <div class="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow">
                 <h2 class="text-2xl font-semibold text-gray-900 mb-6">Ajouter un locataire</h2>
                 <form @submit.prevent="submit">

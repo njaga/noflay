@@ -47,7 +47,7 @@
 </template>
 
 <script setup>
-import { defineProps } from 'vue';
+
 
 const props = defineProps(['transactions']);
 const emit =  defineEmits(['view-transaction', 'edit-transaction', 'delete-transaction']);

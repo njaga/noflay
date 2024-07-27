@@ -21,7 +21,7 @@
 </template>
 
 <script setup>
-import { defineProps } from 'vue';
+
 import Modal from "@/Components/Modal.vue";
 
 const props = defineProps({

@@ -13,7 +13,7 @@
                         <p class="text-sm text-gray-600 mb-2 line-clamp-4">
                             {{ property.description }}
                         </p>
-                        <div v-if="property.contracts && property.contracts.length > 0" class="bg-indigo-50 p-2 rounded-md mb-2 text-sm">
+                        <div v-if="property.contracts && property.contracts.length > 0 && property.contracts[0].tenant" class="bg-indigo-50 p-2 rounded-md mb-2 text-sm">
                             <p class="font-medium text-indigo-700">
                                 Locataire actuel
                             </p>
@@ -22,6 +22,11 @@
                             </p>
                             <p class="text-indigo-600 font-medium">
                                 Loyer: {{ formatCurrency(property.contracts[0].rent_amount) }}
+                            </p>
+                        </div>
+                        <div v-else class="bg-yellow-50 p-2 rounded-md mb-2 text-sm">
+                            <p class="font-medium text-yellow-700">
+                                Aucun locataire actuellement
                             </p>
                         </div>
                         <div class="flex justify-between items-center">
@@ -53,7 +58,16 @@
 import { ref } from "vue";
 import { TransitionGroup } from "vue";
 
-const props = defineProps(["landlord"]);
+const props = defineProps({
+    landlord: {
+        type: Object,
+        required: true,
+        default: () => ({
+            properties: []
+        })
+    }
+});
+
 const emit = defineEmits([
     "confirm-delete-property",
     "edit-property",
