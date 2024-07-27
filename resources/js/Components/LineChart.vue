@@ -13,7 +13,7 @@
 </template>
 
 <script setup>
-import { defineProps } from 'vue';
+
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 
 defineProps({

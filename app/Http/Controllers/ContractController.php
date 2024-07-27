@@ -10,6 +10,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class ContractController extends Controller
@@ -261,6 +262,53 @@ class ContractController extends Controller
             'contract' => $contract,
             'totalCommission' => $totalCommission,
         ]);
+    }
+
+    public function uploadDocument(Request $request, Contract $contract)
+    {
+        $request->validate([
+            'document_type' => 'required|string|in:contract_signed,insurance,inventory,other_documents',
+            'file' => 'required|file|max:10240', // 10MB max
+        ]);
+
+        $path = $request->file('file')->store('contracts/' . $contract->id, 'public');
+
+        $column = $request->document_type . '_path';
+        $contract->$column = $path;
+        $contract->save();
+
+        return response()->json(['message' => 'Document uploaded successfully']);
+    }
+
+    public function downloadDocument(Contract $contract, $documentType)
+    {
+        $column = $documentType . '_path';
+        $path = $contract->$column;
+
+        if (!$path) {
+            return response()->json(['error' => 'Document not found'], 404);
+        }
+
+        return response()->file(storage_path('app/public/' . $path));
+    }
+
+    public function deleteDocument(Contract $contract, $documentType)
+    {
+        $column = $documentType . '_path';
+        $path = $contract->$column;
+
+        if (!$path) {
+            return response()->json(['error' => 'Document not found'], 404);
+        }
+
+        // Delete the file from storage
+        Storage::disk('public')->delete($path);
+
+        // Clear the path in the database
+        $contract->$column = null;
+        $contract->save();
+
+        return response()->json(['message' => 'Document deleted successfully']);
     }
 
 }

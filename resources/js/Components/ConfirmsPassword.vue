@@ -1,5 +1,6 @@
 <script setup>
 import { ref, reactive, nextTick } from 'vue';
+import axios from 'axios';
 import DialogModal from './DialogModal.vue';
 import InputError from './InputError.vue';
 import PrimaryButton from './PrimaryButton.vue';
@@ -40,8 +41,12 @@ const startConfirmingPassword = () => {
         } else {
             confirmingPassword.value = true;
 
-            setTimeout(() => passwordInput.value.focus(), 250);
+            nextTick(() => {
+                passwordInput.value.focus();
+            });
         }
+    }).catch(error => {
+        console.error('Error confirming password:', error);
     });
 };
 
@@ -54,12 +59,14 @@ const confirmPassword = () => {
         form.processing = false;
 
         closeModal();
-        nextTick().then(() => emit('confirmed'));
+        nextTick(() => emit('confirmed'));
 
     }).catch(error => {
         form.processing = false;
         form.error = error.response.data.errors.password[0];
-        passwordInput.value.focus();
+        nextTick(() => {
+            passwordInput.value.focus();
+        });
     });
 };
 

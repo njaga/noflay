@@ -21,6 +21,10 @@ class Company extends Model
         'address',
         'website',
         'is_active',
+        'logo',
+        'NINEA',
+        'RCCM',
+        'representant_id'
     ];
 
     protected $casts = [
@@ -54,5 +58,10 @@ class Company extends Model
 
     public function contracts(){
         return $this->hasMany(Contract::class);
+    }
+
+    public function representant()
+    {
+        return $this->belongsTo(User::class, 'representant_id');
     }
 }

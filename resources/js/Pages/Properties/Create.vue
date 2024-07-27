@@ -1,6 +1,6 @@
 <template>
     <AppLayout title="Créer une propriété">
-        <div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
             <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
                 <div class="p-8 sm:p-12">
                     <h1

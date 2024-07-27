@@ -20,6 +20,7 @@ class Property extends Model
         'available_count',
         'company_id',
         'photos',
+        'status',
     ];
 
     protected $dates = ['deleted_at'];

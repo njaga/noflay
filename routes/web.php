@@ -19,9 +19,12 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Middleware\CheckUserStatus;
 use App\Http\Controllers\DemoRequestController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\TenantAccountController;
 use App\Http\Controllers\HelpController;
+use App\Http\Controllers\PrivacyPolicyController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\TermsOfServiceController;
 use App\Http\Middleware\CheckUserActivity;
 use App\Http\Middleware\CheckSessionExpiration;
 use Illuminate\Support\Facades\Auth;
@@ -32,6 +35,10 @@ use Illuminate\Support\Facades\Log;
 Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('welcome');
+
+// Routes pour la politique de confidentialité et les conditions d'utilisation
+Route::get('/privacy-policy', [PrivacyPolicyController::class, 'index'])->name('privacy-policy');
+Route::get('/terms-of-service', [TermsOfServiceController::class, 'index'])->name('terms-of-service');
 
 // Ajout de la route de connexion
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -85,6 +92,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('properties/{id}/force-delete', [PropertyController::class, 'forceDelete'])->name('properties.forceDelete');
         Route::resource('properties', PropertyController::class);
         Route::get('properties/{property}/report', [PropertyController::class, 'report'])->name('properties.report');
+        Route::put('/properties/{property}', [PropertyController::class, 'update'])->name('properties.update');
+        Route::post('/properties/{property}', [PropertyController::class, 'update'])->name('properties.update');
+        Route::put('/properties/{property}', [PropertyController::class, 'update'])->name('properties.update');
+
 
         // Routes pour la gestion des locataires
         Route::get('tenants/archives', [TenantController::class, 'archives'])->name('tenants.archives');
@@ -104,6 +115,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/contracts/{contract}/edit', [ContractController::class, 'edit'])->name('contracts.edit');
         Route::put('/contracts/{contract}', [ContractController::class, 'update'])->name('contracts.update');
         Route::resource('contracts', ContractController::class)->except(['create', 'store', 'edit', 'update']);
+        Route::post('/contracts/{contract}/upload-document', [ContractController::class, 'uploadDocument'])->name('contracts.upload-document');
+        Route::get('/contracts/{contract}/download-document/{documentType}', [ContractController::class, 'downloadDocument'])
+            ->name('contracts.download-document');
+        Route::delete('/contracts/{contract}/delete-document/{documentType}', [ContractController::class, 'deleteDocument'])
+            ->name('contracts.delete-document');
+
+        // Routes pour la gestion des documents
+        Route::post('/documents', [DocumentController::class, 'store'])->name('documents.store');
+        Route::get('/documents/{contract}', [DocumentController::class, 'index'])->name('documents.index');
+        Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
+        Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
 
         // Routes pour les utilisateurs désactivés
         Route::get('/inactive-user', function () {
@@ -155,6 +177,8 @@ Route::fallback(function () {
     ]);
 });
 
+
+// API Paiement de Paytech
 Route::post('/api/my-ipn', function () {
     $type_event = request('type_event');
     $custom_field = json_decode(request('custom_field'), true);
@@ -171,8 +195,7 @@ Route::post('/api/my-ipn', function () {
     $my_api_key = env('PAYTECH_API_KEY');
     $my_api_secret = env('PAYTECH_API_SECRET');
 
-    if(hash('sha256', $my_api_secret) === $api_secret_sha256 && hash('sha256', $my_api_key) === $api_key_sha256)
-    {
+    if (hash('sha256', $my_api_secret) === $api_secret_sha256 && hash('sha256', $my_api_key) === $api_key_sha256) {
         // Paiement confirmé par Paytech
         Log::info('Paiement Paytech confirmé', [
             'ref_command' => $ref_command,
@@ -186,9 +209,7 @@ Route::post('/api/my-ipn', function () {
         // User::where('payment_ref', $ref_command)->update(['subscription_status' => 'active']);
 
         return response()->json(['status' => 'success']);
-    }
-    else
-    {
+    } else {
         // La requête ne provient pas de Paytech
         Log::warning('Tentative de notification IPN non autorisée');
         return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 401);

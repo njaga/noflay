@@ -11,6 +11,8 @@ use Spatie\Permission\Middleware\RoleMiddleware;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Inertia\Inertia;
+use Illuminate\Console\Scheduling\Schedule;
+use App\Models\User;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -28,9 +30,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
         ]);
     })
+
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->respond(function (Response $response, Throwable $exception, Request $request) {
-            if (in_array($response->getStatusCode(), [500, 503, 404, 401, 403, 419])) {
+            if (!app()->environment(['local', 'testing']) && in_array($response->getStatusCode(), [500, 503, 404, 401, 403, 419])) {
                 return Inertia::render('Error', ['status' => $response->getStatusCode()])
                     ->toResponse($request)
                     ->setStatusCode($response->getStatusCode());
@@ -42,7 +45,23 @@ return Application::configure(basePath: dirname(__DIR__))
 
             return $response;
         });
-    })->create();
+    })
+    ->withSchedule(function (Schedule $schedule) {
+        $schedule->call(function () {
+            $expiredUsers = User::where('role', 'admin_entreprise')
+                                ->where('is_active', true)
+                                ->where('demo_expiration', '<', now())
+                                ->get();
+            foreach ($expiredUsers as $user) {
+                $user->is_active = false;
+                $user->save();
+            }
+        })->daily();
+    })
+
+    ->create();
+
+
 
 
 
