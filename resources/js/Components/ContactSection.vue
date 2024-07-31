@@ -1,11 +1,13 @@
 <template>
     <section id="contact" class="bg-white text-gray-800 py-20 relative ">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-            <div class="text-center mb-12">
-                <h2 class="text-xl font-extrabold text-gray-900 sm:text-3xl">
-                    <span class="block">Vous ne trouvez pas le plan qui vous convient ?</span>
-                    <span class="block text-indigo-600">Contactez-nous pour un plan personnalisé</span>
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+            <div class="text-center mb-16">
+                <h2 class="text-base text-indigo-600 font-semibold tracking-wide uppercase animate-fade-in">Contact
                 </h2>
+                <p class="mt-2 text-4xl font-extrabold text-gray-900 animate-slide-up">
+                    Pour plus d'informations <span
+                        class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600">ou support</span>
+                </p>
             </div>
 
             <div class="bg-white shadow-2xl rounded-lg overflow-hidden">

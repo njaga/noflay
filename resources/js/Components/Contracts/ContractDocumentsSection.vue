@@ -1,7 +1,5 @@
 <template>
-    <div
-        class="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl overflow-hidden mt-5 shadow-lg"
-    >
+    <div class="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg overflow-hidden mt-5 shadow-lg">
         <div class="bg-white px-8 py-6">
             <h4 class="text-2xl font-bold text-indigo-800 mb-6">
                 Documents liés
@@ -13,9 +11,7 @@
                     class="bg-gray-50 p-4 rounded-lg shadow-sm transition-all duration-300 hover:shadow-md"
                 >
                     <div class="flex items-center justify-between">
-                        <span class="text-lg font-medium text-gray-700">{{
-                            doc.name
-                        }}</span>
+                        <span class="text-lg font-medium text-gray-700">{{ doc.name }}</span>
                         <div class="flex items-center space-x-2">
                             <button
                                 v-if="contract[doc.path]"
@@ -26,23 +22,14 @@
                                 <i class="bi bi-download text-xl"></i>
                             </button>
                             <button
-                                @click="
-                                    openModal(
-                                        contract[doc.path] ? 'edit' : 'add',
-                                        doc
-                                    )
-                                "
+                                @click="openModal(contract[doc.path] ? 'edit' : 'add', doc)"
                                 class="bg-indigo-600 text-white p-2 rounded-full hover:bg-indigo-700 transition duration-300"
-                                :title="
-                                    contract[doc.path] ? 'Modifier' : 'Ajouter'
-                                "
+                                :title="contract[doc.path] ? 'Modifier' : 'Ajouter'"
                             >
                                 <i
                                     :class="[
                                         'text-lg',
-                                        contract[doc.path]
-                                            ? 'bi bi-pencil-fill'
-                                            : 'bi bi-plus-lg',
+                                        contract[doc.path] ? 'bi bi-pencil-fill' : 'bi bi-plus-lg',
                                     ]"
                                 ></i>
                             </button>
@@ -222,3 +209,7 @@ const deleteDocument = () => {
     );
 };
 </script>
+
+<style>
+/* Ajoutez ici les styles personnalisés si nécessaire */
+</style>

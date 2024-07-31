@@ -155,77 +155,17 @@ class LandlordController extends Controller
         $landlord = Landlord::with(['properties.contracts.tenant', 'company'])->findOrFail($id);
         Gate::authorize('view', $landlord);
 
-        // Récupérer les transactions récentes
-        $transactions = LandlordTransaction::where('landlord_id', $id)
-            ->orderBy('transaction_date', 'desc')
-            ->take(10)
-            ->get();
+        $currentDate = Carbon::now();
 
-        // Récupérer les dépenses récentes
-        $expenses = Expense::whereHas('property', function ($query) use ($landlord) {
-            $query->where('landlord_id', $landlord->id);
-        })
-            ->orderBy('expense_date', 'desc')
-            ->take(10)
-            ->get();
+        // Récupérer toutes les transactions récentes
+        $recentTransactions = $this->getRecentTransactions($landlord, $currentDate);
 
-        // Récupérer les contrats récents
-        $contracts = Contract::whereHas('property', function ($query) use ($landlord) {
-            $query->where('landlord_id', $landlord->id);
-        })
-            ->orderBy('created_at', 'desc')
-            ->take(10)
-            ->get()
-            ->map(function ($contract) {
-                $contract->type = 'contract';
-                if ($contract->commission_amount) {
-                    $contract->sub_type = 'contract_commission';
-                    $contract->amount = $contract->commission_amount;
-                } elseif ($contract->caution_amount) {
-                    $contract->sub_type = 'contract_caution';
-                    $contract->amount = $contract->caution_amount;
-                }
-                $contract->transaction_date = $contract->created_at;
-                return $contract;
-            });
-
-        // Récupérer les paiements récentes
-        $payments = Payment::whereHas('contract.property', function ($query) use ($landlord) {
-            $query->where('landlord_id', $landlord->id);
-        })
-            ->orderBy('payment_date', 'desc')
-            ->take(10)
-            ->get();
-
-        // Fusionner toutes les transactions dans un seul tableau
-        $recentTransactions = $transactions->concat($expenses)->concat($contracts)->concat($payments)->sortByDesc(function ($item) {
-            return $item->transaction_date ?? $item->expense_date ?? $item->created_at ?? $item->payment_date;
-        })->take(10);
-
-        // Ajouter un type par défaut si absent
-        $recentTransactions->each(function ($item) {
-            if (!isset($item->type)) {
-                if ($item instanceof LandlordTransaction) {
-                    $item->type = 'transaction';
-                } elseif ($item instanceof Expense) {
-                    $item->type = 'expense';
-                    $item->transaction_date = $item->expense_date;
-                } elseif ($item instanceof Contract) {
-                    $item->type = 'contract';
-                } elseif ($item instanceof Payment) {
-                    $item->type = 'payment';
-                    $item->transaction_date = $item->payment_date;
-                } else {
-                    $item->type = 'unknown';
-                }
-            }
-        });
-
-        $financialInfo = $this->calculateFinancialInfo($landlord, Carbon::now());
+        // Calculer les informations financières
+        $financialInfo = $this->calculateFinancialInfo($landlord, $currentDate);
 
         return Inertia::render('Landlords/Show', [
             'landlord' => $landlord,
-            'transactions' => $recentTransactions->values(),
+            'transactions' => $recentTransactions,
             'financialInfo' => $financialInfo,
             'company' => $landlord->company,
             'auth' => [
@@ -234,6 +174,78 @@ class LandlordController extends Controller
             ]
         ]);
     }
+
+    private function getRecentTransactions($landlord, $date)
+{
+    $transactions = collect();
+
+    // Transactions du bailleur
+    $transactions = $transactions->concat(
+        LandlordTransaction::where('landlord_id', $landlord->id)
+            ->orderBy('transaction_date', 'desc')
+            ->take(10)
+            ->get()
+            ->map(function ($item) {
+                $item->type = 'transaction';
+                $item->transaction_date = $item->transaction_date;
+                return $item;
+            })
+    );
+
+    // Dépenses
+    $transactions = $transactions->concat(
+        Expense::whereHas('property', function ($query) use ($landlord) {
+            $query->where('landlord_id', $landlord->id);
+        })
+        ->orderBy('expense_date', 'desc')
+        ->take(10)
+        ->get()
+        ->map(function ($item) {
+            $item->type = 'expense';
+            $item->transaction_date = $item->expense_date;
+            return $item;
+        })
+    );
+
+    // Contrats
+    $transactions = $transactions->concat(
+        Contract::whereHas('property', function ($query) use ($landlord) {
+            $query->where('landlord_id', $landlord->id);
+        })
+        ->orderBy('created_at', 'desc')
+        ->take(10)
+        ->get()
+        ->map(function ($item) {
+            $item->type = 'contract';
+            if ($item->commission_amount) {
+                $item->sub_type = 'contract_commission';
+                $item->amount = $item->commission_amount;
+            } elseif ($item->caution_amount) {
+                $item->sub_type = 'contract_caution';
+                $item->amount = $item->caution_amount;
+            }
+            $item->transaction_date = $item->created_at;
+            return $item;
+        })
+    );
+
+    // Paiements
+    $transactions = $transactions->concat(
+        Payment::whereHas('contract.property', function ($query) use ($landlord) {
+            $query->where('landlord_id', $landlord->id);
+        })
+        ->orderBy('payment_date', 'desc')
+        ->take(10)
+        ->get()
+        ->map(function ($item) {
+            $item->type = 'payment';
+            $item->transaction_date = $item->payment_date;
+            return $item;
+        })
+    );
+
+    return $transactions->sortByDesc('transaction_date')->take(10)->values();
+}
 
     public function edit(Landlord $landlord)
     {

@@ -6,6 +6,7 @@ use App\Models\Contract;
 use App\Models\Property;
 use App\Models\Tenant;
 use App\Models\Company;
+use App\Models\Transaction;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -115,12 +116,26 @@ class ContractController extends Controller
             $validated['company_id'] = Auth::user()->company_id;
         }
 
-        Contract::create($validated);
+        $contract = Contract::create($validated);
 
         $landlord->balance += $validated['caution_amount'] - $commissionCaution;
         $landlord->save();
 
         $property->decrementAvailableCount();
+
+        // Créer une transaction pour la caution
+        if (isset($validated['caution_amount']) && $validated['caution_amount'] > 0) {
+            Transaction::create([
+                'date' => $contract->start_date,
+                'amount' => $validated['caution_amount'],
+                'type' => 'DEPOSIT',
+                'description' => 'Caution pour le contrat',
+                'property_id' => $contract->property_id,
+                'landlord_id' => $contract->property->landlord_id,
+                'tenant_id' => $contract->tenant_id,
+                'contract_id' => $contract->id,
+            ]);
+        }
 
         return redirect()->route('contracts.index')->with('success', 'Contrat créé avec succès.');
     }

@@ -6,7 +6,7 @@
 
                 <!-- Boutons de raccourcis -->
                 <div class="flex justify-end mb-8">
-                    <Link href="{{ route('expenses.create') }}" class="btn-primary mr-2">Ajouter une Dépense</Link>
+                    <Link :href="route('expenses.create')" class="btn-primary mr-2">Ajouter une Dépense</Link>
                 </div>
 
                 <!-- Filtres -->

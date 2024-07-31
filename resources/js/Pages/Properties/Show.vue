@@ -146,7 +146,7 @@
                                 Ajouter un locataire
                                 </Link>
 
-                                <!-- Générer rapport
+
                                 <Link
                                     :href="
                                         route('properties.report', property.id)
@@ -156,7 +156,7 @@
                                     <i class="fas fa-file-alt mr-2"></i> Générer
                                     un rapport
                                 </Link>
-                                -->
+
 
                                 <button @click="showDeleteModal = true"
                                     class="flex items-center justify-center w-full bg-red-600 text-white px-4 py-3 rounded-lg font-semibold transition duration-300 ease-in-out hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
