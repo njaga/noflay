@@ -11,7 +11,7 @@
                     @open-add-expense-modal="openAddExpenseModal"
                     @open-add-payment-modal="openAddPaymentModal"
                 />
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mt-8">
                     <div class="col-span-1 md:col-span-2 lg:col-span-2 space-y-8">
                         <FinancialOverview :financialInfo="financialInfo" />
                         <RecentTransactions
@@ -79,7 +79,6 @@
     </AppLayout>
 </template>
 
-
 <script setup>
 import { ref, onMounted } from "vue";
 import { usePage, router } from "@inertiajs/vue3";
@@ -126,13 +125,11 @@ const notificationMessage = ref("");
 const notificationType = ref("");
 
 function viewTransaction(transaction) {
-    console.log('Viewing transaction', transaction);
     selectedTransaction.value = transaction;
     showViewTransactionModal.value = true;
 }
 
 function editTransaction(transaction) {
-    console.log('Editing transaction', transaction);
     selectedTransaction.value = transaction;
     showEditTransactionModal.value = true;
 }
@@ -153,8 +150,7 @@ function deleteTransaction(id) {
             notificationMessage.value = "La transaction a été supprimée avec succès.";
             notificationType.value = "success";
             showNotificationModal.value = true;
-            // Rafraîchir la liste des transactions
-            router.reload({ only: ["transactions"] });
+            router.reload({ only: ["transactions", "financialInfo"] });
         },
         onError: () => {
             notificationTitle.value = "Échec de la suppression";
@@ -164,6 +160,7 @@ function deleteTransaction(id) {
         },
     });
 }
+
 
 function openGenerateMandat() {
     showGenerateMandat.value = true;
@@ -266,7 +263,7 @@ function handleSavedExpense() {
     notificationMessage.value = "La dépense a été enregistrée avec succès.";
     notificationType.value = "success";
     showNotificationModal.value = true;
-    router.reload({ only: ["landlord"] });
+    router.reload({ only: ["landlord", "transactions", "financialInfo"] });
 }
 
 function handleSavedPayment() {
@@ -275,7 +272,7 @@ function handleSavedPayment() {
     notificationMessage.value = "Le paiement a été enregistré avec succès.";
     notificationType.value = "success";
     showNotificationModal.value = true;
-    router.reload({ only: ["landlord"] });
+    router.reload({ only: ["landlord", "transactions", "financialInfo"] });
 }
 
 function formatDate(dateString) {

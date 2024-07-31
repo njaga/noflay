@@ -12,10 +12,14 @@ class Expense extends Model
     protected $fillable = [
         'company_id',
         'property_id',
+        'type',
         'description',
         'amount',
         'expense_date',
     ];
+
+    const VALID_TYPES = ['maintenance', 'frais judiciaires', 'taxes', 'Assurance', 'other'];
+
 
     public function property()
     {

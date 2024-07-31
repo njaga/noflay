@@ -45,9 +45,14 @@
 
                 <div v-else>
                     <div v-if="viewMode === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                        <PropertyCard v-for="property in paginatedProperties" :key="property.id" :property="property"
-                            :auth="auth" @openDeleteModal="openDeleteModal"
-                            @togglePropertyStatus="togglePropertyStatus" />
+                        <PropertyCard
+      v-for="property in properties"
+      :key="property.id"
+      :property="property"
+      :auth="auth"
+      @openDeleteModal="openDeleteModal"
+      @togglePropertyStatus="togglePropertyStatus"
+    />
                     </div>
 
                     <PropertyTable v-else :properties="paginatedProperties" :auth="auth"

@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Expense;
 use App\Models\Property;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 class ExpenseController extends Controller
@@ -20,7 +22,6 @@ class ExpenseController extends Controller
         ]);
     }
 
-
     public function create()
     {
         $properties = Property::where('company_id', Auth::user()->company_id)->get();
@@ -33,17 +34,31 @@ class ExpenseController extends Controller
     {
         $request->validate([
             'property_id' => 'required|exists:properties,id',
+            'type' => 'required|string|in:maintenance,frais judiciaires,taxes,Assurance,other',
             'description' => 'required|string|max:255',
             'amount' => 'required|numeric|min:0',
             'expense_date' => 'required|date',
         ]);
 
-        Expense::create([
+        $expense = Expense::create([
             'company_id' => Auth::user()->company_id,
             'property_id' => $request->property_id,
+            'type' => $request->type,
             'description' => $request->description,
             'amount' => $request->amount,
             'expense_date' => $request->expense_date,
+        ]);
+
+        // Créer une transaction correspondante
+        Transaction::create([
+            'company_id' => Auth::user()->company_id,
+            'expense_id' => $expense->id,
+            'date' => $expense->expense_date,
+            'amount' => -$expense->amount, // Montant négatif pour une dépense
+            'type' => 'EXPENSE',
+            'description' => $expense->description,
+            'property_id' => $expense->property_id,
+            'landlord_id' => $expense->property->landlord_id,
         ]);
 
         return redirect()->route('expenses.index')->with('success', 'Dépense créée avec succès.');
@@ -51,7 +66,7 @@ class ExpenseController extends Controller
 
     public function show(Expense $expense)
     {
-        $this->authorize('view', $expense);
+        Gate :: authorize('view', $expense);
         $expense->load('property');
         return Inertia::render('Expenses/Show', [
             'expense' => $expense,
@@ -60,7 +75,7 @@ class ExpenseController extends Controller
 
     public function edit(Expense $expense)
     {
-        $this->authorize('update', $expense);
+        Gate :: authorize('update', $expense);
         $properties = Property::where('company_id', Auth::user()->company_id)->get();
         return Inertia::render('Expenses/Edit', [
             'expense' => $expense,
@@ -70,10 +85,11 @@ class ExpenseController extends Controller
 
     public function update(Request $request, Expense $expense)
     {
-        $this->authorize('update', $expense);
+        Gate :: authorize('update', $expense);
 
         $request->validate([
             'property_id' => 'required|exists:properties,id',
+            'type' => 'required|string|in:maintenance,frais judiciaires,taxes,Assurance,other',
             'description' => 'required|string|max:255',
             'amount' => 'required|numeric|min:0',
             'expense_date' => 'required|date',
@@ -81,6 +97,7 @@ class ExpenseController extends Controller
 
         $expense->update([
             'property_id' => $request->property_id,
+            'type' => $request->type,
             'description' => $request->description,
             'amount' => $request->amount,
             'expense_date' => $request->expense_date,
@@ -89,9 +106,10 @@ class ExpenseController extends Controller
         return redirect()->route('expenses.index')->with('success', 'Dépense mise à jour avec succès.');
     }
 
+
     public function destroy(Expense $expense)
     {
-        $this->authorize('delete', $expense);
+        Gate :: authorize('delete', $expense);
         $expense->delete();
         return redirect()->route('expenses.index')->with('success', 'Dépense supprimée avec succès.');
     }

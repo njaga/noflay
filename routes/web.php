@@ -92,17 +92,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('properties/{id}/force-delete', [PropertyController::class, 'forceDelete'])->name('properties.forceDelete');
         Route::resource('properties', PropertyController::class);
         Route::get('properties/{property}/report', [PropertyController::class, 'report'])->name('properties.report');
-        Route::put('/properties/{property}', [PropertyController::class, 'update'])->name('properties.update');
-        Route::post('/properties/{property}', [PropertyController::class, 'update'])->name('properties.update');
-        Route::put('/properties/{property}', [PropertyController::class, 'update'])->name('properties.update');
+        Route::match(['put', 'post'], '/properties/{property}', [PropertyController::class, 'update'])->name('properties.update');
 
 
-        // Routes pour la gestion des locataires
         Route::get('tenants/archives', [TenantController::class, 'archives'])->name('tenants.archives');
         Route::post('tenants/{id}/restore', [TenantController::class, 'restore'])->name('tenants.restore');
-        Route::post('tenants/{id}/force-delete', [TenantController::class, 'forceDelete'])->name('tenants.forceDelete');
+        Route::delete('tenants/{id}/force-delete', [TenantController::class, 'forceDelete'])->name('tenants.forceDelete');
         Route::get('tenants/archived/{id}', [TenantController::class, 'showArchived'])->name('tenants.showArchived');
+
+        // Utilisez Route::resource avec l'option 'except' pour exclure les routes que vous définissez manuellement
         Route::resource('tenants', TenantController::class);
+
+        // Définissez manuellement la route de mise à jour pour s'assurer qu'elle utilise la méthode PATCH
+        Route::patch('/tenants/{tenant}', [TenantController::class, 'update'])->name('tenants.update');
+
+        // Route pour la création de compte locataire
+        Route::post('/tenants/{id}/create-account', [TenantAccountController::class, 'createTenantAccount'])->name('tenants.create-account');
 
         // Routes pour la gestion des contrats
         Route::post('contracts/{contract}/restore', [ContractController::class, 'restore'])->name('contracts.restore');
@@ -154,7 +159,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('expenses', ExpenseController::class);
 
         // Routes pour la gestion des transactions
-        Route::resource('transactions', TransactionController::class);
+        Route::get('/transactions/grand-livre', [TransactionController::class, 'grandLivre'])->name('transactions.grand-livre');
+        Route::get('/transactions/ventilation', [TransactionController::class, 'ventilation'])->name('transactions.ventilation');
 
         // Routes pour la gestion des paiements des bailleurs
         Route::resource('landlord-payouts', LandlordPayoutController::class);

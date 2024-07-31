@@ -48,7 +48,7 @@
     auth: Object
   });
 
-  const emit = defineEmits(['openDeleteModal', 'togglePropertyStatus']);
+  const emit = defineEmits(['openDeleteModal', 'togglePropertyStatus', 'close', 'confirm']);
 
   const viewPropertyDetails = (property) => {
     router.get(route('properties.show', property.id));

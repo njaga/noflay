@@ -1,43 +1,46 @@
 <template>
     <div
-        class="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-3xl shadow-2xl overflow-hidden"
+        class="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg shadow-md overflow-hidden"
     >
         <div class="p-8">
-            <h3 class="text-3xl font-extrabold text-indigo-900 mb-8">
-                Détails du contrat
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <h4 class="text-xl font-semibold text-indigo-800 mb-4">
-                        Informations du locataire
+                        Locataire
                     </h4>
                     <p class="flex items-center mb-2">
+                        <i class="bi bi-person-fill text-indigo-600 mr-2"></i>
                         <span class="font-medium mr-2">Nom:</span>
                         {{ contract.tenant.first_name }}
                         {{ contract.tenant.last_name }}
                     </p>
                     <p class="flex items-center mb-2">
+                        <i class="bi bi-envelope-fill text-indigo-600 mr-2"></i>
                         <span class="font-medium mr-2">Email:</span>
                         {{ contract.tenant.email }}
                     </p>
                     <p class="flex items-center mb-2">
+                        <i class="bi bi-telephone-fill text-indigo-600 mr-2"></i>
                         <span class="font-medium mr-2">Téléphone:</span>
                         {{ contract.tenant.phone_number || "N/A" }}
                     </p>
                 </div>
                 <div>
                     <h4 class="text-xl font-semibold text-indigo-800 mb-4">
-                        Informations de la propriété
+                        Propriété
                     </h4>
                     <p class="flex items-center mb-2">
+                        <i class="bi bi-house-fill text-indigo-600 mr-2"></i>
                         <span class="font-medium mr-2">Nom:</span>
                         {{ contract.property.name }}
                     </p>
                     <p class="flex items-center mb-2">
+                        <i class="bi bi-geo-alt-fill text-indigo-600 mr-2"></i>
                         <span class="font-medium mr-2">Adresse:</span>
                         {{ contract.property.address }}
                     </p>
                     <p class="flex items-center mb-2">
+                        <i class="bi bi-building text-indigo-600 mr-2"></i>
                         <span class="font-medium mr-2">Type:</span>
                         {{ contract.property.property_type }}
                     </p>
@@ -62,20 +65,7 @@
                             class="text-indigo-600 hover:text-indigo-800 transition duration-300"
                             title="Télécharger"
                         >
-                            <svg
-                                class="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                                ></path>
-                            </svg>
+                            <i class="bi bi-download"></i>
                         </button>
                         <button
                             @click="
@@ -86,21 +76,7 @@
                             "
                             class="bg-indigo-600 text-white text-sm px-4 py-2 rounded-full hover:bg-indigo-700 transition duration-300 flex items-center"
                         >
-                            <svg
-                                v-if="contract[doc.path]"
-                                class="w-4 h-4 mr-2"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                                ></path>
-                            </svg>
+                            <i v-if="contract[doc.path]" class="bi bi-pencil-fill mr-2"></i>
                             {{ contract[doc.path] ? "Modifier" : "Ajouter" }}
                         </button>
                         <button
@@ -109,20 +85,7 @@
                             class="text-red-600 hover:text-red-800 transition duration-300"
                             title="Supprimer"
                         >
-                            <svg
-                                class="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                ></path>
-                            </svg>
+                            <i class="bi bi-trash-fill"></i>
                         </button>
                     </div>
                 </li>
@@ -212,8 +175,11 @@ const props = defineProps({
         type: Object,
         required: true,
     },
+    totalCommission: {
+        type: Number,
+        required: true,
+    },
 });
-
 const documents = [
     {
         type: "contract_signed",
@@ -369,3 +335,7 @@ const deleteDocument = async () => {
     }
 };
 </script>
+
+<style>
+/* Ajoutez ici les styles personnalisés si nécessaire */
+</style>
