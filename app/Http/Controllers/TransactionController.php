@@ -2,107 +2,53 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Transaction;
-use App\Models\LandlordTransaction;
 use App\Models\Landlord;
 use App\Models\Property;
+use App\Models\Transaction;
+use App\Models\LandlordTransaction;
 use App\Models\Tenant;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
+use Carbon\Carbon;
+use Illuminate\Auth\Middleware\Authorize;
+use Illuminate\Support\Facades\Gate;
 
 class TransactionController extends Controller
 {
-    public function index(Request $request)
-    {
-        $query = Transaction::query();
-
-        // Filtrage
-        if ($request->has('type')) {
-            $query->where('type', $request->type);
-        }
-        if ($request->has('date_from')) {
-            $query->where('date', '>=', $request->date_from);
-        }
-        if ($request->has('date_to')) {
-            $query->where('date', '<=', $request->date_to);
-        }
-
-        // Tri
-        $sortField = $request->input('sort_by', 'date');
-        $sortDirection = $request->input('sort_direction', 'desc');
-        $query->orderBy($sortField, $sortDirection);
-
-        $transactions = $query->paginate(15);
-
-        return Inertia::render('Transactions/Index', [
-            'transactions' => $transactions,
-        ]);
-    }
-
-    public function store(Request $request)
-    {
-        $validatedData = $request->validate([
-            'date' => 'required|date',
-            'amount' => 'required|numeric',
-            'type' => 'required|in:EXPENSE,PAYMENT,DEPOSIT,REFUND,LANDLORD_PAYOUT',
-            'description' => 'nullable|string',
-            'property_id' => 'nullable|exists:properties,id',
-            'landlord_id' => 'nullable|exists:landlords,id',
-            'tenant_id' => 'nullable|exists:tenants,id',
-            'contract_id' => 'nullable|exists:contracts,id',
-            'refund_reason' => 'required_if:type,REFUND|in:' . implode(',', array_keys(Transaction::REFUND_REASONS)),
-        ]);
-
-        $transaction = Transaction::create($validatedData);
-        return response()->json($transaction, 201);
-    }
-
-    public function show(Transaction $transaction)
-    {
-        return Inertia::render('Transactions/Show', [
-            'transaction' => $transaction->load(['property', 'landlord', 'tenant', 'contract']),
-        ]);
-    }
-
-    public function update(Request $request, Transaction $transaction)
-    {
-        $validatedData = $request->validate([
-            'date' => 'required|date',
-            'amount' => 'required|numeric',
-            'type' => 'required|in:EXPENSE,PAYMENT,DEPOSIT,REFUND',
-            'description' => 'nullable|string',
-            'property_id' => 'nullable|exists:properties,id',
-            'landlord_id' => 'nullable|exists:landlords,id',
-            'tenant_id' => 'nullable|exists:tenants,id',
-            'contract_id' => 'nullable|exists:contracts,id',
-        ]);
-
-        $transaction->update($validatedData);
-        return response()->json($transaction);
-    }
-
-    public function destroy(Transaction $transaction)
-    {
-        $transaction->delete();
-        return response()->json(['message' => 'Transaction supprimée avec succès.']);
-    }
-
     public function grandLivre(Request $request)
     {
-        Log::info('Grand Livre request', $request->all());
+        Gate::authorize('viewAny', Transaction::class);
 
+        $user = $request->user();
         $query = Transaction::with(['property', 'landlord', 'tenant']);
         $landlordQuery = LandlordTransaction::with('landlord');
 
+        if (!$user->hasRole('super_admin')) {
+            if ($user->hasRole(['admin_entreprise', 'user_entreprise'])) {
+                $companyId = $user->company_id;
+                $query->whereHas('property', function ($q) use ($companyId) {
+                    $q->where('company_id', $companyId);
+                });
+                $landlordQuery->whereHas('landlord', function ($q) use ($companyId) {
+                    $q->where('company_id', $companyId);
+                });
+            } elseif ($user->hasRole('bailleur')) {
+                $landlordId = $user->landlord_id;
+                $query->where('landlord_id', $landlordId);
+                $landlordQuery->where('landlord_id', $landlordId);
+            }
+        }
+
+        // Appliquer les filtres
         if ($request->filled('type')) {
             if ($request->type === 'LANDLORD_PAYOUT') {
-                $query->whereNull('id'); // Ne retourne aucune transaction normale
+                $query->whereNull('id');
                 $landlordQuery->where('type', 'payout');
             } else {
                 $query->where('type', $request->type);
-                $landlordQuery->whereNull('id'); // Ne retourne aucune transaction de bailleur
+                $landlordQuery->whereNull('id');
             }
         }
 
@@ -145,29 +91,191 @@ class TransactionController extends Controller
             ['path' => $request->url(), 'query' => $request->query()]
         );
 
-        $formattedTransactions = $paginatedTransactions->through(function ($transaction) {
-            return [
-                'id' => $transaction->id,
-                'date' => $transaction instanceof Transaction ? $transaction->date : $transaction->transaction_date,
-                'type' => $transaction instanceof Transaction ? $transaction->type : 'LANDLORD_PAYOUT',
-                'description' => $transaction instanceof Transaction ? $transaction->description : 'Paiement au bailleur',
-                'amount' => $transaction instanceof Transaction ? $transaction->amount : -$transaction->total_amount,
-                'property' => $transaction instanceof Transaction ? $transaction->property : null,
-                'landlord' => $transaction instanceof Transaction ? $transaction->landlord : $transaction->landlord,
-                'tenant' => $transaction instanceof Transaction ? $transaction->tenant : null,
-                'refund_reason' => $transaction instanceof Transaction ? $transaction->refund_reason : null,
-            ];
-        });
-
-        Log::info('Formatted transactions', ['count' => $formattedTransactions->count()]);
-
         return Inertia::render('Transactions/GrandLivre', [
-            'transactions' => $formattedTransactions,
+            'transactions' => $paginatedTransactions,
             'filters' => $request->all(['type', 'date_from', 'date_to', 'landlord_id', 'tenant_id', 'property_id']),
-            'landlords' => Landlord::all(),
-            'tenants' => Tenant::all(),
-            'properties' => Property::all(),
+            'landlords' => $this->getLandlordsForUser($user),
+            'tenants' => $this->getTenantsForUser($user),
+            'properties' => $this->getPropertiesForUser($user),
         ]);
+    }
+
+    public function ventilation(Request $request)
+    {
+        Gate::authorize('viewAny', Transaction::class);
+
+        $user = $request->user();
+        $query = Transaction::query();
+        $landlordQuery = LandlordTransaction::where('type', 'payout');
+        $landlordScope = Landlord::query();
+        $propertyScope = Property::query();
+
+        if (!$user->hasRole('super_admin')) {
+            if ($user->hasRole(['admin_entreprise', 'user_entreprise'])) {
+                $companyId = $user->company_id;
+                $query->whereHas('property', function ($q) use ($companyId) {
+                    $q->where('company_id', $companyId);
+                });
+                $landlordQuery->whereHas('landlord', function ($q) use ($companyId) {
+                    $q->where('company_id', $companyId);
+                });
+                $landlordScope->where('company_id', $companyId);
+                $propertyScope->where('company_id', $companyId);
+            } elseif ($user->hasRole('bailleur')) {
+                $landlordId = $user->landlord_id;
+                $query->where('landlord_id', $landlordId);
+                $landlordQuery->where('landlord_id', $landlordId);
+                $landlordScope->where('id', $landlordId);
+                $propertyScope->where('landlord_id', $landlordId);
+            }
+        }
+
+        // Appliquer les filtres de date
+        $dateRange = $request->input('dateRange', 'all');
+        $startDate = $request->input('startDate');
+        $endDate = $request->input('endDate');
+
+        if ($dateRange !== 'all' && $startDate && $endDate) {
+            $query->whereBetween('date', [$startDate, $endDate]);
+            $landlordQuery->whereBetween('transaction_date', [$startDate, $endDate]);
+        }
+
+        $ventilationByLandlord = $landlordScope
+            ->withSum(['landlordTransactions as transactions_sum_amount' => function ($query) use ($startDate, $endDate) {
+                $query->where('type', 'payout');
+                if ($startDate && $endDate) {
+                    $query->whereBetween('transaction_date', [$startDate, $endDate]);
+                }
+            }], 'total_amount')
+            ->withCount(['landlordTransactions as transactions_count' => function ($query) use ($startDate, $endDate) {
+                $query->where('type', 'payout');
+                if ($startDate && $endDate) {
+                    $query->whereBetween('transaction_date', [$startDate, $endDate]);
+                }
+            }])
+            ->paginate(10, ['*'], 'landlord_page');
+
+        $ventilationByProperty = $propertyScope
+            ->withSum(['transactions as transactions_sum_amount' => function ($query) use ($startDate, $endDate) {
+                if ($startDate && $endDate) {
+                    $query->whereBetween('date', [$startDate, $endDate]);
+                }
+            }], 'amount')
+            ->withCount(['transactions' => function ($query) use ($startDate, $endDate) {
+                if ($startDate && $endDate) {
+                    $query->whereBetween('date', [$startDate, $endDate]);
+                }
+            }])
+            ->paginate(10, ['*'], 'property_page');
+
+        $ventilationByType = $query
+            ->select('type', DB::raw('SUM(amount) as total_amount'), DB::raw('COUNT(*) as transaction_count'))
+            ->groupBy('type')
+            ->get();
+
+        $landlordPayouts = $landlordQuery
+            ->select(DB::raw("'LANDLORD_PAYOUT' as type"), DB::raw('SUM(total_amount) as total_amount'), DB::raw('COUNT(*) as transaction_count'))
+            ->groupBy('type')
+            ->get();
+
+        $ventilationByType = $ventilationByType->concat($landlordPayouts);
+
+        // Évolution mensuelle
+        $monthlyData = $this->getMonthlyData($query, $landlordQuery, $startDate, $endDate);
+
+        return Inertia::render('Transactions/Ventilation', [
+            'ventilationByLandlord' => $ventilationByLandlord,
+            'ventilationByProperty' => $ventilationByProperty,
+            'ventilationByType' => $ventilationByType,
+            'monthlyEvolution' => $monthlyData,
+            'filters' => [
+                'dateRange' => $dateRange,
+                'startDate' => $startDate,
+                'endDate' => $endDate,
+            ],
+        ]);
+    }
+
+    private function getLandlordsForUser($user)
+    {
+        if ($user->hasRole('super_admin')) {
+            return Landlord::all();
+        } elseif ($user->hasRole(['admin_entreprise', 'user_entreprise'])) {
+            return Landlord::where('company_id', $user->company_id)->get();
+        } elseif ($user->hasRole('bailleur')) {
+            return Landlord::where('id', $user->landlord_id)->get();
+        }
+        return collect();
+    }
+
+    private function getTenantsForUser($user)
+    {
+        if ($user->hasRole('super_admin')) {
+            return Tenant::all();
+        } elseif ($user->hasRole(['admin_entreprise', 'user_entreprise'])) {
+            return Tenant::whereHas('property', function ($query) use ($user) {
+                $query->where('company_id', $user->company_id);
+            })->get();
+        } elseif ($user->hasRole('bailleur')) {
+            return Tenant::whereHas('property', function ($query) use ($user) {
+                $query->where('landlord_id', $user->landlord_id);
+            })->get();
+        }
+        return collect();
+    }
+
+    private function getPropertiesForUser($user)
+    {
+        if ($user->hasRole('super_admin')) {
+            return Property::all();
+        } elseif ($user->hasRole(['admin_entreprise', 'user_entreprise'])) {
+            return Property::where('company_id', $user->company_id)->get();
+        } elseif ($user->hasRole('bailleur')) {
+            return Property::where('landlord_id', $user->landlord_id)->get();
+        }
+        return collect();
+    }
+
+    private function getMonthlyData($transactionQuery, $landlordPayoutQuery, $startDate, $endDate)
+    {
+        $startDate = $startDate ? Carbon::parse($startDate) : Carbon::now()->startOfYear();
+        $endDate = $endDate ? Carbon::parse($endDate) : Carbon::now();
+
+        $months = [];
+        $current = $startDate->copy()->startOfMonth();
+        while ($current <= $endDate) {
+            $months[] = $current->format('Y-m');
+            $current->addMonth();
+        }
+
+        $monthlyTransactions = $transactionQuery->selectRaw('YEAR(date) as year, MONTH(date) as month, SUM(CASE WHEN amount >= 0 THEN amount ELSE 0 END) as revenue, SUM(CASE WHEN amount < 0 THEN ABS(amount) ELSE 0 END) as expense')
+            ->whereBetween('date', [$startDate, $endDate])
+            ->groupBy(DB::raw('YEAR(date)'), DB::raw('MONTH(date)'))
+            ->get()
+            ->keyBy(function ($item) {
+                return Carbon::createFromDate($item->year, $item->month)->format('Y-m');
+            });
+
+        $landlordPayouts = $landlordPayoutQuery->selectRaw('YEAR(transaction_date) as year, MONTH(transaction_date) as month, SUM(total_amount) as payout')
+            ->whereBetween('transaction_date', [$startDate, $endDate])
+            ->groupBy(DB::raw('YEAR(transaction_date)'), DB::raw('MONTH(transaction_date)'))
+            ->get()
+            ->keyBy(function ($item) {
+                return Carbon::createFromDate($item->year, $item->month)->format('Y-m');
+            });
+
+        $monthlyData = [];
+        foreach ($months as $month) {
+            $transaction = $monthlyTransactions->get($month, null);
+            $payout = $landlordPayouts->get($month, null);
+            $monthlyData[] = [
+                'date' => $month,
+                'revenue' => $transaction ? $transaction->revenue : 0,
+                'expense' => ($transaction ? $transaction->expense : 0) + ($payout ? $payout->payout : 0),
+            ];
+        }
+
+        return $monthlyData;
     }
 
     public function export(Request $request)
@@ -238,39 +346,4 @@ class TransactionController extends Controller
         }
     }
 
-
-    public function ventilation(Request $request)
-    {
-        $ventilationByLandlord = Landlord::withSum('transactions', 'amount')
-            ->withCount('transactions')
-            ->paginate(10, ['*'], 'landlord_page');
-
-        $ventilationByProperty = Property::withSum('transactions', 'amount')
-            ->withCount('transactions')
-            ->paginate(10, ['*'], 'property_page');
-
-        $ventilationByType = Transaction::select('type', DB::raw('SUM(amount) as total_amount'), DB::raw('COUNT(*) as transaction_count'))
-            ->groupBy('type')
-            ->get();
-
-        $landlordPayouts = LandlordTransaction::where('type', 'payout')
-            ->select(DB::raw("'LANDLORD_PAYOUT' as type"), DB::raw('SUM(total_amount) as total_amount'), DB::raw('COUNT(*) as transaction_count'))
-            ->groupBy('type')
-            ->get();
-
-        $ventilationByType = $ventilationByType->concat($landlordPayouts);
-
-        // Ajout de logs pour le débogage
-        Log::info('Ventilation data:', [
-            'landlords' => $ventilationByLandlord->toArray(),
-            'properties' => $ventilationByProperty->toArray(),
-            'types' => $ventilationByType->toArray()
-        ]);
-
-        return Inertia::render('Transactions/Ventilation', [
-            'ventilationByLandlord' => $ventilationByLandlord,
-            'ventilationByProperty' => $ventilationByProperty,
-            'ventilationByType' => $ventilationByType,
-        ]);
-    }
 }

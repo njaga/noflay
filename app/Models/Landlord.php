@@ -105,4 +105,9 @@ class Landlord extends Model
             });
         });
     }
+
+    public function landlordTransactions()
+{
+    return $this->hasMany(LandlordTransaction::class);
+}
 }
