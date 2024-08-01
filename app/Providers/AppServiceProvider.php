@@ -16,9 +16,11 @@ use App\Policies\CompanyPolicy;
 use App\Policies\ContractPolicy;
 use App\Policies\LandlordPayoutPolicy;
 use App\Policies\LandlordPolicy;
+use App\Policies\LandlordTransactionPolicy;
 use App\Policies\PaymentPolicy;
 use App\Policies\PropertyPolicy;
 use App\Policies\TenantPolicy;
+use App\Policies\TransactionPolicy;
 use Illuminate\Support\Facades\Schema;
 
 class AppServiceProvider extends ServiceProvider
@@ -39,5 +41,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Contract::class, ContractPolicy::class);
         Gate::policy(Payment::class, PaymentPolicy::class);
         Gate::policy(LandlordPayout::class, LandlordPayoutPolicy::class);
+        Gate::policy(LandlordTransactionPolicy::class, LandlordTransactionPolicy::class);
+        Gate::policy(TransactionPolicy::class, TransactionPolicy::class);
+        
     }
 }

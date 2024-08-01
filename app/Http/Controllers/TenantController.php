@@ -141,12 +141,19 @@ class TenantController extends Controller
         // Récupérer et formater les pièces jointes
         $attachments = [];
         if ($tenant->attachments) {
-            $attachmentsData = json_decode($tenant->attachments, true);
-            foreach ($attachmentsData as $attachment) {
-                $attachments[] = [
-                    'name' => $attachment['name'],
-                    'url' => Storage::url($attachment['path']),
-                ];
+            // Vérifier si $tenant->attachments est déjà un tableau
+            $attachmentsData = is_array($tenant->attachments)
+                ? $tenant->attachments
+                : json_decode($tenant->attachments, true);
+
+            // Vérifier si le décodage a réussi
+            if (is_array($attachmentsData)) {
+                foreach ($attachmentsData as $attachment) {
+                    $attachments[] = [
+                        'name' => $attachment['name'],
+                        'url' => Storage::url($attachment['path']),
+                    ];
+                }
             }
         }
 

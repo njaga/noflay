@@ -36,7 +36,9 @@
 
             <!-- Filtres -->
             <div class="bg-white shadow rounded-lg p-6 mb-6">
-                <h2 class="text-xl font-semibold text-gray-800 mb-4">Filtres</h2>
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                    Filtres
+                </h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label for="dateRange" class="block text-sm font-medium text-gray-700">Période</label>
@@ -53,12 +55,12 @@
                     <div v-if="filters.dateRange === 'custom'">
                         <label for="startDate" class="block text-sm font-medium text-gray-700">Date de début</label>
                         <input type="date" v-model="filters.startDate" id="startDate"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" />
                     </div>
                     <div v-if="filters.dateRange === 'custom'">
                         <label for="endDate" class="block text-sm font-medium text-gray-700">Date de fin</label>
                         <input type="date" v-model="filters.endDate" id="endDate"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" />
                     </div>
                 </div>
                 <div class="mt-4">
@@ -69,23 +71,24 @@
                 </div>
             </div>
 
-
             <!-- Graphiques -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div class="bg-white shadow rounded-lg p-6">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                        Répartition par Type
-                    </h2>
-                    <div style="height: 300px">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Répartition par Type</h2>
+                    <div v-if="typeChartData.datasets[0].data.length > 0" style="height: 300px;">
                         <PieChart :chart-data="typeChartData" :options="pieChartOptions" />
+                    </div>
+                    <div v-else class="flex items-center justify-center h-full">
+                        <p class="text-gray-500">Aucune donnée disponible</p>
                     </div>
                 </div>
                 <div class="bg-white shadow rounded-lg p-6">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                        Évolution Mensuelle
-                    </h2>
-                    <div style="height: 300px">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Évolution Mensuelle</h2>
+                    <div v-if="monthlyChartData.labels.length > 0" style="height: 300px;">
                         <LineChart :chart-data="monthlyChartData" :options="lineChartOptions" />
+                    </div>
+                    <div v-else class="flex items-center justify-center h-full">
+                        <p class="text-gray-500">Aucune donnée disponible</p>
                     </div>
                 </div>
             </div>
@@ -201,59 +204,82 @@ const page = usePage();
 const props = defineProps({
     ventilationByLandlord: {
         type: Object,
-        default: () => ({}),
+        default: () => ({})
     },
     ventilationByProperty: {
         type: Object,
-        default: () => ({}),
+        default: () => ({})
     },
     ventilationByType: {
         type: Array,
-        default: () => [],
+        default: () => []
     },
+    monthlyEvolution: {
+        type: Array,
+        default: () => []
+    },
+    filters: {
+        type: Object,
+        default: () => ({})
+    }
 });
 
 const filters = reactive({
-  dateRange: 'all',
-  startDate: '',
-  endDate: '',
+    dateRange: "all",
+    startDate: "",
+    endDate: "",
 });
 
 const updateDateRange = () => {
-  const today = new Date();
-  switch (filters.dateRange) {
-    case 'today':
-      filters.startDate = today.toISOString().split('T')[0];
-      filters.endDate = today.toISOString().split('T')[0];
-      break;
-    case 'thisWeek':
-      const firstDayOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
-      filters.startDate = firstDayOfWeek.toISOString().split('T')[0];
-      filters.endDate = new Date().toISOString().split('T')[0];
-      break;
-    case 'thisMonth':
-      filters.startDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
-      filters.endDate = new Date().toISOString().split('T')[0];
-      break;
-    case 'thisYear':
-      filters.startDate = new Date(today.getFullYear(), 0, 1).toISOString().split('T')[0];
-      filters.endDate = new Date().toISOString().split('T')[0];
-      break;
-    case 'custom':
-      // Les dates seront définies manuellement par l'utilisateur
-      break;
-    default:
-      filters.startDate = '';
-      filters.endDate = '';
-  }
+    const today = new Date();
+    switch (filters.dateRange) {
+        case "today":
+            filters.startDate = today.toISOString().split("T")[0];
+            filters.endDate = today.toISOString().split("T")[0];
+            break;
+        case "thisWeek":
+            const firstDayOfWeek = new Date(
+                today.setDate(today.getDate() - today.getDay())
+            );
+            filters.startDate = firstDayOfWeek.toISOString().split("T")[0];
+            filters.endDate = new Date().toISOString().split("T")[0];
+            break;
+        case "thisMonth":
+            filters.startDate = new Date(
+                today.getFullYear(),
+                today.getMonth(),
+                1
+            )
+                .toISOString()
+                .split("T")[0];
+            filters.endDate = new Date().toISOString().split("T")[0];
+            break;
+        case "thisYear":
+            filters.startDate = new Date(today.getFullYear(), 0, 1)
+                .toISOString()
+                .split("T")[0];
+            filters.endDate = new Date().toISOString().split("T")[0];
+            break;
+        case "custom":
+            // Les dates seront définies manuellement par l'utilisateur
+            break;
+        default:
+            filters.startDate = "";
+            filters.endDate = "";
+    }
 };
 
 const applyFilters = () => {
-  router.get('/transactions/ventilation', filters, {
-    preserveState: true,
-    preserveScroll: true,
-    only: ['ventilationByLandlord', 'ventilationByProperty', 'ventilationByType'],
-  });
+    router.get("/transactions/ventilation", filters, {
+        preserveState: true,
+        preserveScroll: true,
+        only: [
+            "ventilationByLandlord",
+            "ventilationByProperty",
+            "ventilationByType",
+            "monthlyEvolution",
+        ],
+    });
 };
 
 const ventilationByLandlordArray = computed(() => {
@@ -334,62 +360,53 @@ const totalExpenses = computed(() => {
 });
 
 const typeChartData = computed(() => {
+    if (!props.ventilationByType || props.ventilationByType.length === 0) {
+        return {
+            labels: [],
+            datasets: [{ data: [] }]
+        };
+    }
     return {
-        labels: ventilationByType.value.map((item) => item.type),
-        datasets: [
-            {
-                data: ventilationByType.value.map((item) =>
-                    Math.abs(item.total_amount)
-                ),
-                backgroundColor: [
-                    "#4CAF50",
-                    "#2196F3",
-                    "#FFC107",
-                    "#F44336",
-                    "#9C27B0",
-                ],
-            },
-        ],
+        labels: props.ventilationByType.map(item => translateTransactionType(item.type)),
+        datasets: [{
+            data: props.ventilationByType.map(item => Math.abs(parseFloat(item.total_amount))),
+            backgroundColor: [
+                '#4CAF50', '#2196F3', '#FFC107', '#F44336', '#9C27B0'
+            ],
+        }]
     };
 });
 
 const monthlyChartData = computed(() => {
-    // Simuler des données mensuelles (à remplacer par de vraies données)
-    const months = [
-        "Jan",
-        "Fév",
-        "Mar",
-        "Avr",
-        "Mai",
-        "Juin",
-        "Juil",
-        "Août",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Déc",
-    ];
-    const revenues = months.map(() => Math.floor(Math.random() * 10000));
-    const expenses = months.map(() => Math.floor(Math.random() * 8000));
+    if (!props.monthlyEvolution || props.monthlyEvolution.length === 0) {
+        return {
+            labels: [],
+            datasets: []
+        };
+    }
+    const months = props.monthlyEvolution.map(item => item.date);
+    const revenues = props.monthlyEvolution.map(item => item.revenue);
+    const expenses = props.monthlyEvolution.map(item => item.expense);
 
     return {
         labels: months,
         datasets: [
             {
-                label: "Revenus",
+                label: 'Revenus',
                 data: revenues,
-                borderColor: "#4CAF50",
-                backgroundColor: "rgba(76, 175, 80, 0.1)",
+                borderColor: '#4CAF50',
+                backgroundColor: 'rgba(76, 175, 80, 0.1)',
             },
             {
-                label: "Dépenses",
+                label: 'Dépenses',
                 data: expenses,
-                borderColor: "#F44336",
-                backgroundColor: "rgba(244, 67, 54, 0.1)",
-            },
-        ],
+                borderColor: '#F44336',
+                backgroundColor: 'rgba(244, 67, 54, 0.1)',
+            }
+        ]
     };
 });
+
 
 const pieChartOptions = {
     responsive: true,
@@ -449,21 +466,24 @@ const formatCurrency = (value) => {
     return new Intl.NumberFormat("fr-FR", {
         style: "currency",
         currency: "XOF",
-    }).format(value || 0);
+    }).format(Math.abs(value) || 0);
 };
 
 onMounted(() => {
-  // Initialiser les filtres avec les valeurs de l'URL si elles existent
-  const urlParams = new URLSearchParams(window.location.search);
-  filters.dateRange = urlParams.get('dateRange') || 'all';
-  filters.startDate = urlParams.get('startDate') || '';
-  filters.endDate = urlParams.get('endDate') || '';
+    // Initialiser les filtres avec les valeurs de l'URL si elles existent
+    const urlParams = new URLSearchParams(window.location.search);
+    filters.dateRange = urlParams.get("dateRange") || "all";
+    filters.startDate = urlParams.get("startDate") || "";
+    filters.endDate = urlParams.get("endDate") || "";
 
-  if (filters.dateRange !== 'custom') {
-    updateDateRange();
-  }
+    if (filters.dateRange !== "custom") {
+        updateDateRange();
+    }
+
+    console.log("ventilationByLandlord:", props.ventilationByLandlord);
+    console.log("ventilationByProperty:", props.ventilationByProperty);
+    console.log("ventilationByType:", props.ventilationByType);
 });
-
 </script>
 
 <style scoped>
