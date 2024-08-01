@@ -1,6 +1,6 @@
+<h1 align="center">NOFLAY</h1>
 <p align="center">
-    <strong>NOFLAY</strong><br>
-    La solution pratique pour une gestion immobilière efficace et sans stress.
+    <strong>La solution pratique pour une gestion immobilière efficace et sans stress.</strong>
 </p>
 
 <p align="center">
