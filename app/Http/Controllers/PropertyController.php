@@ -7,6 +7,8 @@ use App\Models\Landlord;
 use App\Models\Company;
 use App\Models\Payment;
 use App\Models\Contract;
+use App\Models\Expense;
+use App\Models\LandlordTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -276,7 +278,7 @@ class PropertyController extends Controller
 
     public function report($id)
     {
-        $property = Property::with('contracts.tenant')->findOrFail($id);
+        $property = Property::with(['contracts.tenant', 'landlord', 'company'])->findOrFail($id);
 
         $cautionAmounts = Contract::where('property_id', $id)->sum('caution_amount');
         $rentAmounts = Contract::where('property_id', $id)->sum('rent_amount');
@@ -285,12 +287,52 @@ class PropertyController extends Controller
         })->sum('amount');
         $commissionAmounts = Contract::where('property_id', $id)->sum('commission_amount');
 
+        // Revenus mensuels pour l'année en cours
+        $monthlyRevenues = Payment::whereHas('contract', function ($query) use ($id) {
+            $query->where('property_id', $id);
+        })
+            ->whereYear('payment_date', date('Y'))
+            ->selectRaw('MONTH(payment_date) as month, SUM(amount) as total')
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get()
+            ->pluck('total', 'month')
+            ->toArray();
+
+        // Remplir les mois manquants avec des zéros
+        $revenueData = array_replace(array_fill(1, 12, 0), $monthlyRevenues);
+
+        // Récupérer les paiements
+        $payments = Payment::whereHas('contract', function ($query) use ($id) {
+            $query->where('property_id', $id);
+        })
+            ->with('tenant:id,first_name,last_name')
+            ->orderBy('payment_date', 'desc')
+            ->get();
+
+        // Récupérer les versements (payouts)
+        $payouts = LandlordTransaction::whereHas('landlord', function ($query) use ($property) {
+            $query->where('id', $property->landlord_id);
+        })
+            ->where('type', 'payout')
+            ->orderBy('transaction_date', 'desc')
+            ->get();
+
+        // Récupérer les dépenses
+        $expenses = Expense::where('property_id', $id)
+            ->orderBy('expense_date', 'desc')
+            ->get();
+
         return Inertia::render('Properties/Report', [
             'property' => $property,
             'cautionAmounts' => $cautionAmounts,
             'rentAmounts' => $rentAmounts,
             'totalPayments' => $totalPayments,
             'commissionAmounts' => $commissionAmounts,
+            'revenueData' => array_values($revenueData),
+            'payments' => $payments,
+            'payouts' => $payouts,
+            'expenses' => $expenses,
         ]);
     }
 

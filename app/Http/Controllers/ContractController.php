@@ -269,13 +269,21 @@ class ContractController extends Controller
             abort(403, 'This action is unauthorized.');
         }
 
-        $rentCommission = $contract->rent_amount * ($contract->property->landlord->agency_percentage / 100);
-        $cautionCommission = $contract->caution_amount * ($contract->property->landlord->agency_percentage / 100);
+        // Récupérer le pourcentage d'agence, même si la propriété ou le bailleur ont été supprimés
+        $agencyPercentage = $contract->property?->landlord?->agency_percentage ?? 0;
+
+        $rentCommission = $contract->rent_amount * ($agencyPercentage / 100);
+        $cautionCommission = $contract->caution_amount * ($agencyPercentage / 100);
         $totalCommission = $rentCommission + $cautionCommission;
 
         return Inertia::render('Contracts/ShowArchived', [
             'contract' => $contract,
+            'rentCommission' => $rentCommission,
+            'cautionCommission' => $cautionCommission,
             'totalCommission' => $totalCommission,
+            'propertyName' => $contract->property?->name ?? 'Propriété supprimée',
+            'propertyAddress' => $contract->property?->address ?? 'N/A',
+            'landlordName' => $contract->property?->landlord?->name ?? 'Bailleur supprimé',
         ]);
     }
 

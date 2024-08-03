@@ -12,22 +12,12 @@
                         <div class="mb-8">
                             <nav class="flex space-x-4" aria-label="Tabs">
                                 <button
-                                    @click="activeTab = 'apercu'"
-                                    :class="tabClass('apercu')"
+                                    v-for="tab in tabs"
+                                    :key="tab.name"
+                                    @click="activeTab = tab.name"
+                                    :class="tabClass(tab.name)"
                                 >
-                                    Aperçu
-                                </button>
-                                <button
-                                    @click="activeTab = 'statistiques'"
-                                    :class="tabClass('statistiques')"
-                                >
-                                    Statistiques
-                                </button>
-                                <button
-                                    @click="activeTab = 'proprietes'"
-                                    :class="tabClass('proprietes')"
-                                >
-                                    Propriétés
+                                    {{ tab.label }}
                                 </button>
                             </nav>
                         </div>
@@ -38,32 +28,13 @@
                                 class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
                             >
                                 <StatCard
-                                    title="Utilisateurs"
-                                    :value="users.length"
-                                    icon="users"
-                                    color="bg-blue-500"
-                                    link="/users"
-                                />
-                                <StatCard
-                                    title="Contrats"
-                                    :value="contracts.length"
-                                    icon="file-text"
-                                    color="bg-green-500"
-                                    link="/contracts"
-                                />
-                                <StatCard
-                                    title="Propriétés"
-                                    :value="properties.length"
-                                    icon="home"
-                                    color="bg-yellow-500"
-                                    link="/properties"
-                                />
-                                <StatCard
-                                    title="Locataires"
-                                    :value="tenants.length"
-                                    icon="user-check"
-                                    color="bg-purple-500"
-                                    link="/tenants"
+                                    v-for="stat in overviewStats"
+                                    :key="stat.title"
+                                    :title="stat.title"
+                                    :value="stat.value"
+                                    :icon="stat.icon"
+                                    :color="stat.color"
+                                    :link="stat.link"
                                 />
                             </div>
                             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -73,113 +44,75 @@
                                     />
                                 </ChartCard>
                                 <ChartCard title="Répartition des Propriétés">
-                                    <PieChart
+                                    <DoughnutChart
                                         :chart-data="propertyTypesChartData"
                                     />
                                 </ChartCard>
                             </div>
                         </div>
 
-                        <div v-if="activeTab === 'statistiques'">
+                        <div v-if="activeTab === 'utilisateurs'">
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                <ChartCard title="Évolution des Utilisateurs">
+                                    <AreaChart
+                                        :chart-data="userGrowthChartData"
+                                    />
+                                </ChartCard>
+                                <ChartCard title="Évolution des Bailleurs">
+                                    <BarChart :chart-data="landlordChartData" />
+                                </ChartCard>
+                                <ChartCard title="Évolution des Locataires">
+                                    <LineChart :chart-data="tenantChartData" />
+                                </ChartCard>
+                                <ChartCard title="Répartition des Utilisateurs">
+                                    <PolarAreaChart
+                                        :chart-data="userDistributionChartData"
+                                    />
+                                </ChartCard>
+                            </div>
+                        </div>
+
+                        <div v-if="activeTab === 'finances'">
                             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                 <ChartCard title="Revenus Mensuels">
                                     <BarChart :chart-data="revenueChartData" />
                                 </ChartCard>
+                                <ChartCard title="Commissions Reçues">
+                                    <LineChart
+                                        :chart-data="commissionChartData"
+                                    />
+                                </ChartCard>
+                                <ChartCard title="Retards de Paiement">
+                                    <ScatterChart
+                                        :chart-data="latePaymentChartData"
+                                    />
+                                </ChartCard>
+                                <ChartCard title="Évolution des Dépenses">
+                                    <AreaChart :chart-data="expenseChartData" />
+                                </ChartCard>
+                            </div>
+                        </div>
+
+                        <div v-if="activeTab === 'proprietes'">
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                 <ChartCard title="Taux d'Occupation">
                                     <LineChart
                                         :chart-data="occupancyRateChartData"
                                     />
                                 </ChartCard>
                                 <ChartCard title="Répartition des Dépenses">
-                                    <PieChart
-                                        :chart-data="expenseDistributionChartData"
-                                    />
-                                </ChartCard>
-                                <ChartCard title="Évolution des Utilisateurs">
-                                    <LineChart
-                                        :chart-data="userGrowthChartData"
+                                    <RadarChart
+                                        :chart-data="
+                                            expenseDistributionChartData
+                                        "
                                     />
                                 </ChartCard>
                             </div>
-                        </div>
-
-                        <div v-if="activeTab === 'proprietes'">
-                            <div class="bg-white rounded-lg shadow-md p-6">
+                            <div class="mt-8">
                                 <h3 class="text-xl font-semibold mb-4">
                                     Propriétés Récentes
                                 </h3>
-                                <div class="overflow-x-auto">
-                                    <table
-                                        class="min-w-full divide-y divide-gray-200"
-                                    >
-                                        <thead class="bg-gray-50">
-                                            <tr>
-                                                <th
-                                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                                >
-                                                    Nom
-                                                </th>
-                                                <th
-                                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                                >
-                                                    Adresse
-                                                </th>
-                                                <th
-                                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                                >
-                                                    Loyer
-                                                </th>
-                                                <th
-                                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                                >
-                                                    Statut
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody
-                                            class="bg-white divide-y divide-gray-200"
-                                        >
-                                            <tr
-                                                v-for="property in recentProperties"
-                                                :key="property.id"
-                                            >
-                                                <td
-                                                    class="px-6 py-4 whitespace-nowrap"
-                                                >
-                                                    {{ property.name }}
-                                                </td>
-                                                <td
-                                                    class="px-6 py-4 whitespace-nowrap"
-                                                >
-                                                    {{ property.address }}
-                                                </td>
-                                                <td
-                                                    class="px-6 py-4 whitespace-nowrap"
-                                                >
-                                                    {{
-                                                        formatCurrency(
-                                                            property.price
-                                                        )
-                                                    }}
-                                                </td>
-                                                <td
-                                                    class="px-6 py-4 whitespace-nowrap"
-                                                >
-                                                    <span
-                                                        :class="
-                                                            statusClass(
-                                                                property.status
-                                                            )
-                                                        "
-                                                        >{{
-                                                            property.status
-                                                        }}</span
-                                                    >
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
+                                <PropertyTable :properties="recentProperties" />
                             </div>
                         </div>
                     </div>
@@ -196,8 +129,13 @@ import AppLayout from "@/Layouts/AppLayout.vue";
 import StatCard from "@/Components/StatCard.vue";
 import ChartCard from "@/Components/ChartCard.vue";
 import LineChart from "@/Components/Charts/LineChart.vue";
-import PieChart from "@/Components/Charts/PieChart.vue";
 import BarChart from "@/Components/Charts/BarChart.vue";
+import DoughnutChart from "@/Components/Charts/DoughnutChart.vue";
+import AreaChart from "@/Components/Charts/AreaChart.vue";
+import ScatterChart from "@/Components/Charts/ScatterChart.vue";
+import RadarChart from "@/Components/Charts/RadarChart.vue";
+import PolarAreaChart from "@/Components/Charts/PolarAreaChart.vue";
+import PropertyTable from "@/Components/PropertyTable.vue";
 
 const { props } = usePage();
 const activeTab = ref("apercu");
@@ -207,9 +145,47 @@ const users = ref(props.users || []);
 const contracts = ref(props.contracts || []);
 const properties = ref(props.properties || []);
 const tenants = ref(props.tenants || []);
+
+const tabs = [
+    { name: "apercu", label: "Aperçu" },
+    { name: "utilisateurs", label: "Utilisateurs" },
+    { name: "finances", label: "Finances" },
+    { name: "proprietes", label: "Propriétés" },
+];
+
+const overviewStats = computed(() => [
+    {
+        title: "Utilisateurs",
+        value: users.value.length,
+        icon: "users",
+        color: "bg-blue-500",
+        link: "/users",
+    },
+    {
+        title: "Contrats",
+        value: contracts.value.length,
+        icon: "file-text",
+        color: "bg-green-500",
+        link: "/contracts",
+    },
+    {
+        title: "Propriétés",
+        value: properties.value.length,
+        icon: "home",
+        color: "bg-yellow-500",
+        link: "/properties",
+    },
+    {
+        title: "Locataires",
+        value: tenants.value.length,
+        icon: "user-check",
+        color: "bg-purple-500",
+        link: "/tenants",
+    },
+]);
+
 const recentProperties = computed(() => properties.value.slice(0, 5));
 
-// Correction du graphique "Évolution des Contrats"
 const contractChartData = computed(() => ({
     labels: props.contractStats.labels,
     datasets: [
@@ -240,9 +216,21 @@ const propertyTypesChartData = computed(() => ({
     ],
 }));
 
-// Nouveaux graphiques
 const revenueChartData = computed(() => ({
-    labels: ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"],
+    labels: [
+        "Jan",
+        "Fév",
+        "Mar",
+        "Avr",
+        "Mai",
+        "Jun",
+        "Jul",
+        "Aoû",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Déc",
+    ],
     datasets: [
         {
             label: "Revenus",
@@ -253,7 +241,20 @@ const revenueChartData = computed(() => ({
 }));
 
 const occupancyRateChartData = computed(() => ({
-    labels: ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"],
+    labels: [
+        "Jan",
+        "Fév",
+        "Mar",
+        "Avr",
+        "Mai",
+        "Jun",
+        "Jul",
+        "Aoû",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Déc",
+    ],
     datasets: [
         {
             label: "Taux d'Occupation",
@@ -266,24 +267,21 @@ const occupancyRateChartData = computed(() => ({
     ],
 }));
 
-const expenseDistributionChartData = computed(() => ({
-    labels: props.expenseDistributionStats.labels,
-    datasets: [
-        {
-            data: props.expenseDistributionStats.data,
-            backgroundColor: [
-                "#FF6384",
-                "#36A2EB",
-                "#FFCE56",
-                "#4BC0C0",
-                "#9966FF",
-            ],
-        },
-    ],
-}));
-
 const userGrowthChartData = computed(() => ({
-    labels: ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"],
+    labels: [
+        "Jan",
+        "Fév",
+        "Mar",
+        "Avr",
+        "Mai",
+        "Jun",
+        "Jul",
+        "Aoû",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Déc",
+    ],
     datasets: [
         {
             label: "Nouveaux Utilisateurs",
@@ -292,6 +290,176 @@ const userGrowthChartData = computed(() => ({
             backgroundColor: "rgba(75, 192, 192, 0.2)",
             tension: 0.1,
             fill: true,
+        },
+    ],
+}));
+
+const landlordChartData = computed(() => ({
+    labels: [
+        "Jan",
+        "Fév",
+        "Mar",
+        "Avr",
+        "Mai",
+        "Jun",
+        "Jul",
+        "Aoû",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Déc",
+    ],
+    datasets: [
+        {
+            label: "Nouveaux Bailleurs",
+            data: props.landlordStats.data,
+            backgroundColor: "rgba(153, 102, 255, 0.5)",
+            borderColor: "rgba(153, 102, 255, 1)",
+            borderWidth: 1,
+        },
+    ],
+}));
+
+const tenantChartData = computed(() => ({
+    labels: [
+        "Jan",
+        "Fév",
+        "Mar",
+        "Avr",
+        "Mai",
+        "Jun",
+        "Jul",
+        "Aoû",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Déc",
+    ],
+    datasets: [
+        {
+            label: "Nouveaux Locataires",
+            data: props.tenantStats.data,
+            borderColor: "rgba(255, 159, 64, 1)",
+            backgroundColor: "rgba(255, 159, 64, 0.2)",
+            tension: 0.1,
+            fill: true,
+        },
+    ],
+}));
+
+const commissionChartData = computed(() => ({
+    labels: [
+        "Jan",
+        "Fév",
+        "Mar",
+        "Avr",
+        "Mai",
+        "Jun",
+        "Jul",
+        "Aoû",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Déc",
+    ],
+    datasets: [
+        {
+            label: "Commissions Reçues",
+            data: props.commissionStats.data,
+            borderColor: "rgba(255, 206, 86, 1)",
+            backgroundColor: "rgba(255, 206, 86, 0.2)",
+            tension: 0.1,
+            fill: true,
+        },
+    ],
+}));
+
+const latePaymentChartData = computed(() => ({
+    datasets: [
+        {
+            label: "Retards de Paiement",
+            data: props.latePaymentStats.data.map((value, index) => ({
+                x: index + 1,
+                y: value,
+                r: Math.sqrt(value) * 2, // La taille du point dépend de la racine carrée de la valeur pour une meilleure visualisation
+            })),
+            backgroundColor: "rgba(255, 99, 132, 0.5)",
+        },
+    ],
+}));
+
+const expenseChartData = computed(() => ({
+    labels: [
+        "Jan",
+        "Fév",
+        "Mar",
+        "Avr",
+        "Mai",
+        "Jun",
+        "Jul",
+        "Aoû",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Déc",
+    ],
+    datasets: [
+        {
+            label: "Dépenses",
+            data: props.expenseStats.data,
+            borderColor: "rgba(54, 162, 235, 1)",
+            backgroundColor: "rgba(54, 162, 235, 0.2)",
+            tension: 0.1,
+            fill: true,
+        },
+    ],
+}));
+
+const expenseDistributionChartData = computed(() => ({
+    labels: props.expenseDistributionStats.labels,
+    datasets: [
+        {
+            label: "Répartition des Dépenses",
+            data: props.expenseDistributionStats.data,
+            backgroundColor: "rgba(54, 162, 235, 0.2)",
+            borderColor: "rgb(54, 162, 235)",
+            pointBackgroundColor: "rgb(54, 162, 235)",
+        },
+    ],
+}));
+
+const userDistributionChartData = computed(() => ({
+    labels: [
+        "Administrateur",
+        "Utilisateur",
+        "Bailleur",
+        "Locataire",
+        "Autres",
+    ],
+    datasets: [
+        {
+            data: [
+                users.value.filter((u) => u.role === "admin_entreprise").length,
+                users.value.filter((u) => u.role === "user_entreprise").length,
+                users.value.filter((u) => u.role === "bailleur").length,
+                users.value.filter((u) => u.role === "locataire").length,
+                users.value.filter(
+                    (u) =>
+                        ![
+                            "admin_entreprise",
+                            "user_entreprise",
+                            "bailleur",
+                            "locataire",
+                        ].includes(u.role)
+                ).length,
+            ],
+            backgroundColor: [
+                "#FF6384",
+                "#36A2EB",
+                "#FFCE56",
+                "#4BC0C0",
+                "#9966FF",
+            ],
         },
     ],
 }));
@@ -309,16 +477,5 @@ const formatCurrency = (value) => {
         style: "currency",
         currency: "XOF",
     }).format(value);
-};
-
-const statusClass = (status) => {
-    const classes = {
-        Occupé: "bg-green-100 text-green-800",
-        Libre: "bg-red-100 text-red-800",
-        "En rénovation": "bg-yellow-100 text-yellow-800",
-    };
-    return `px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-        classes[status] || ""
-    }`;
 };
 </script>
