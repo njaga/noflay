@@ -35,8 +35,5 @@ class LandlordTransaction extends Model
         return $this->belongsTo(Landlord::class);
     }
 
-    public function landlordTransactions()
-{
-    return $this->hasMany(LandlordTransaction::class);
-}
+
 }

@@ -7,31 +7,31 @@
             <div class="grid grid-cols-2 gap-4">
                 <StatCard
                     title="Cautions"
-                    :value="formatCurrency(financialInfo.totalCautionAmount)"
+                    :value="financialInfo.totalCautionAmount"
                     icon="credit-card"
                     color="bg-yellow-500"
                 />
                 <StatCard
                     title="Revenus des Loyers"
-                    :value="formatCurrency(financialInfo.monthlyRent)"
+                    :value="financialInfo.monthlyRent"
                     icon="cash"
                     color="bg-green-500"
                 />
                 <StatCard
                     title="Dépenses"
-                    :value="formatCurrency(financialInfo.monthlyExpenses)"
+                    :value="financialInfo.monthlyExpenses"
                     icon="cart"
                     color="bg-red-500"
                 />
                 <StatCard
                     title="Commissions"
-                    :value="formatCurrency(financialInfo.totalCommissions)"
+                    :value="financialInfo.totalCommissions"
                     icon="credit-card"
                     color="bg-blue-500"
                 />
                 <StatCard
                     title="Solde Net"
-                    :value="formatCurrency(financialInfo.netBalance)"
+                    :value="financialInfo.netBalance"
                     icon="wallet"
                     color="bg-indigo-500"
                 />
@@ -43,12 +43,10 @@
 <script setup>
 import StatCard from "@/Components/StatCard.vue";
 
-const props = defineProps(["financialInfo"]);
-
-const formatCurrency = (value) => {
-    return new Intl.NumberFormat("fr-FR", {
-        style: "currency",
-        currency: "XOF",
-    }).format(value);
-};
+const props = defineProps({
+    financialInfo: {
+        type: Object,
+        required: true
+    }
+});
 </script>

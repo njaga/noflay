@@ -35,12 +35,12 @@
                         <button @click="toggleAdvancedFilters"
                             class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out transform hover:scale-105">
                             <i class="bi" :class="showAdvancedFilters
-                                    ? 'bi-eye-slash'
-                                    : 'bi-eye'
+                                ? 'bi-eye-slash'
+                                : 'bi-eye'
                                 "></i>
                             <span class="ml-2">{{
                                 showAdvancedFilters ? "Masquer" : "Afficher"
-                                }}</span>
+                            }}</span>
                         </button>
                     </div>
                 </div>
@@ -115,26 +115,20 @@
                                 class="hover:bg-gray-50 transition-colors duration-200">
                                 <td v-for="column in columns" :key="column.key" class="px-6 py-4 whitespace-nowrap">
                                     <div v-if="column.key === 'type'" :class="getTypeClass(transaction.type)">
-                                        {{
-                                            getTransactionType(transaction.type)
-                                        }}
+                                        {{ getTransactionType(transaction.type) }}
                                     </div>
                                     <div v-else-if="column.key === 'amount'" :class="{
-                                        'text-green-600':
-                                            transaction.amount > 0,
-                                        'text-red-600':
-                                            transaction.amount < 0,
+                                        'text-green-600': transaction.amount > 0,
+                                        'text-red-600': transaction.amount < 0,
                                     }">
-                                        {{ formatCurrency(transaction.amount) }}
+                                        {{ formatCurrency(transaction.amount || transaction.total_amount) }}
+                                    </div>
+                                    <div v-else-if="column.key === 'date'">
+                                        {{ formatDate(transaction) }}
                                     </div>
                                     <div v-else>
-                                        {{
-                                            column.format
-                                                ? column.format(
-                                                    transaction[column.key]
-                                                )
-                                                : transaction[column.key]
-                                        }}
+                                        {{ column.format ? column.format(transaction[column.key]) :
+                                            transaction[column.key] }}
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
@@ -158,19 +152,17 @@
                                 class="text-xs font-semibold rounded-full px-2 py-1">
                                 {{ getTransactionType(transaction.type) }}
                             </span>
-                            <span class="text-sm text-gray-500">{{
-                                formatDate(transaction.date)
-                                }}</span>
+                            <span class="text-sm text-gray-500">{{ formatDate(transaction) }}</span>
                         </div>
                         <div class="mb-2">
                             <p class="font-semibold">
                                 {{ transaction.description }}
                             </p>
                             <p :class="{
-                                'text-green-600': transaction.amount > 0,
-                                'text-red-600': transaction.amount < 0,
+                                'text-green-600': (transaction.amount || transaction.total_amount) > 0,
+                                'text-red-600': (transaction.amount || transaction.total_amount) < 0,
                             }">
-                                {{ formatCurrency(transaction.amount) }}
+                                {{ formatCurrency(transaction.amount || transaction.total_amount) }}
                             </p>
                         </div>
                         <div class="text-sm text-gray-600">
@@ -226,42 +218,29 @@
                                     <div class="mt-2 space-y-4">
                                         <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
                                             <span class="text-sm font-medium text-gray-500">Date</span>
-                                            <span class="text-sm text-gray-900">{{
-                                                formatDate(
-                                                    selectedTransaction.date
-                                                )
-                                            }}</span>
+                                            <span class="text-sm text-gray-900">{{ formatDate(selectedTransaction)
+                                                }}</span>
                                         </div>
                                         <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
                                             <span class="text-sm font-medium text-gray-500">Type</span>
                                             <span class="text-sm text-gray-900">{{
-                                                getTransactionType(
-                                                    selectedTransaction.type
-                                                )
-                                            }}</span>
+                                                getTransactionType(selectedTransaction.type) }}</span>
                                         </div>
                                         <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
                                             <span class="text-sm font-medium text-gray-500">Montant</span>
                                             <span class="text-sm" :class="{
-                                                'text-green-600':
-                                                    selectedTransaction.amount >
-                                                    0,
-                                                'text-red-600':
-                                                    selectedTransaction.amount <
-                                                    0,
+                                                'text-green-600': (selectedTransaction.amount || selectedTransaction.total_amount) > 0,
+                                                'text-red-600': (selectedTransaction.amount || selectedTransaction.total_amount) < 0,
                                             }">
-                                                {{
-                                                    formatCurrency(
-                                                        selectedTransaction.amount
-                                                    )
-                                                }}
+                                                {{ formatCurrency(selectedTransaction.amount ||
+                                                selectedTransaction.total_amount) }}
                                             </span>
                                         </div>
                                         <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
                                             <span class="text-sm font-medium text-gray-500">Description</span>
                                             <span class="text-sm text-gray-900">{{
                                                 selectedTransaction.description
-                                            }}</span>
+                                                }}</span>
                                         </div>
                                         <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
                                             <span class="text-sm font-medium text-gray-500">Bailleur</span>
@@ -391,6 +370,7 @@ const getTransactionType = (type) => {
         DEPOSIT: "Caution",
         REFUND: "Remboursement",
         LANDLORD_PAYOUT: "Versement au bailleur",
+        payout: "Versement au bailleur",
     };
     return types[type] || type;
 };
@@ -425,7 +405,8 @@ const formatCurrency = (value) => {
     }).format(value);
 };
 
-const formatDate = (dateString) => {
+const formatDate = (transaction) => {
+    const dateString = transaction.date || transaction.transaction_date;
     if (!dateString) return "N/A";
     const options = { year: "numeric", month: "long", day: "numeric" };
     return new Date(dateString).toLocaleDateString("fr-FR", options);

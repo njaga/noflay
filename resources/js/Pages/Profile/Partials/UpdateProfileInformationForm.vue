@@ -30,7 +30,7 @@
             <div>
                 <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
                 <input id="name" v-model="form.name" type="text"
-                    class="w-full px-4 py-3 rounded-md bg-gray-100 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition duration-300"
+                    class="w-full px-4 py-3 rounded-md text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition duration-300"
                     required autocomplete="name">
                 <p v-if="form.errors.name" class="mt-2 text-sm text-red-600">{{ form.errors.name }}</p>
             </div>
@@ -39,7 +39,7 @@
             <div>
                 <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Adresse e-mail</label>
                 <input id="email" v-model="form.email" type="email"
-                    class="w-full px-4 py-3 rounded-md bg-gray-100 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition duration-300"
+                    class="w-full px-4 py-3 rounded-md text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition duration-300"
                     required autocomplete="username">
                 <p v-if="form.errors.email" class="mt-2 text-sm text-red-600">{{ form.errors.email }}</p>
             </div>

@@ -1,116 +1,212 @@
 <template>
     <AppLayout :title="`${property.name} - Rapport`">
-        <div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+        <div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gray-100">
             <div class="max-w-7xl mx-auto">
-                <h1 class="text-4xl font-bold text-indigo-800 mb-8">Rapport de la propriété : {{ property.name }}</h1>
+                <h1 class="text-4xl font-bold text-indigo-800 mb-8">
+                    Rapport de la propriété : {{ property.name }}
+                </h1>
 
-                <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
-                    <div class="px-4 py-5 sm:px-6">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900">Informations sur la propriété</h3>
-                        <p class="mt-1 max-w-2xl text-sm text-gray-500">Détails de la propriété et rapport financier.</p>
+                <!-- Vue d'ensemble -->
+                <div
+                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+                >
+                    <StatCard
+                        title="Cautions"
+                        :value="Number(cautionAmounts)"
+                        icon="shield-alt"
+                        color="bg-blue-500"
+                    />
+                    <StatCard
+                        title="Loyers"
+                        :value="Number(rentAmounts)"
+                        icon="home"
+                        color="bg-green-500"
+                    />
+                    <StatCard
+                        title="Paiements reçus"
+                        :value="Number(totalPayments)"
+                        icon="money-bill-wave"
+                        color="bg-yellow-500"
+                    />
+                    <StatCard
+                        title="Commissions"
+                        :value="Number(commissionAmounts)"
+                        icon="percentage"
+                        color="bg-purple-500"
+                    />
+                </div>
+
+                <!-- Informations sur la propriété -->
+                <div class="bg-white shadow-lg rounded-lg overflow-hidden mb-8">
+                    <div class="px-6 py-4 bg-indigo-600">
+                        <h3 class="text-lg font-semibold text-white">
+                            Informations sur la propriété
+                        </h3>
                     </div>
-                    <div class="border-t border-gray-200">
-                        <dl>
-                            <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt class="text-sm font-medium text-gray-500">Nom</dt>
-                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ property.name }}</dd>
+                    <div class="p-6">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">
+                                    Nom
+                                </p>
+                                <p class="mt-1 text-sm text-gray-900">
+                                    {{ property.name }}
+                                </p>
                             </div>
-                            <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt class="text-sm font-medium text-gray-500">Type de propriété</dt>
-                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ property.property_type }}</dd>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">
+                                    Type de propriété
+                                </p>
+                                <p class="mt-1 text-sm text-gray-900">
+                                    {{ property.property_type }}
+                                </p>
                             </div>
-                            <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt class="text-sm font-medium text-gray-500">Adresse</dt>
-                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ property.address }}</dd>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">
+                                    Adresse
+                                </p>
+                                <p class="mt-1 text-sm text-gray-900">
+                                    {{ property.address }}
+                                </p>
                             </div>
-                            <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt class="text-sm font-medium text-gray-500">Bailleur</dt>
-                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                                    {{ property.landlord ? `${property.landlord.first_name} ${property.landlord.last_name}` : 'N/A' }}
-                                </dd>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">
+                                    Propriétaire
+                                </p>
+                                <p class="mt-1 text-sm text-gray-900">
+                                    {{
+                                        property.landlord
+                                            ? `${property.landlord.first_name} ${property.landlord.last_name}`
+                                            : "N/A"
+                                    }}
+                                </p>
                             </div>
-                            <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt class="text-sm font-medium text-gray-500">Entreprise</dt>
-                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                                    {{ property.company ? property.company.name : 'N/A' }}
-                                </dd>
-                            </div>
-                        </dl>
+                        </div>
                     </div>
                 </div>
 
-                <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
-                    <div class="px-4 py-5 sm:px-6">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900">Locataires</h3>
-                        <p class="mt-1 max-w-2xl text-sm text-gray-500">Liste des locataires actuels.</p>
-                    </div>
-                    <div class="border-t border-gray-200">
-                        <ul class="divide-y divide-gray-200">
-                            <li v-for="contract in property.contracts" :key="contract.id" class="px-4 py-4 sm:px-6">
-                                <div class="flex items-center justify-between">
-                                    <p class="text-sm font-medium text-indigo-600 truncate">
-                                        {{ contract.tenant ? `${contract.tenant.first_name} ${contract.tenant.last_name}` : 'N/A' }}
-                                    </p>
-                                    <div class="ml-2 flex-shrink-0 flex">
-                                        <p class="text-sm font-medium text-gray-500">{{ contract.start_date }} - {{ contract.end_date }}</p>
-                                    </div>
-                                </div>
-                                <div class="mt-2 sm:flex sm:justify-between">
-                                    <div class="sm:flex">
-                                        <p class="flex items-center text-sm text-gray-500">
-                                            <i class="fas fa-home mr-1"></i>
-                                            {{ contract.property ? contract.property.name : 'N/A' }}
-                                        </p>
-                                    </div>
-                                    <div class="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                                        <i class="fas fa-money-bill-wave mr-1"></i>
-                                        {{ contract.rent_amount }} XOF
-                                    </div>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
+                <!-- Graphiques -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <ChartCard title="Revenus mensuels">
+                        <BarChart :chart-data="revenueChartData" />
+                    </ChartCard>
+                    <ChartCard title="Répartition des dépenses">
+                        <DoughnutChart :chart-data="expenseChartData" />
+                    </ChartCard>
                 </div>
 
-                <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-                    <div class="px-4 py-5 sm:px-6">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900">Paiements</h3>
-                        <p class="mt-1 max-w-2xl text-sm text-gray-500">Historique des paiements effectués.</p>
-                    </div>
-                    <div class="border-t border-gray-200">
-                        <ul class="divide-y divide-gray-200">
-                            <li v-for="payment in property.payments" :key="payment.id" class="px-4 py-4 sm:px-6">
-                                <div class="flex items-center justify-between">
-                                    <p class="text-sm font-medium text-indigo-600 truncate">{{ payment.amount }} XOF</p>
-                                    <div class="ml-2 flex-shrink-0 flex">
-                                        <p class="text-sm font-medium text-gray-500">{{ payment.payment_date }}</p>
-                                    </div>
-                                </div>
-                                <div class="mt-2 sm:flex sm:justify-between">
-                                    <div class="sm:flex">
-                                        <p class="flex items-center text-sm text-gray-500">
-                                            <i class="fas fa-receipt mr-1"></i>
-                                            {{ payment.description }}
-                                        </p>
-                                    </div>
-                                    <div class="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                                        <i class="fas fa-user mr-1"></i>
-                                        {{ payment.tenant ? `${payment.tenant.first_name} ${payment.tenant.last_name}` : 'N/A' }}
-                                    </div>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
+<!-- Historique des transactions -->
+<div class="bg-white shadow-lg rounded-lg overflow-hidden mb-8">
+            <div class="px-6 py-4 bg-indigo-600">
+                <h3 class="text-lg font-semibold text-white">Historique des transactions</h3>
+            </div>
+            <div class="p-6">
+                <TabGroup>
+                    <TabList class="flex space-x-1 rounded-xl bg-blue-900/20 p-1">
+                        <Tab v-for="category in ['Paiements', 'Versements', 'Dépenses']" as="template" :key="category" v-slot="{ selected }">
+                            <button
+                                :class="[
+                                    'w-full rounded-lg py-2.5 text-sm font-medium leading-5 text-blue-700',
+                                    'ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2',
+                                    selected
+                                        ? 'bg-white shadow'
+                                        : 'text-blue-100 hover:bg-white/[0.12] hover:text-white'
+                                ]"
+                            >
+                                {{ category }}
+                            </button>
+                        </Tab>
+                    </TabList>
+                    <TabPanels class="mt-2">
+                        <TabPanel>
+                            <TransactionTable :transactions="payments" type="payment" />
+                        </TabPanel>
+                        <TabPanel>
+                            <TransactionTable :transactions="payouts" type="payout" />
+                        </TabPanel>
+                        <TabPanel>
+                            <TransactionTable :transactions="expenses" type="expense" />
+                        </TabPanel>
+                    </TabPanels>
+                </TabGroup>
+            </div>
+        </div>
             </div>
         </div>
     </AppLayout>
 </template>
 
 <script setup>
+import { computed } from "vue";
 import { usePage } from "@inertiajs/vue3";
 import AppLayout from "@/Layouts/AppLayout.vue";
+import StatCard from "@/Components/StatCard.vue";
+import ChartCard from "@/Components/ChartCard.vue";
+import BarChart from "@/Components/Charts/BarChart.vue";
+import DoughnutChart from "@/Components/Charts/DoughnutChart.vue";
+import TransactionTable from "@/Components/TransactionTable.vue";
+import { TabGroup, TabList, Tab, TabPanels, TabPanel } from "@headlessui/vue";
 
 const { props } = usePage();
-const property = props.property;
+const {
+    property,
+    cautionAmounts,
+    rentAmounts,
+    totalPayments,
+    commissionAmounts,
+    revenueData,
+    payments,
+    payouts,
+    expenses
+} = props;
+
+// Données pour le graphique des revenus
+const revenueChartData = computed(() => ({
+    labels: [
+        "Jan",
+        "Fév",
+        "Mar",
+        "Avr",
+        "Mai",
+        "Jun",
+        "Jul",
+        "Aoû",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Déc",
+    ],
+    datasets: [
+        {
+            label: "Revenus mensuels",
+            data: revenueData,
+            backgroundColor: "rgba(75, 192, 192, 0.6)",
+        },
+    ],
+}));
+
+// Données pour le graphique des dépenses
+const expenseChartData = computed(() => ({
+    labels: ["Entretien", "Réparations", "Taxes", "Assurance", "Autres"],
+    datasets: [
+        {
+            data: [3000, 5000, 2000, 1000, 500],
+            backgroundColor: [
+                "#FF6384",
+                "#36A2EB",
+                "#FFCE56",
+                "#4BC0C0",
+                "#9966FF",
+            ],
+        },
+    ],
+}));
+
+// Fonction pour formater la devise
+const formatCurrency = (value) => {
+    return new Intl.NumberFormat("fr-FR", {
+        style: "currency",
+        currency: "XOF",
+    }).format(value);
+};
 </script>

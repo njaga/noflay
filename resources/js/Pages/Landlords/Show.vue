@@ -11,8 +11,12 @@
                     @open-add-expense-modal="openAddExpenseModal"
                     @open-add-payment-modal="openAddPaymentModal"
                 />
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mt-8">
-                    <div class="col-span-1 md:col-span-2 lg:col-span-2 space-y-8">
+                <div
+                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mt-8"
+                >
+                    <div
+                        class="col-span-1 md:col-span-2 lg:col-span-2 space-y-8"
+                    >
                         <FinancialOverview :financialInfo="financialInfo" />
                         <RecentTransactions
                             :transactions="transactions"
@@ -41,6 +45,7 @@
         <AddExpenseModal
             v-if="showAddExpenseModal"
             :landlord="landlord"
+            :expenseTypes="expenseTypes"
             @close="showAddExpenseModal = false"
             @saved="handleSavedExpense"
         />
@@ -95,7 +100,23 @@ import EditTransactionModal from "@/Components/EditTransactionModal.vue";
 import NewConfirmationModal from "@/Components/NewConfirmationModal.vue";
 import NotificationModal from "@/Components/NotificationModal.vue";
 
-const { props } = usePage();
+const page = usePage();
+const props = defineProps({
+    landlord: Object,
+    transactions: Object,
+    financialInfo: Object,
+    company: Object,
+});
+
+// Définir expenseTypes ici
+const expenseTypes = [
+    "maintenance",
+    "frais judiciaires",
+    "taxes",
+    "Assurance",
+    "other",
+];
+
 const landlord = ref(props.landlord || {});
 const transactions = ref(props.transactions || []);
 const financialInfo = ref(props.financialInfo || {});
@@ -136,7 +157,9 @@ function editTransaction(transaction) {
 
 function confirmDeleteTransaction(transaction) {
     confirmationTitle.value = "Supprimer la transaction";
-    confirmationMessage.value = `Êtes-vous sûr de vouloir supprimer la transaction du ${formatDate(transaction.transaction_date)} pour un montant de ${formatCurrency(transaction.amount)} ?`;
+    confirmationMessage.value = `Êtes-vous sûr de vouloir supprimer la transaction du ${formatDate(
+        transaction.transaction_date
+    )} pour un montant de ${formatCurrency(transaction.amount)} ?`;
     confirmationAction = () => deleteTransaction(transaction.id);
     showConfirmationModal.value = true;
 }
@@ -147,20 +170,21 @@ function deleteTransaction(id) {
         preserveScroll: true,
         onSuccess: () => {
             notificationTitle.value = "Supprimé avec succès";
-            notificationMessage.value = "La transaction a été supprimée avec succès.";
+            notificationMessage.value =
+                "La transaction a été supprimée avec succès.";
             notificationType.value = "success";
             showNotificationModal.value = true;
             router.reload({ only: ["transactions", "financialInfo"] });
         },
         onError: () => {
             notificationTitle.value = "Échec de la suppression";
-            notificationMessage.value = "La suppression de la transaction a échoué.";
+            notificationMessage.value =
+                "La suppression de la transaction a échoué.";
             notificationType.value = "error";
             showNotificationModal.value = true;
         },
     });
 }
-
 
 function openGenerateMandat() {
     showGenerateMandat.value = true;
@@ -176,14 +200,16 @@ function openAddPaymentModal() {
 
 function confirmDeleteLandlord() {
     confirmationTitle.value = "Supprimer le bailleur";
-    confirmationMessage.value = "Êtes-vous sûr de vouloir supprimer ce bailleur ? Cette action est irréversible.";
+    confirmationMessage.value =
+        "Êtes-vous sûr de vouloir supprimer ce bailleur ? Cette action est irréversible.";
     confirmationAction = deleteLandlord;
     showConfirmationModal.value = true;
 }
 
 function confirmDeleteProperty(propertyId) {
     confirmationTitle.value = "Supprimer la propriété";
-    confirmationMessage.value = "Êtes-vous sûr de vouloir supprimer cette propriété ? Cette action est irréversible.";
+    confirmationMessage.value =
+        "Êtes-vous sûr de vouloir supprimer cette propriété ? Cette action est irréversible.";
     confirmationAction = () => deleteProperty(propertyId);
     showConfirmationModal.value = true;
 }
@@ -215,7 +241,8 @@ function deleteLandlord() {
     router.delete(route("landlords.destroy", landlord.value.id), {
         onSuccess: () => {
             notificationTitle.value = "Supprimé avec succès";
-            notificationMessage.value = "Le bailleur a été supprimé avec succès.";
+            notificationMessage.value =
+                "Le bailleur a été supprimé avec succès.";
             notificationType.value = "success";
             showNotificationModal.value = true;
             router.visit(route("landlords.index"));
@@ -235,14 +262,16 @@ function deleteProperty(propertyId) {
         preserveScroll: true,
         onSuccess: () => {
             notificationTitle.value = "Supprimé avec succès";
-            notificationMessage.value = "La propriété a été supprimée avec succès.";
+            notificationMessage.value =
+                "La propriété a été supprimée avec succès.";
             notificationType.value = "success";
             showNotificationModal.value = true;
             router.reload({ only: ["landlord"] });
         },
         onError: () => {
             notificationTitle.value = "Échec de la suppression";
-            notificationMessage.value = "La suppression de la propriété a échoué.";
+            notificationMessage.value =
+                "La suppression de la propriété a échoué.";
             notificationType.value = "error";
             showNotificationModal.value = true;
         },

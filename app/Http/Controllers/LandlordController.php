@@ -163,6 +163,11 @@ class LandlordController extends Controller
         // Calculer les informations financières
         $financialInfo = $this->calculateFinancialInfo($landlord, $currentDate);
 
+        // Assurez-vous que toutes les valeurs sont des nombres
+        $financialInfo = array_map(function ($value) {
+            return is_numeric($value) ? (float)$value : $value;
+        }, $financialInfo);
+
         return Inertia::render('Landlords/Show', [
             'landlord' => $landlord,
             'transactions' => $recentTransactions,
@@ -176,76 +181,76 @@ class LandlordController extends Controller
     }
 
     private function getRecentTransactions($landlord, $date)
-{
-    $transactions = collect();
+    {
+        $transactions = collect();
 
-    // Transactions du bailleur
-    $transactions = $transactions->concat(
-        LandlordTransaction::where('landlord_id', $landlord->id)
-            ->orderBy('transaction_date', 'desc')
-            ->take(10)
-            ->get()
-            ->map(function ($item) {
-                $item->type = 'transaction';
-                $item->transaction_date = $item->transaction_date;
-                return $item;
+        // Transactions du bailleur
+        $transactions = $transactions->concat(
+            LandlordTransaction::where('landlord_id', $landlord->id)
+                ->orderBy('transaction_date', 'desc')
+                ->take(10)
+                ->get()
+                ->map(function ($item) {
+                    $item->type = 'transaction';
+                    $item->transaction_date = $item->transaction_date;
+                    return $item;
+                })
+        );
+
+        // Dépenses
+        $transactions = $transactions->concat(
+            Expense::whereHas('property', function ($query) use ($landlord) {
+                $query->where('landlord_id', $landlord->id);
             })
-    );
+                ->orderBy('expense_date', 'desc')
+                ->take(10)
+                ->get()
+                ->map(function ($item) {
+                    $item->type = 'expense';
+                    $item->transaction_date = $item->expense_date;
+                    return $item;
+                })
+        );
 
-    // Dépenses
-    $transactions = $transactions->concat(
-        Expense::whereHas('property', function ($query) use ($landlord) {
-            $query->where('landlord_id', $landlord->id);
-        })
-        ->orderBy('expense_date', 'desc')
-        ->take(10)
-        ->get()
-        ->map(function ($item) {
-            $item->type = 'expense';
-            $item->transaction_date = $item->expense_date;
-            return $item;
-        })
-    );
+        // Contrats
+        $transactions = $transactions->concat(
+            Contract::whereHas('property', function ($query) use ($landlord) {
+                $query->where('landlord_id', $landlord->id);
+            })
+                ->orderBy('created_at', 'desc')
+                ->take(10)
+                ->get()
+                ->map(function ($item) {
+                    $item->type = 'contract';
+                    if ($item->commission_amount) {
+                        $item->sub_type = 'contract_commission';
+                        $item->amount = $item->commission_amount;
+                    } elseif ($item->caution_amount) {
+                        $item->sub_type = 'contract_caution';
+                        $item->amount = $item->caution_amount;
+                    }
+                    $item->transaction_date = $item->created_at;
+                    return $item;
+                })
+        );
 
-    // Contrats
-    $transactions = $transactions->concat(
-        Contract::whereHas('property', function ($query) use ($landlord) {
-            $query->where('landlord_id', $landlord->id);
-        })
-        ->orderBy('created_at', 'desc')
-        ->take(10)
-        ->get()
-        ->map(function ($item) {
-            $item->type = 'contract';
-            if ($item->commission_amount) {
-                $item->sub_type = 'contract_commission';
-                $item->amount = $item->commission_amount;
-            } elseif ($item->caution_amount) {
-                $item->sub_type = 'contract_caution';
-                $item->amount = $item->caution_amount;
-            }
-            $item->transaction_date = $item->created_at;
-            return $item;
-        })
-    );
+        // Paiements
+        $transactions = $transactions->concat(
+            Payment::whereHas('contract.property', function ($query) use ($landlord) {
+                $query->where('landlord_id', $landlord->id);
+            })
+                ->orderBy('payment_date', 'desc')
+                ->take(10)
+                ->get()
+                ->map(function ($item) {
+                    $item->type = 'payment';
+                    $item->transaction_date = $item->payment_date;
+                    return $item;
+                })
+        );
 
-    // Paiements
-    $transactions = $transactions->concat(
-        Payment::whereHas('contract.property', function ($query) use ($landlord) {
-            $query->where('landlord_id', $landlord->id);
-        })
-        ->orderBy('payment_date', 'desc')
-        ->take(10)
-        ->get()
-        ->map(function ($item) {
-            $item->type = 'payment';
-            $item->transaction_date = $item->payment_date;
-            return $item;
-        })
-    );
-
-    return $transactions->sortByDesc('transaction_date')->take(10)->values();
-}
+        return $transactions->sortByDesc('transaction_date')->take(10)->values();
+    }
 
     public function edit(Landlord $landlord)
     {
@@ -401,17 +406,17 @@ class LandlordController extends Controller
                         'amount' => round($payment->amount, 2)
                     ];
                 }),
-                'cautionDetails' => Contract::whereHas('property', function ($query) use ($landlord) {
-                    $query->where('landlord_id', $landlord->id);
-                })->where('is_reversed', false)
-                    ->get(['tenant_id', 'property_id', 'caution_amount'])
-                    ->map(function ($contract) {
-                        return [
-                            'tenant' => $contract->tenant ? $contract->tenant->first_name . ' ' . $contract->tenant->last_name : 'Locataire non spécifié',
-                            'property' => $contract->property->name,
-                            'amount' => round($contract->caution_amount, 2)
-                        ];
-                    }),
+            'cautionDetails' => Contract::whereHas('property', function ($query) use ($landlord) {
+                $query->where('landlord_id', $landlord->id);
+            })->where('is_reversed', false)
+                ->get(['tenant_id', 'property_id', 'caution_amount'])
+                ->map(function ($contract) {
+                    return [
+                        'tenant' => $contract->tenant ? $contract->tenant->first_name . ' ' . $contract->tenant->last_name : 'Locataire non spécifié',
+                        'property' => $contract->property->name,
+                        'amount' => round($contract->caution_amount, 2)
+                    ];
+                }),
             'expenseDetails' => Expense::whereHas('property', function ($query) use ($landlord) {
                 $query->where('landlord_id', $landlord->id);
             })->where('is_repay', false)
