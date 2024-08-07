@@ -17,9 +17,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Carbon\Carbon;
+use App\Models\Attachment;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
 class LandlordController extends Controller
@@ -117,38 +119,66 @@ class LandlordController extends Controller
 
     public function store(Request $request)
     {
-        Gate::authorize('create', Landlord::class);
+        try {
+            Gate::authorize('create', Landlord::class);
 
-        $validatedData = $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'address' => 'required|string|max:255',
-            'phone' => 'required|string|max:15',
-            'email' => 'required|string|email|max:255|unique:landlords',
-            'identity_number' => 'required|string|max:255',
-            'identity_expiry_date' => 'required|date',
-            'agency_percentage' => 'required|numeric|min:0|max:100',
-            'contract_duration' => 'required|integer|min:1',
-            'company_id' => 'required|integer|exists:companies,id',
-            'attachments.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
-        ]);
+            Log::info('Received request data:', $request->all());
 
-        if ($request->hasFile('attachments')) {
+            $validator = Validator::make($request->all(), [
+                'first_name' => 'required|string|max:255',
+                'last_name' => 'required|string|max:255',
+                'address' => 'required|string|max:255',
+                'phone' => 'required|string|max:15',
+                'email' => 'required|string|email|max:255|unique:landlords',
+                'identity_number' => 'required|string|max:255',
+                'identity_expiry_date' => 'required|date',
+                'agency_percentage' => 'required|numeric|min:0|max:100',
+                'contract_duration' => 'required|integer|min:1',
+                'company_id' => 'required|integer|exists:companies,id',
+                'attachments' => 'nullable|array|max:5',
+                'attachments.*' => 'file|mimes:pdf,jpg,jpeg,png|max:5120', // 5120 KB = 5 MB
+            ]);
+
+            if ($validator->fails()) {
+                return Inertia::render('Landlords/Create', [
+                    'errors' => $validator->errors(),
+                ])->withViewData(['error' => 'Validation failed']);
+            }
+
+            $validatedData = $validator->validated();
+
+            if (!Auth::user()->hasRole('super_admin')) {
+                $validatedData['company_id'] = Auth::user()->company_id;
+            }
+
             $attachments = [];
-            foreach ($request->file('attachments') as $file) {
-                $attachments[] = $file->store('attachments');
+            if ($request->hasFile('attachments')) {
+                foreach ($request->file('attachments') as $index => $file) {
+                    if ($file) { // Filter out empty files
+                        try {
+                            $filename = uniqid() . '.' . $file->getClientOriginalExtension();
+                            $path = $file->storeAs('attachments', $filename, 'public');
+                            $attachments[] = $path;
+                        } catch (\Exception $e) {
+                            Log::error("Error storing file at index $index: " . $e->getMessage());
+                            return back()->withErrors(["attachments.$index" => "Erreur lors du téléchargement du fichier $index"]);
+                        }
+                    }
+                }
             }
             $validatedData['attachments'] = json_encode($attachments);
+
+            $landlord = Landlord::create($validatedData);
+
+            Log::info('Landlord created successfully:', $landlord->toArray());
+
+            return redirect()->route('landlords.index')->with('success', 'Bailleur créé avec succès.');
+        } catch (\Exception $e) {
+            Log::error('Error in LandlordController@store: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Une erreur est survenue lors de la création du bailleur.']);
         }
-
-        if (!Auth::user()->hasRole('super_admin')) {
-            $validatedData['company_id'] = Auth::user()->company_id;
-        }
-
-        Landlord::create($validatedData);
-
-        return redirect()->route('landlords.index')->with('success', 'Bailleur créé avec succès.');
     }
+
 
     public function show($id)
     {

@@ -1,52 +1,25 @@
 <template>
-    <canvas ref="chartRef"></canvas>
+    <BaseChart type="bar" :data="chartData" :options="mergedOptions" />
 </template>
 
 <script setup>
-import { ref, onMounted, watch, onUnmounted } from 'vue';
-import Chart from 'chart.js/auto';
+import { computed } from "vue";
+import BaseChart from "@/Components/BaseChart.vue";
 
 const props = defineProps({
     chartData: {
         type: Object,
-        required: true
+        required: true,
     },
-    options: {
+    chartOptions: {
         type: Object,
-        default: () => ({})
-    }
+        default: () => ({}),
+    },
 });
 
-const chartRef = ref(null);
-let chart = null;
-
-const createChart = () => {
-    const ctx = chartRef.value.getContext('2d');
-    chart = new Chart(ctx, {
-        type: 'bar',
-        data: props.chartData,
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            ...props.options
-        }
-    });
-};
-
-onMounted(() => {
-    createChart();
-});
-
-watch(() => props.chartData, (newData) => {
-    if (chart) {
-        chart.data = newData;
-        chart.update();
-    }
-}, { deep: true });
-
-onUnmounted(() => {
-    if (chart) {
-        chart.destroy();
-    }
-});
+const mergedOptions = computed(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    ...props.chartOptions,
+}));
 </script>

@@ -1,34 +1,26 @@
-<script setup>
-import { Line } from 'vue-chartjs'
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Filler, Legend } from 'chart.js'
+<template>
+    <BaseChart type="line" :data="chartData" :options="mergedOptions" />
+</template>
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Filler, Legend)
+<script setup>
+import { computed } from "vue";
+import BaseChart from "@/Components/BaseChart.vue";
 
 const props = defineProps({
-  chartData: {
-    type: Object,
-    required: true
-  },
-  options: {
-    type: Object,
-    default: () => ({
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: true
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true
-        }
-      }
-    })
-  }
-})
-</script>
+    chartData: {
+        type: Object,
+        required: true,
+    },
+    chartOptions: {
+        type: Object,
+        default: () => ({}),
+    },
+});
 
-<template>
-  <Line :data="chartData" :options="options" />
-</template>
+const mergedOptions = computed(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    fill: true,
+    ...props.chartOptions,
+}));
+</script>

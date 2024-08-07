@@ -1,38 +1,25 @@
-<script setup>
-import { Scatter } from 'vue-chartjs'
-import { Chart as ChartJS, LinearScale, PointElement, LineElement, Tooltip, Legend } from 'chart.js'
+<template>
+    <BaseChart type="scatter" :data="chartData" :options="mergedOptions" />
+</template>
 
-ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend)
+<script setup>
+import { computed } from "vue";
+import BaseChart from "@/Components/BaseChart.vue";
 
 const props = defineProps({
-  chartData: {
-    type: Object,
-    required: true
-  },
-  options: {
-    type: Object,
-    default: () => ({
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: true
-        }
-      },
-      scales: {
-        x: {
-          type: 'linear',
-          position: 'bottom'
-        },
-        y: {
-          beginAtZero: true
-        }
-      }
-    })
-  }
-})
-</script>
+    chartData: {
+        type: Object,
+        required: true,
+    },
+    chartOptions: {
+        type: Object,
+        default: () => ({}),
+    },
+});
 
-<template>
-  <Scatter :data="chartData" :options="options" />
-</template>
+const mergedOptions = computed(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    ...props.chartOptions,
+}));
+</script>

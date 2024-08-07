@@ -1,5 +1,6 @@
 <script setup>
 import { defineProps } from "vue";
+import { Home } from 'lucide-vue-next';
 
 const props = defineProps({
     properties: {
@@ -37,7 +38,10 @@ const statusClass = (availableCount) => {
     <div>
         <!-- Version bureau -->
         <div class="hidden sm:block overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
+            <table
+                v-if="properties.length > 0"
+                class="min-w-full divide-y divide-gray-200"
+            >
                 <thead class="bg-gray-50">
                     <tr>
                         <th
@@ -105,11 +109,17 @@ const statusClass = (availableCount) => {
                     </tr>
                 </tbody>
             </table>
+            <div v-else class="text-center py-8 bg-gray-50">
+                <Home class="mx-auto h-12 w-12 text-gray-400" />
+                <p class="text-gray-500 text-lg font-medium">Aucune donnée disponible pour le moment</p>
+
+            </div>
         </div>
 
         <!-- Version mobile -->
         <div class="sm:hidden">
             <div
+                v-if="properties.length > 0"
                 v-for="property in properties"
                 :key="property.id"
                 class="bg-white shadow overflow-hidden sm:rounded-lg mb-4"
@@ -167,9 +177,7 @@ const statusClass = (availableCount) => {
                                 class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2"
                             >
                                 <span
-                                    :class="
-                                        statusClass(property.available_count)
-                                    "
+                                    :class="statusClass(property.available_count)"
                                     class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
                                 >
                                     {{ getStatus(property.available_count) }}
@@ -178,6 +186,10 @@ const statusClass = (availableCount) => {
                         </div>
                     </dl>
                 </div>
+            </div>
+            <div v-else class="text-center py-8 bg-gray-50">
+                <Home class="mx-auto h-12 w-12 text-gray-400" />
+                <p class="mt-1 text-sm text-gray-500">Aucune donnée disponible pour le moment.</p>
             </div>
         </div>
     </div>

@@ -97,11 +97,11 @@
                                             </svg>
                                             <p class="mb-2 text-sm text-indigo-600"><span class="font-bold">Cliquez pour
                                                     télécharger</span> ou glissez-déposez</p>
-                                            <p class="text-xs text-indigo-500">PNG, JPG, PDF, DOCX jusqu'à 10MB (max 5
+                                            <p class="text-xs text-indigo-500">PNG, JPG, PDF jusqu'à 5MB (max 5
                                                 fichiers)</p>
                                         </div>
                                         <input id="attachments" type="file" @change="handleFileUpload" multiple
-                                            class="hidden" accept=".png,.jpg,.jpeg,.pdf,.docx" />
+                                            class="hidden" accept=".png,.jpg,.jpeg,.pdf" />
                                     </label>
                                 </div>
                             </div>
@@ -196,6 +196,55 @@
                 </div>
             </div>
         </Transition>
+
+        <!-- Modal de statut -->
+        <TransitionRoot as="template" :show="showStatusModal">
+            <Dialog as="div" class="fixed z-10 inset-0 overflow-y-auto" @close="closeStatusModal">
+                <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                    <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0"
+                        enter-to="opacity-100" leave="ease-in duration-200" leave-from="opacity-100"
+                        leave-to="opacity-0">
+                        <DialogOverlay class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+                    </TransitionChild>
+
+                    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                    <TransitionChild as="template" enter="ease-out duration-300"
+                        enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                        enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200"
+                        leave-from="opacity-100 translate-y-0 sm:scale-100"
+                        leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
+                        <div
+                            class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-sm sm:w-full sm:p-6">
+                            <div>
+                                <div
+                                    class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
+                                    <CheckIcon class="h-6 w-6 text-green-600" aria-hidden="true" />
+                                </div>
+                                <div class="mt-3 text-center sm:mt-5">
+                                    <DialogTitle as="h3" class="text-lg leading-6 font-medium text-gray-900">
+                                        {{ statusTitle }}
+                                    </DialogTitle>
+                                    <div class="mt-2">
+                                        <p class="text-sm text-gray-500">
+                                            {{ statusMessage }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-5 sm:mt-6">
+                                <button type="button"
+                                    class="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm"
+                                    @click="closeStatusModal">
+                                    Fermer
+                                </button>
+                            </div>
+                        </div>
+                    </TransitionChild>
+                </div>
+            </Dialog>
+        </TransitionRoot>
+
     </AppLayout>
 </template>
 
@@ -203,8 +252,10 @@
 import { ref } from 'vue';
 import { useForm, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import { CheckIcon } from '@heroicons/vue/24/solid';
+import { Dialog, DialogOverlay, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 
-const { auth, companies } = usePage().props;
+const { auth, companies, error: pageError } = usePage().props;
 
 const form = useForm({
     first_name: '',
@@ -222,27 +273,36 @@ const form = useForm({
 
 const previewFiles = ref([]);
 const showSuccessModal = ref(false);
+const error = ref(pageError);
 
 const handleFileUpload = (event) => {
     const files = Array.from(event.target.files);
-    if (files.length + form.attachments.length > 5) {
+    if (files.length > 5) {
         alert('Vous ne pouvez ajouter que 5 documents maximum.');
+        event.target.value = '';
         return;
     }
 
-    const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png'];
-    const validFiles = files.filter(file => allowedTypes.includes(file.type));
+    const validFiles = files.filter(file => {
+        const validTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        if (!validTypes.includes(file.type)) {
+            alert(`Le fichier ${file.name} n'est pas d'un type valide. Seuls PDF, JPG et PNG sont acceptés.`);
+            return false;
+        }
+        if (file.size > maxSize) {
+            alert(`Le fichier ${file.name} est trop volumineux. La taille maximale est de 5MB.`);
+            return false;
+        }
+        return true;
+    });
 
-    if (validFiles.length !== files.length) {
-        alert('Certains fichiers ont été ignorés. Seuls les fichiers PDF, DOCX et images sont autorisés.');
-    }
-
-    form.attachments = [...form.attachments, ...validFiles];
-    previewFiles.value = [...previewFiles.value, ...validFiles.map(file => ({
+    form.attachments = validFiles;
+    previewFiles.value = validFiles.map(file => ({
         name: file.name,
         type: file.type,
         preview: file.type.startsWith('image') ? URL.createObjectURL(file) : null
-    }))];
+    }));
 };
 
 const removeFile = (index) => {
@@ -253,21 +313,39 @@ const removeFile = (index) => {
     previewFiles.value.splice(index, 1);
 };
 
+const showStatusModal = ref(false);
+const statusTitle = ref('');
+const statusMessage = ref('');
+
+const openStatusModal = (title, message) => {
+    statusTitle.value = title;
+    statusMessage.value = message;
+    showStatusModal.value = true;
+};
+
+const closeStatusModal = () => {
+    showStatusModal.value = false;
+};
+
 const submit = () => {
+    // Filter out empty files before sending the form
+    form.attachments = form.attachments.filter(file => file.size > 0);
+
     form.post(route('landlords.store'), {
         preserveScroll: true,
         preserveState: true,
         onSuccess: () => {
+            openStatusModal('Succès', 'Le bailleur a été créé avec succès.');
             form.reset();
             previewFiles.value = [];
-            showSuccessModal.value = true; // Afficher le modal au lieu de l'alerte
         },
         onError: (errors) => {
+            openStatusModal('Erreur', 'Une erreur est survenue lors de la création du bailleur.');
             console.error(errors);
-            alert('Une erreur est survenue lors de la création du bailleur');
         },
     });
 };
+
 </script>
 
 <style scoped>

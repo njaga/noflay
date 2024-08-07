@@ -145,8 +145,8 @@ class DashboardController extends Controller
         DB::enableQueryLog();
 
         $commissions = LandlordTransaction::whereHas('landlord', function ($query) use ($companyId) {
-                $query->where('company_id', $companyId);
-            })
+            $query->where('company_id', $companyId);
+        })
             ->select(
                 DB::raw('YEAR(transaction_date) as year'),
                 DB::raw('MONTH(transaction_date) as month'),
@@ -405,6 +405,13 @@ class DashboardController extends Controller
 
         $totalProperties = Property::where('company_id', $companyId)->count();
 
+        if ($totalProperties === 0) {
+            return [
+                'labels' => [],
+                'data' => [],
+            ];
+        }
+
         $occupancyRates = DB::table('properties')
             ->leftJoin('contracts', 'properties.id', '=', 'contracts.property_id')
             ->where('properties.company_id', $companyId)
@@ -428,13 +435,14 @@ class DashboardController extends Controller
         $data = array_fill(0, 12, 0);
 
         foreach ($occupancyRates as $rate) {
-            $occupancyRate = ($rate->occupied_properties / $totalProperties) * 100;
+            $occupancyRate = $totalProperties > 0 ? ($rate->occupied_properties / $totalProperties) * 100 : 0;
             $data[$rate->month - 1] = round($occupancyRate, 2);
         }
 
         $result = [
             'labels' => ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'],
             'data' => $data,
+            'totalProperties' => $totalProperties,
         ];
 
         Log::info('Final result:', $result);
