@@ -1,24 +1,25 @@
-<script setup>
-import { Doughnut } from 'vue-chartjs'
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
+<template>
+    <BaseChart type="doughnut" :data="chartData" :options="mergedOptions" />
+</template>
 
-ChartJS.register(ArcElement, Tooltip, Legend)
+<script setup>
+import { computed } from "vue";
+import BaseChart from "@/Components/BaseChart.vue";
 
 const props = defineProps({
-  chartData: {
-    type: Object,
-    required: true
-  },
-  options: {
-    type: Object,
-    default: () => ({
-      responsive: true,
-      maintainAspectRatio: false
-    })
-  }
-})
-</script>
+    chartData: {
+        type: Object,
+        required: true,
+    },
+    chartOptions: {
+        type: Object,
+        default: () => ({}),
+    },
+});
 
-<template>
-  <Doughnut :data="chartData" :options="options" />
-</template>
+const mergedOptions = computed(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    ...props.chartOptions,
+}));
+</script>

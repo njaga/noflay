@@ -40,10 +40,13 @@ class ExpensePolicy
         return false;
     }
 
-    public function create(User $user, Property $property)
+    public function create(User $user, ?Property $property = null)
     {
         if ($user->hasRole('admin_entreprise') || $user->hasRole('user_entreprise')) {
-            return $user->company_id === $property->company_id;
+            if ($property) {
+                return $user->company_id === $property->company_id;
+            }
+            return true; // Allow creation if no specific property is provided
         }
 
         return false;

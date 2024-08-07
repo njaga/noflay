@@ -1,52 +1,40 @@
 <template>
-    <canvas ref="chartRef"></canvas>
+    <BaseChart type="pie" :data="chartData" :options="mergedOptions" />
 </template>
 
 <script setup>
-import { ref, onMounted, watch, onUnmounted } from 'vue';
-import Chart from 'chart.js/auto';
+import { computed } from "vue";
+import BaseChart from "@/Components/BaseChart.vue";
 
 const props = defineProps({
     chartData: {
         type: Object,
-        required: true
+        required: true,
     },
     options: {
         type: Object,
-        default: () => ({})
-    }
+        default: () => ({}),
+    },
 });
 
-const chartRef = ref(null);
-let chart = null;
+const mergedOptions = computed(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    ...props.options,
+}));
 
-const createChart = () => {
-    const ctx = chartRef.value.getContext('2d');
-    chart = new Chart(ctx, {
-        type: 'pie',
-        data: props.chartData,
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            ...props.options
-        }
-    });
-};
-
-onMounted(() => {
-    createChart();
+// Vérification des données vides
+const hasData = computed(() => {
+    return (
+        props.chartData.datasets &&
+        props.chartData.datasets.length > 0 &&
+        props.chartData.datasets[0].data &&
+        props.chartData.datasets[0].data.length > 0
+    );
 });
 
-watch(() => props.chartData, (newData) => {
-    if (chart) {
-        chart.data = newData;
-        chart.update();
-    }
-}, { deep: true });
-
-onUnmounted(() => {
-    if (chart) {
-        chart.destroy();
-    }
+// Si les données sont vides, on retourne un objet vide pour déclencher le message "Aucune donnée disponible"
+const safeChartData = computed(() => {
+    return hasData.value ? props.chartData : { labels: [], datasets: [] };
 });
 </script>

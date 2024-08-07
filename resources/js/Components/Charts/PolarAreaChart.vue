@@ -1,29 +1,25 @@
-<script setup>
-import { PolarArea } from 'vue-chartjs'
-import { Chart as ChartJS, RadialLinearScale, ArcElement, Tooltip, Legend } from 'chart.js'
+<template>
+    <BaseChart type="polarArea" :data="chartData" :options="mergedOptions" />
+</template>
 
-ChartJS.register(RadialLinearScale, ArcElement, Tooltip, Legend)
+<script setup>
+import { computed } from "vue";
+import BaseChart from "@/Components/BaseChart.vue";
 
 const props = defineProps({
-  chartData: {
-    type: Object,
-    required: true
-  },
-  options: {
-    type: Object,
-    default: () => ({
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: true
-        }
-      }
-    })
-  }
-})
-</script>
+    chartData: {
+        type: Object,
+        required: true,
+    },
+    chartOptions: {
+        type: Object,
+        default: () => ({}),
+    },
+});
 
-<template>
-  <PolarArea :data="chartData" :options="options" />
-</template>
+const mergedOptions = computed(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    ...props.chartOptions,
+}));
+</script>

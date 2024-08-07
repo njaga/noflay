@@ -47,40 +47,39 @@ class ContractController extends Controller
     {
         Gate::authorize('create', Contract::class);
 
-        $companies = Auth::user()->hasRole('super_admin') ? Company::all() : Company::where('id', Auth::user()->company_id)->get();
+        $tenantId = $request->input('tenant_id');
+        $selectedTenant = null;
+
+        if ($tenantId) {
+            $selectedTenant = Tenant::find($tenantId);
+            if (!$selectedTenant) {
+                return redirect()->route('contracts.create')->withErrors('Tenant not found.');
+            }
+        }
+
+        $companies = Auth::user()->hasRole('super_admin')
+            ? Company::all()
+            : Company::where('id', Auth::user()->company_id)->get();
+
         $properties = Property::with('landlord')
             ->where('company_id', Auth::user()->company_id)
             ->get();
 
+        $tenants = Tenant::where('company_id', Auth::user()->company_id)->get();
+
         return Inertia::render('Contracts/Create', [
-            'tenants' => Tenant::all(),
+            'tenants' => $tenants,
             'properties' => $properties,
             'companies' => $companies,
-            'tenant' => null,
+            'selectedTenant' => $selectedTenant,
         ]);
     }
 
     public function createWithTenant($tenantId)
     {
-        Gate::authorize('create', Contract::class);
-
-        $tenant = Tenant::find($tenantId);
-        if (!$tenant) {
-            return redirect()->route('contracts.create')->withErrors('Tenant not found.');
-        }
-
-        $companies = Auth::user()->hasRole('super_admin') ? Company::all() : Company::where('id', Auth::user()->company_id)->get();
-        $properties = Property::with('landlord')
-            ->where('company_id', Auth::user()->company_id)
-            ->get();
-
-        return Inertia::render('Contracts/Create', [
-            'tenants' => Tenant::all(),
-            'properties' => $properties,
-            'companies' => $companies,
-            'tenant' => $tenant,
-        ]);
+        return redirect()->route('contracts.create', ['tenant_id' => $tenantId]);
     }
+
 
     public function store(Request $request)
     {

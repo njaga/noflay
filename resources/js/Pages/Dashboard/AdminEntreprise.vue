@@ -7,7 +7,6 @@
                         <h2 class="text-3xl font-bold mb-8 text-gray-800">
                             Tableau de bord
                         </h2>
-
                         <!-- Onglets pour la navigation -->
                         <div class="mb-8">
                             <nav class="flex space-x-4" aria-label="Tabs">
@@ -21,7 +20,6 @@
                                 </button>
                             </nav>
                         </div>
-
                         <!-- Contenu des onglets -->
                         <div v-if="activeTab === 'apercu'">
                             <div
@@ -184,21 +182,12 @@ const overviewStats = computed(() => [
     },
 ]);
 
-const recentProperties = computed(() => properties.value.slice(0, 5));
+const recentProperties = computed(() => {
+    const propertiesToShow = properties.value.slice(0, 5);
+    return propertiesToShow.length > 0 ? propertiesToShow : [];
+});
 
-const contractChartData = computed(() => ({
-    labels: props.contractStats.labels,
-    datasets: [
-        {
-            label: "Nombre de Contrats",
-            data: props.contractStats.data,
-            borderColor: "rgba(75, 192, 192, 1)",
-            backgroundColor: "rgba(75, 192, 192, 0.2)",
-            tension: 0.1,
-            fill: true,
-        },
-    ],
-}));
+const totalProperties = computed(() => properties.value.length);
 
 const propertyTypesChartData = computed(() => ({
     labels: props.propertyTypes.labels,
@@ -212,205 +201,6 @@ const propertyTypesChartData = computed(() => ({
                 "#4BC0C0",
                 "#9966FF",
             ],
-        },
-    ],
-}));
-
-const revenueChartData = computed(() => ({
-    labels: [
-        "Jan",
-        "Fév",
-        "Mar",
-        "Avr",
-        "Mai",
-        "Jun",
-        "Jul",
-        "Aoû",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Déc",
-    ],
-    datasets: [
-        {
-            label: "Revenus",
-            data: props.revenueStats.data,
-            backgroundColor: "rgba(54, 162, 235, 0.5)",
-        },
-    ],
-}));
-
-const occupancyRateChartData = computed(() => ({
-    labels: [
-        "Jan",
-        "Fév",
-        "Mar",
-        "Avr",
-        "Mai",
-        "Jun",
-        "Jul",
-        "Aoû",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Déc",
-    ],
-    datasets: [
-        {
-            label: "Taux d'Occupation",
-            data: props.occupancyRateStats.data,
-            borderColor: "rgba(255, 99, 132, 1)",
-            backgroundColor: "rgba(255, 99, 132, 0.2)",
-            tension: 0.1,
-            fill: true,
-        },
-    ],
-}));
-
-const userGrowthChartData = computed(() => ({
-    labels: [
-        "Jan",
-        "Fév",
-        "Mar",
-        "Avr",
-        "Mai",
-        "Jun",
-        "Jul",
-        "Aoû",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Déc",
-    ],
-    datasets: [
-        {
-            label: "Nouveaux Utilisateurs",
-            data: props.userGrowthStats.data,
-            borderColor: "rgba(75, 192, 192, 1)",
-            backgroundColor: "rgba(75, 192, 192, 0.2)",
-            tension: 0.1,
-            fill: true,
-        },
-    ],
-}));
-
-const landlordChartData = computed(() => ({
-    labels: [
-        "Jan",
-        "Fév",
-        "Mar",
-        "Avr",
-        "Mai",
-        "Jun",
-        "Jul",
-        "Aoû",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Déc",
-    ],
-    datasets: [
-        {
-            label: "Nouveaux Bailleurs",
-            data: props.landlordStats.data,
-            backgroundColor: "rgba(153, 102, 255, 0.5)",
-            borderColor: "rgba(153, 102, 255, 1)",
-            borderWidth: 1,
-        },
-    ],
-}));
-
-const tenantChartData = computed(() => ({
-    labels: [
-        "Jan",
-        "Fév",
-        "Mar",
-        "Avr",
-        "Mai",
-        "Jun",
-        "Jul",
-        "Aoû",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Déc",
-    ],
-    datasets: [
-        {
-            label: "Nouveaux Locataires",
-            data: props.tenantStats.data,
-            borderColor: "rgba(255, 159, 64, 1)",
-            backgroundColor: "rgba(255, 159, 64, 0.2)",
-            tension: 0.1,
-            fill: true,
-        },
-    ],
-}));
-
-const commissionChartData = computed(() => ({
-    labels: [
-        "Jan",
-        "Fév",
-        "Mar",
-        "Avr",
-        "Mai",
-        "Jun",
-        "Jul",
-        "Aoû",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Déc",
-    ],
-    datasets: [
-        {
-            label: "Commissions Reçues",
-            data: props.commissionStats.data,
-            borderColor: "rgba(255, 206, 86, 1)",
-            backgroundColor: "rgba(255, 206, 86, 0.2)",
-            tension: 0.1,
-            fill: true,
-        },
-    ],
-}));
-
-const latePaymentChartData = computed(() => ({
-    datasets: [
-        {
-            label: "Retards de Paiement",
-            data: props.latePaymentStats.data.map((value, index) => ({
-                x: index + 1,
-                y: value,
-                r: Math.sqrt(value) * 2, // La taille du point dépend de la racine carrée de la valeur pour une meilleure visualisation
-            })),
-            backgroundColor: "rgba(255, 99, 132, 0.5)",
-        },
-    ],
-}));
-
-const expenseChartData = computed(() => ({
-    labels: [
-        "Jan",
-        "Fév",
-        "Mar",
-        "Avr",
-        "Mai",
-        "Jun",
-        "Jul",
-        "Aoû",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Déc",
-    ],
-    datasets: [
-        {
-            label: "Dépenses",
-            data: props.expenseStats.data,
-            borderColor: "rgba(54, 162, 235, 1)",
-            backgroundColor: "rgba(54, 162, 235, 0.2)",
-            tension: 0.1,
-            fill: true,
         },
     ],
 }));
@@ -478,4 +268,269 @@ const formatCurrency = (value) => {
         currency: "XOF",
     }).format(value);
 };
+
+const isDataEmpty = (data) => {
+    return !data || data.length === 0 || data.every((item) => item === 0);
+};
+
+const contractChartData = computed(() => {
+    if (isDataEmpty(props.contractStats.data)) {
+        return { labels: [], datasets: [] };
+    }
+    return {
+        labels: props.contractStats.labels,
+        datasets: [
+            {
+                label: "Nombre de Contrats",
+                data: props.contractStats.data,
+                borderColor: "rgba(75, 192, 192, 1)",
+                backgroundColor: "rgba(75, 192, 192, 0.2)",
+                tension: 0.1,
+                fill: true,
+            },
+        ],
+    };
+});
+
+const userGrowthChartData = computed(() => {
+    if (isDataEmpty(props.userGrowthStats.data)) {
+        return { labels: [], datasets: [] };
+    }
+    return {
+        labels: [
+            "Jan",
+            "Fév",
+            "Mar",
+            "Avr",
+            "Mai",
+            "Jun",
+            "Jul",
+            "Aoû",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Déc",
+        ],
+        datasets: [
+            {
+                label: "Nouveaux Utilisateurs",
+                data: props.userGrowthStats.data,
+                borderColor: "rgba(75, 192, 192, 1)",
+                backgroundColor: "rgba(75, 192, 192, 0.2)",
+                tension: 0.1,
+                fill: true,
+            },
+        ],
+    };
+});
+
+const landlordChartData = computed(() => {
+    if (isDataEmpty(props.landlordStats.data)) {
+        return { labels: [], datasets: [] };
+    }
+    return {
+        labels: [
+            "Jan",
+            "Fév",
+            "Mar",
+            "Avr",
+            "Mai",
+            "Jun",
+            "Jul",
+            "Aoû",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Déc",
+        ],
+        datasets: [
+            {
+                label: "Nouveaux Bailleurs",
+                data: props.landlordStats.data,
+                backgroundColor: "rgba(153, 102, 255, 0.5)",
+                borderColor: "rgba(153, 102, 255, 1)",
+                borderWidth: 1,
+            },
+        ],
+    };
+});
+
+const tenantChartData = computed(() => {
+    if (isDataEmpty(props.tenantStats.data)) {
+        return { labels: [], datasets: [] };
+    }
+    return {
+        labels: [
+            "Jan",
+            "Fév",
+            "Mar",
+            "Avr",
+            "Mai",
+            "Jun",
+            "Jul",
+            "Aoû",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Déc",
+        ],
+        datasets: [
+            {
+                label: "Nouveaux Locataires",
+                data: props.tenantStats.data,
+                borderColor: "rgba(255, 159, 64, 1)",
+                backgroundColor: "rgba(255, 159, 64, 0.2)",
+                tension: 0.1,
+                fill: true,
+            },
+        ],
+    };
+});
+
+const revenueChartData = computed(() => {
+    if (isDataEmpty(props.revenueStats.data)) {
+        return { labels: [], datasets: [] };
+    }
+    return {
+        labels: [
+            "Jan",
+            "Fév",
+            "Mar",
+            "Avr",
+            "Mai",
+            "Jun",
+            "Jul",
+            "Aoû",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Déc",
+        ],
+        datasets: [
+            {
+                label: "Revenus",
+                data: props.revenueStats.data,
+                backgroundColor: "rgba(54, 162, 235, 0.5)",
+            },
+        ],
+    };
+});
+
+const commissionChartData = computed(() => {
+    if (isDataEmpty(props.commissionStats.data)) {
+        return { labels: [], datasets: [] };
+    }
+    return {
+        labels: [
+            "Jan",
+            "Fév",
+            "Mar",
+            "Avr",
+            "Mai",
+            "Jun",
+            "Jul",
+            "Aoû",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Déc",
+        ],
+        datasets: [
+            {
+                label: "Commissions Reçues",
+                data: props.commissionStats.data,
+                borderColor: "rgba(255, 206, 86, 1)",
+                backgroundColor: "rgba(255, 206, 86, 0.2)",
+                tension: 0.1,
+                fill: true,
+            },
+        ],
+    };
+});
+
+const latePaymentChartData = computed(() => {
+    if (isDataEmpty(props.latePaymentStats.data)) {
+        return { labels: [], datasets: [] };
+    }
+    return {
+        datasets: [
+            {
+                label: "Retards de Paiement",
+                data: props.latePaymentStats.data.map((value, index) => ({
+                    x: index + 1,
+                    y: value,
+                    r: Math.sqrt(value) * 2,
+                })),
+                backgroundColor: "rgba(255, 99, 132, 0.5)",
+            },
+        ],
+    };
+});
+
+const expenseChartData = computed(() => {
+    if (isDataEmpty(props.expenseStats.data)) {
+        return { labels: [], datasets: [] };
+    }
+    return {
+        labels: [
+            "Jan",
+            "Fév",
+            "Mar",
+            "Avr",
+            "Mai",
+            "Jun",
+            "Jul",
+            "Aoû",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Déc",
+        ],
+        datasets: [
+            {
+                label: "Dépenses",
+                data: props.expenseStats.data,
+                borderColor: "rgba(54, 162, 235, 1)",
+                backgroundColor: "rgba(54, 162, 235, 0.2)",
+                tension: 0.1,
+                fill: true,
+            },
+        ],
+    };
+});
+
+const occupancyRateChartData = computed(() => {
+    if (
+        isDataEmpty(props.occupancyRateStats.data) ||
+        totalProperties.value === 0
+    ) {
+        return { labels: [], datasets: [] };
+    }
+    return {
+        labels: [
+            "Jan",
+            "Fév",
+            "Mar",
+            "Avr",
+            "Mai",
+            "Jun",
+            "Jul",
+            "Aoû",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Déc",
+        ],
+        datasets: [
+            {
+                label: "Taux d'Occupation",
+                data: props.occupancyRateStats.data,
+                borderColor: "rgba(255, 99, 132, 1)",
+                backgroundColor: "rgba(255, 99, 132, 0.2)",
+                tension: 0.1,
+                fill: true,
+            },
+        ],
+    };
+});
 </script>

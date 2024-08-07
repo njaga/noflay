@@ -1,29 +1,25 @@
-<script setup>
-import { Radar } from 'vue-chartjs'
-import { Chart as ChartJS, RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend } from 'chart.js'
+<template>
+    <BaseChart type="radar" :data="chartData" :options="mergedOptions" />
+</template>
 
-ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend)
+<script setup>
+import { computed } from "vue";
+import BaseChart from "@/Components/BaseChart.vue";
 
 const props = defineProps({
-  chartData: {
-    type: Object,
-    required: true
-  },
-  options: {
-    type: Object,
-    default: () => ({
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: true
-        }
-      }
-    })
-  }
-})
-</script>
+    chartData: {
+        type: Object,
+        required: true,
+    },
+    chartOptions: {
+        type: Object,
+        default: () => ({}),
+    },
+});
 
-<template>
-  <Radar :data="chartData" :options="options" />
-</template>
+const mergedOptions = computed(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    ...props.chartOptions,
+}));
+</script>

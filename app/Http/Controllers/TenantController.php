@@ -15,6 +15,8 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Str;
 
 class TenantController extends Controller
 {
@@ -102,36 +104,60 @@ class TenantController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255',
-            'phone_number' => 'required|string|max:20',
-            'address' => 'required|string|max:255',
-            'id_card_number' => 'required|string|max:255',
-            'id_card_expiration_date' => 'required|date',
-            'attachments.*' => 'file|mimes:pdf,docx,jpeg,png|max:10240', // 10MB max
-        ]);
+        try {
+            $validated = $request->validate([
+                'first_name' => 'required|string|max:255',
+                'last_name' => 'required|string|max:255',
+                'email' => 'required|string|email|max:255|unique:tenants',
+                'phone_number' => 'required|string|max:20',
+                'address' => 'required|string|max:255',
+                'id_card_number' => 'required|string|max:255',
+                'id_card_expiration_date' => 'required|date',
+                'attachments' => 'nullable|array|max:5',
+                'attachments.*' => 'file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120', // 5MB max
+            ]);
 
-        $attachments = [];
-        if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
-                $path = $file->store('tenant-attachments', 'public');
-                $attachments[] = [
-                    'name' => $file->getClientOriginalName(),
-                    'path' => $path,
-                ];
+            $attachments = [];
+            if ($request->hasFile('attachments')) {
+                foreach ($request->file('attachments') as $file) {
+                    $fileName = $this->generateUniqueFileName($file);
+                    $path = $file->storeAs('tenant-attachments', $fileName, 'public');
+                    $attachments[] = [
+                        'name' => $file->getClientOriginalName(),
+                        'path' => $path,
+                    ];
+                }
             }
-        }
 
-        $tenant = new Tenant($request->all());
-        if (!$request->user()->hasRole('super_admin')) {
+            $tenant = new Tenant($validated);
+            $tenant->attachments = json_encode($attachments);
             $tenant->company_id = $request->user()->company_id;
-        }
-        $tenant->attachments = $attachments;
-        $tenant->save();
+            $tenant->save();
 
-        return redirect()->route('contracts.create', $tenant->id)->with('success', 'Locataire créé avec succès. Veuillez créer un contrat.');
+            return redirect()->route('contracts.createWithTenant', ['tenantId' => $tenant->id])
+                ->with('success', 'Locataire créé avec succès. Vous pouvez maintenant créer un contrat pour ce locataire.');
+        } catch (\Exception $e) {
+            Log::error('Tenant creation failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request' => $request->all()
+            ]);
+            return back()->withErrors(['error' => "Une erreur s'est produite lors de la création du locataire."])->withInput();
+        }
+    }
+
+    private function generateUniqueFileName($file)
+    {
+        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $extension = $file->getClientOriginalExtension();
+
+        // Tronquer le nom du fichier s'il est trop long
+        $truncatedName = Str::limit($originalName, 100, '');
+
+        // Générer un nom de fichier unique
+        $fileName = $truncatedName . '_' . time() . '_' . Str::random(10) . '.' . $extension;
+
+        return $fileName;
     }
 
     public function show(Tenant $tenant)
@@ -181,7 +207,7 @@ class TenantController extends Controller
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:tenants,email,'.$tenant->id,
+            'email' => 'required|email|max:255|unique:tenants,email,' . $tenant->id,
             'phone_number' => 'required|string|max:20',
             'address' => 'required|string|max:255',
             'id_card_number' => 'required|string|max:255',
@@ -346,29 +372,29 @@ class TenantController extends Controller
         Gate::authorize('view', $tenant);
 
         $tenant->load([
-            'contracts' => function($query) {
+            'contracts' => function ($query) {
                 $query->withTrashed();
             },
-            'contracts.property' => function($query) {
+            'contracts.property' => function ($query) {
                 $query->withTrashed();
             },
-            'contracts.property.landlord' => function($query) {
+            'contracts.property.landlord' => function ($query) {
                 $query->withTrashed();
             },
             'company'
         ]);
 
         // Récupérer les propriétés associées
-        $properties = Property::with(['contracts' => function($query) use ($tenant) {
+        $properties = Property::with(['contracts' => function ($query) use ($tenant) {
             $query->where('tenant_id', $tenant->id)->withTrashed();
         }, 'landlord'])->whereHas('contracts', function ($query) use ($tenant) {
             $query->where('tenant_id', $tenant->id);
         })->withTrashed()->get();
 
         // Récupérer les paiements associés
-        $payments = Payment::with(['contract' => function($query) {
+        $payments = Payment::with(['contract' => function ($query) {
             $query->withTrashed();
-        }, 'contract.property' => function($query) {
+        }, 'contract.property' => function ($query) {
             $query->withTrashed();
         }])->whereHas('contract', function ($query) use ($tenant) {
             $query->where('tenant_id', $tenant->id);
@@ -384,5 +410,4 @@ class TenantController extends Controller
             ]
         ]);
     }
-
 }

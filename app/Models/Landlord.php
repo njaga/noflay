@@ -25,7 +25,7 @@ class Landlord extends Model
         'agency_percentage',
         'contract_duration',
         'company_id',
-        'attachments'
+        'attachments',
     ];
 
     protected $casts = [

@@ -13,7 +13,6 @@
                         <i class="fas fa-plus mr-2"></i>Ajouter un bailleur
                         </Link>
 
-                        <!-- Bouton téléchargement -->
                         <button @click="handleDownloadPDF"
                             class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition duration-150 ease-in-out shadow-md hover:shadow-lg ml-4">
                             <i class="fas fa-download mr-2"></i>Télécharger PDF
@@ -67,10 +66,8 @@
                         <Card v-for="landlord in paginatedLandlords" :key="landlord.id"
                             :title="landlord.first_name + ' ' + landlord.last_name" :email="landlord.email"
                             :editUrl="route('landlords.edit', landlord.id)"
-                            :viewUrl="route('landlords.show', landlord.id)"
-                            :canManage="canManageLandlords"
-                            @delete="openDeleteModal(landlord)"
-                            @toggleStatus="toggleLandlordStatus(landlord)"
+                            :viewUrl="route('landlords.show', landlord.id)" :canManage="canManageLandlords"
+                            @delete="openDeleteModal(landlord)" @toggleStatus="toggleLandlordStatus(landlord)"
                             @createAccount="openCreateAccountModal(landlord)">
                             <template #extra-info>
                                 <p class="text-sm text-gray-600">{{ landlord.company.name }}</p>
@@ -107,7 +104,8 @@
                                 <tr v-for="landlord in paginatedLandlords" :key="landlord.id"
                                     class="hover:bg-gray-50 transition duration-150 ease-in-out">
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ landlord.first_name }} {{ landlord.last_name }}</div>
+                                        <div class="text-sm text-gray-900">{{ landlord.first_name }} {{
+                                            landlord.last_name }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm text-gray-900">{{ landlord.email }}</div>
@@ -181,35 +179,39 @@
             </div>
         </Modal>
 
-        <!-- Status update modal -->
-        <Modal :show="showStatusModal" @close="closeStatusModal">
-            <div class="p-6 text-center">
-                <div class="mb-5">
-                    <i
-                        :class="['fas', 'text-5xl', 'animate-pulse', landlordStatusUpdated?.is_active ? 'fa-check-circle text-indigo-500' : 'fa-times-circle text-red-500']"></i>
-                </div>
-                <h3 class="text-lg font-medium text-gray-900 mb-4">Mise à jour du statut</h3>
+        <!-- Delete confirmation modal -->
+        <Modal :show="showDeleteModal" @close="closeDeleteModal">
+            <div class="p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Confirmer la suppression</h3>
                 <p class="text-sm text-gray-500 mb-4">
-                    Le bailleur {{ landlordStatusUpdated?.first_name }} {{ landlordStatusUpdated?.last_name }} a été
-                    {{ landlordStatusUpdated?.is_active ? 'activé' : 'désactivé' }} avec succès.
+                    Êtes-vous sûr de vouloir supprimer le bailleur {{ landlordToDelete?.first_name }}
+                    {{ landlordToDelete?.last_name }} ? Cette action est irréversible.
                 </p>
-                <div class="mt-6 flex justify-center">
-                    <button @click="closeStatusModal"
-                        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition duration-150 ease-in-out">
-                        OK
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button @click="closeDeleteModal" :disabled="isDeleting"
+                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition duration-150 ease-in-out disabled:opacity-50">
+                        Annuler
+                    </button>
+                    <button @click="confirmDelete" :disabled="isDeleting"
+                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition duration-150 ease-in-out disabled:opacity-50 flex items-center">
+                        <span v-if="isDeleting" class="mr-2">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </span>
+                        {{ isDeleting ? 'Suppression...' : 'Supprimer' }}
                     </button>
                 </div>
             </div>
         </Modal>
 
         <!-- Create account modal -->
-        <CreateAccountModal :show="showCreateAccountModal" :landlord="selectedLandlord" @close="closeCreateAccountModal" />
+        <CreateAccountModal :show="showCreateAccountModal" :landlord="selectedLandlord"
+            @close="closeCreateAccountModal" />
     </AppLayout>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { Link, router } from '@inertiajs/vue3';
+import { ref, computed, onMounted } from 'vue';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Card from '@/Components/Card.vue';
@@ -218,12 +220,8 @@ import CreateAccountModal from '@/Components/Landlords/CreateAccountModal.vue';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
-const props = defineProps({
-    landlords: Array,
-    auth: Object,
-});
-
-const landlords = ref(props.landlords);
+const page = usePage();
+const landlords = ref([]);
 const search = ref('');
 const sortBy = ref('first_name');
 const sortOrder = ref('asc');
@@ -237,15 +235,19 @@ const itemsPerPage = 10;
 const showCreateAccountModal = ref(false);
 const selectedLandlord = ref(null);
 
-const filteredLandlords = computed(() => {
-    let filtered = landlords.value.filter(landlord =>
-        (landlord.first_name.toLowerCase().includes(search.value.toLowerCase()) ||
-            landlord.last_name.toLowerCase().includes(search.value.toLowerCase()) ||
-            landlord.email.toLowerCase().includes(search.value.toLowerCase()) ||
-            landlord.company.name.toLowerCase().includes(search.value.toLowerCase()))
-    );
+onMounted(() => {
+    landlords.value = page.props.landlords || [];
+});
 
-    filtered.sort((a, b) => {
+const filteredLandlords = computed(() => {
+    if (!landlords.value) return [];
+
+    return landlords.value.filter(landlord =>
+    (landlord.first_name.toLowerCase().includes(search.value.toLowerCase()) ||
+        landlord.last_name.toLowerCase().includes(search.value.toLowerCase()) ||
+        landlord.email.toLowerCase().includes(search.value.toLowerCase()) ||
+        landlord.company.name.toLowerCase().includes(search.value.toLowerCase()))
+    ).sort((a, b) => {
         let modifier = sortOrder.value === 'asc' ? 1 : -1;
         if (sortBy.value === 'first_name') {
             return modifier * a.first_name.localeCompare(b.first_name);
@@ -257,8 +259,6 @@ const filteredLandlords = computed(() => {
             return modifier * a.company.name.localeCompare(b.company.name);
         }
     });
-
-    return filtered;
 });
 
 const totalPages = computed(() => Math.ceil(filteredLandlords.value.length / itemsPerPage));
@@ -270,7 +270,7 @@ const paginatedLandlords = computed(() => {
 });
 
 const canManageLandlords = computed(() => {
-    return props.auth?.user?.roles?.some(role => ['super_admin', 'admin_entreprise'].includes(role.name)) ?? false;
+    return page.props.auth?.user?.roles?.some(role => ['super_admin', 'admin_entreprise'].includes(role.name)) ?? false;
 });
 
 const toggleView = () => {
@@ -303,15 +303,28 @@ const closeDeleteModal = () => {
     landlordToDelete.value = null;
 };
 
+const isDeleting = ref(false);
+
 const confirmDelete = () => {
-    router.delete(route('landlords.destroy', landlordToDelete.value.id), {
-        preserveState: true,
-        preserveScroll: true,
-        onSuccess: () => {
-            closeDeleteModal();
-            landlords.value = landlords.value.filter(l => l.id !== landlordToDelete.value.id);
-        },
-    });
+    if (landlordToDelete.value) {
+        isDeleting.value = true;
+        router.delete(route('landlords.destroy', landlordToDelete.value.id), {
+            preserveState: false,
+            preserveScroll: false,
+            onSuccess: () => {
+                closeDeleteModal();
+            },
+            onError: (errors) => {
+                console.error('Erreur lors de la suppression:', errors);
+                closeDeleteModal();
+                // Optionnel : afficher un message d'erreur à l'utilisateur
+            },
+            onFinish: () => {
+                landlordToDelete.value = null;
+                isDeleting.value = false;
+            }
+        });
+    }
 };
 
 const toggleLandlordStatus = async (landlord) => {
@@ -354,5 +367,6 @@ const openCreateAccountModal = (landlord) => {
 
 const closeCreateAccountModal = () => {
     showCreateAccountModal.value = false;
+    selectedLandlord.value = null;
 };
 </script>
