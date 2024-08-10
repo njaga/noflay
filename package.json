@@ -39,6 +39,7 @@
         "html2canvas": "^1.4.1",
         "jspdf": "^2.5.1",
         "jspdf-autotable": "^3.8.2",
+        "libphonenumber-js": "^1.11.5",
         "lucide-vue-next": "^0.396.0",
         "recharts": "^2.12.7",
         "sweetalert2": "^11.12.3",
@@ -47,6 +48,7 @@
         "vue-chartjs": "^5.3.1",
         "vue-router": "^4.4.0",
         "vue-select": "^4.0.0-beta.6",
+        "vue-tel-input": "^9.1.4",
         "xlsx": "^0.18.5",
         "yup": "^1.4.0"
     }

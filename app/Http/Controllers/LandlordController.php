@@ -128,15 +128,16 @@ class LandlordController extends Controller
                 'first_name' => 'required|string|max:255',
                 'last_name' => 'required|string|max:255',
                 'address' => 'required|string|max:255',
-                'phone' => 'required|string|max:15',
+                'phone' => 'required|string|max:25',
                 'email' => 'required|string|email|max:255|unique:landlords',
                 'identity_number' => 'required|string|max:255',
-                'identity_expiry_date' => 'required|date',
+                'identity_expiry_date' => 'required|date|after:today',
                 'agency_percentage' => 'required|numeric|min:0|max:100',
+                'rental_percentage' => 'required|numeric|min:0|max:100',
                 'contract_duration' => 'required|integer|min:1',
                 'company_id' => 'required|integer|exists:companies,id',
                 'attachments' => 'nullable|array|max:5',
-                'attachments.*' => 'file|mimes:pdf,jpg,jpeg,png|max:5120', // 5120 KB = 5 MB
+                'attachments.*' => 'file|mimes:pdf,jpg,jpeg,png|max:5120',
             ]);
 
             if ($validator->fails()) {
@@ -153,16 +154,16 @@ class LandlordController extends Controller
 
             $attachments = [];
             if ($request->hasFile('attachments')) {
-                foreach ($request->file('attachments') as $index => $file) {
-                    if ($file) { // Filter out empty files
-                        try {
-                            $filename = uniqid() . '.' . $file->getClientOriginalExtension();
-                            $path = $file->storeAs('attachments', $filename, 'public');
-                            $attachments[] = $path;
-                        } catch (\Exception $e) {
-                            Log::error("Error storing file at index $index: " . $e->getMessage());
-                            return back()->withErrors(["attachments.$index" => "Erreur lors du téléchargement du fichier $index"]);
-                        }
+                foreach ($request->file('attachments') as $file) {
+                    try {
+                        $filename = uniqid() . '.' . $file->getClientOriginalExtension();
+                        $path = $file->storeAs('attachments', $filename, 'public');
+                        $attachments[] = $path;
+                    } catch (\Exception $e) {
+                        Log::error("Error storing file: " . $e->getMessage());
+                        return Inertia::render('Landlords/Create', [
+                            'errors' => ['attachments' => 'Une erreur est survenue lors du téléchargement des pièces jointes.'],
+                        ])->withViewData(['error' => 'File upload failed']);
                     }
                 }
             }
@@ -172,10 +173,14 @@ class LandlordController extends Controller
 
             Log::info('Landlord created successfully:', $landlord->toArray());
 
-            return redirect()->route('landlords.index')->with('success', 'Bailleur créé avec succès.');
+            return Inertia::render('Landlords/Index', [
+                'message' => 'Bailleur créé avec succès.',
+            ]);
         } catch (\Exception $e) {
             Log::error('Error in LandlordController@store: ' . $e->getMessage());
-            return back()->withErrors(['error' => 'Une erreur est survenue lors de la création du bailleur.']);
+            return Inertia::render('Landlords/Create', [
+                'errors' => ['general' => 'Une erreur est survenue lors de la création du bailleur.'],
+            ])->withViewData(['error' => 'Creation failed']);
         }
     }
 
@@ -304,6 +309,7 @@ class LandlordController extends Controller
     {
         Gate::authorize('update', $landlord);
 
+        // Validation des données du formulaire, y compris rental_percentage et la date d'expiration
         $validatedData = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -311,13 +317,15 @@ class LandlordController extends Controller
             'phone' => 'required|string|max:15',
             'email' => 'required|string|email|max:255|unique:landlords,email,' . $landlord->id,
             'identity_number' => 'required|string|max:255',
-            'identity_expiry_date' => 'required|date',
+            'identity_expiry_date' => 'required|date|after:today', // Validation de la date d'expiration
             'agency_percentage' => 'required|numeric|min:0|max:100',
+            'rental_percentage' => 'required|numeric|min:0|max:100',
             'contract_duration' => 'required|integer|min:1',
             'company_id' => 'required|integer|exists:companies,id',
-            'attachments.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
+            'attachments.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5120 KB = 5 MB
         ]);
 
+        // Gestion des pièces jointes si nécessaire
         if ($request->hasFile('attachments')) {
             $attachments = json_decode($landlord->attachments) ?? [];
             foreach ($request->file('attachments') as $file) {
@@ -326,14 +334,17 @@ class LandlordController extends Controller
             $validatedData['attachments'] = json_encode($attachments);
         }
 
+        // Si l'utilisateur n'est pas un super admin, forcer l'id de la compagnie à celui de l'utilisateur authentifié
         if (!Auth::user()->hasRole('super_admin')) {
             $validatedData['company_id'] = Auth::user()->company_id;
         }
 
+        // Mise à jour des informations du bailleur
         $landlord->update($validatedData);
 
         return redirect()->route('landlords.index')->with('success', 'Bailleur mis à jour avec succès.');
     }
+
 
     public function destroy(Landlord $landlord)
     {
@@ -406,11 +417,16 @@ class LandlordController extends Controller
         })->where('is_reversed', false)
             ->sum('caution_amount');
 
+        // Calcul des commissions de gérance
         $agencyPercentage = $landlord->agency_percentage / 100;
         $rentCommission = $monthlyRent * $agencyPercentage;
         $cautionCommission = $totalCautionAmount * $agencyPercentage;
 
-        $totalCommissions = $rentCommission + $cautionCommission;
+        // Calcul des commissions locatives
+        $rentalPercentage = $landlord->rental_percentage / 100;
+        $rentalCommission = $monthlyRent * $rentalPercentage;
+
+        $totalCommissions = $rentCommission + $cautionCommission + $rentalCommission;
 
         $totalTva = ($monthlyRent + $totalCautionAmount) * self::TVA_RATE;
 
@@ -468,6 +484,10 @@ class LandlordController extends Controller
                 [
                     'type' => 'Rent Commission',
                     'amount' => round($rentCommission, 2)
+                ],
+                [
+                    'type' => 'Rental Commission',
+                    'amount' => round($rentalCommission, 2)
                 ]
             ],
             'payoutDetails' => LandlordTransaction::where('landlord_id', $landlord->id)
@@ -483,6 +503,7 @@ class LandlordController extends Controller
                 })
         ];
     }
+
 
     public function createAccount($id)
     {
