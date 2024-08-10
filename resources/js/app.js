@@ -5,13 +5,14 @@ import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
-import { Ziggy } from '@tightenco/ziggy';
-import { Route } from '@tightenco/ziggy';
+import { Ziggy } from './ziggy';
 import FontAwesomeIcon from './fontawesome';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { MotionPlugin } from '@vueuse/motion';
-import Loader from '@/Components/Loader.vue'
+import Loader from '@/Components/Loader.vue';
+import VueTelInput from 'vue-tel-input';
+import 'vue-tel-input/vue-tel-input.css';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -23,6 +24,7 @@ createInertiaApp({
             .use(plugin)
             .use(ZiggyVue)
             .use(MotionPlugin)
+            .use(VueTelInput)
             .component('Loader', Loader);
         vueApp.component('font-awesome-icon', FontAwesomeIcon);
         return vueApp.mount(el);
