@@ -118,7 +118,7 @@ const navItems = computed(() => {
             ],
         },
         {
-            name: "Logements",
+            name: "Propriétés",
             icon: "bi-house-door",
             roles: ["super_admin", "admin_entreprise", "user_entreprise", "bailleur", "locataire"],
             defaultHref: route("properties.index"),

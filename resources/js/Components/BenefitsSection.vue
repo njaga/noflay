@@ -38,17 +38,17 @@ const benefits = ref([
     {
         icon: 'bi-rocket-takeoff',
         title: 'Boostez votre productivité',
-        description: 'Automatisez vos tâches et concentrez-vous sur ce qui compte vraiment pour faire décoller votre activité.',
+        description: 'Automatisez vos tâches quotidiennes et concentrez-vous sur ce qui compte vraiment pour faire décoller votre activité de manière efficace et durable.',
     },
     {
         icon: 'bi-shield-lock',
         title: 'Sécurité renforcée',
-        description: 'Protégez vos intérêts et ceux de vos locataires grâce à notre système de gestion ultra-sécurisé.',
+        description: 'Protégez vos intérêts ainsi que ceux de vos locataires avec notre système de gestion ultra-sécurisé, conçu pour prévenir toute menace et assurer la tranquillité d\'esprit.',
     },
     {
         icon: 'bi-graph-up-arrow',
         title: 'Maximisez vos profits',
-        description: 'Optimisez vos revenus locatifs grâce à des outils d\'analyse avancés et une gestion financière intelligente.',
+        description: 'Optimisez vos revenus en utilisant des outils d\'analyse avancés et une gestion financière intelligente, conçus pour maximiser chaque opportunité de profit.',
     },
 ]);
 </script>

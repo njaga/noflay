@@ -19,11 +19,7 @@
                 </span>
             </div>
             <p class="text-3xl font-bold text-gray-800 mb-2">
-                {{
-                    stat.title === "Nombre de versements"
-                        ? stat.value
-                        : formatCurrency(stat.value)
-                }}
+                {{ stat.value }}
             </p>
             <p class="text-sm text-gray-500">{{ stat.description }}</p>
         </div>
@@ -39,18 +35,6 @@ const props = defineProps({
         required: true,
     },
 });
-
-const formatCurrency = (amount) => {
-    if (!amount || isNaN(amount)) {
-        return "0 F CFA";
-    }
-    return new Intl.NumberFormat("fr-FR", {
-        style: "currency",
-        currency: "XOF",
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-    }).format(amount);
-};
 
 const getIcon = (index) => {
     const icons = [TrendingUp, Users, CreditCard];

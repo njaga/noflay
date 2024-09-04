@@ -259,7 +259,10 @@
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
                                         >
-                                            {{ contract.property?.name || 'Propriété supprimée' }}
+                                            {{
+                                                contract.property?.name ||
+                                                "Propriété supprimée"
+                                            }}
                                         </td>
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
@@ -276,36 +279,89 @@
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"
                                         >
-                                            <Link
-                                                :href="
-                                                    route(
-                                                        'contracts.show',
-                                                        contract.id
-                                                    )
-                                                "
-                                                class="text-indigo-600 hover:text-indigo-900 mr-2"
+                                            <div
+                                                class="flex justify-end items-center space-x-2"
                                             >
-                                                <i class="fas fa-eye"></i>
-                                            </Link>
-                                            <Link
-                                                :href="
-                                                    route(
-                                                        'contracts.edit',
-                                                        contract.id
-                                                    )
-                                                "
-                                                class="text-indigo-600 hover:text-indigo-900 mr-2"
-                                            >
-                                                <i class="fas fa-edit"></i>
-                                            </Link>
-                                            <button
-                                                @click="
-                                                    openDeleteModal(contract)
-                                                "
-                                                class="text-red-600 hover:text-red-900"
-                                            >
-                                                <i class="fas fa-trash"></i>
-                                            </button>
+                                                <div class="relative group">
+                                                    <Link
+                                                        :href="
+                                                            route(
+                                                                'contracts.show',
+                                                                contract.id
+                                                            )
+                                                        "
+                                                        class="text-indigo-600 hover:text-indigo-900"
+                                                    >
+                                                        <i
+                                                            class="fas fa-eye"
+                                                        ></i>
+                                                    </Link>
+                                                    <div
+                                                        class="absolute invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gray-800 text-white text-xs rounded py-1 px-2 right-0 bottom-full mb-2 w-max"
+                                                    >
+                                                        Voir les détails
+                                                    </div>
+                                                </div>
+                                                <div class="relative group">
+                                                    <Link
+                                                        :href="
+                                                            route(
+                                                                'contracts.edit',
+                                                                contract.id
+                                                            )
+                                                        "
+                                                        class="text-indigo-600 hover:text-indigo-900"
+                                                    >
+                                                        <i
+                                                            class="fas fa-edit"
+                                                        ></i>
+                                                    </Link>
+                                                    <div
+                                                        class="absolute invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gray-800 text-white text-xs rounded py-1 px-2 right-0 bottom-full mb-2 w-max"
+                                                    >
+                                                        Modifier le contrat
+                                                    </div>
+                                                </div>
+                                                <div class="relative group">
+                                                    <button
+                                                        @click="
+                                                            openDeleteModal(
+                                                                contract
+                                                            )
+                                                        "
+                                                        class="text-red-600 hover:text-red-900"
+                                                    >
+                                                        <i
+                                                            class="fas fa-trash"
+                                                        ></i>
+                                                    </button>
+                                                    <div
+                                                        class="absolute invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gray-800 text-white text-xs rounded py-1 px-2 right-0 bottom-full mb-2 w-max"
+                                                    >
+                                                        Supprimer le contrat
+                                                    </div>
+                                                </div>
+                                                <div class="relative group">
+                                                    <button
+                                                        @click="
+                                                            generateContract(
+                                                                contract
+                                                            )
+                                                        "
+                                                        class="text-green-600 hover:text-green-900"
+                                                    >
+                                                        <i
+                                                            class="fas fa-file-contract"
+                                                        ></i>
+                                                    </button>
+                                                    <div
+                                                        class="absolute invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gray-800 text-white text-xs rounded py-1 px-2 right-0 bottom-full mb-2 w-max"
+                                                    >
+                                                        Générer le contrat de
+                                                        location
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -371,45 +427,46 @@
                 </Modal>
 
                 <Modal :show="showSuccessModal" @close="closeSuccessModal">
-            <div class="p-6 bg-white rounded-lg shadow-xl">
-                <h3 class="text-lg font-medium text-green-indigo mb-4">
-                    Opération réussie
-                </h3>
-                <p class="text-sm text-gray-500 mb-4">
-                    {{ successMessage }}
-                </p>
-                <div class="mt-6 flex justify-end">
-                    <button
-                        @click="closeSuccessModal"
-                        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition duration-150 ease-in-out"
-                    >
-                        Fermer
-                    </button>
-                </div>
-            </div>
-        </Modal>
+                    <div class="p-6 bg-white rounded-lg shadow-xl">
+                        <h3 class="text-lg font-medium text-green-indigo mb-4">
+                            Opération réussie
+                        </h3>
+                        <p class="text-sm text-gray-500 mb-4">
+                            {{ successMessage }}
+                        </p>
+                        <div class="mt-6 flex justify-end">
+                            <button
+                                @click="closeSuccessModal"
+                                class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition duration-150 ease-in-out"
+                            >
+                                Fermer
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
 
-        <Modal :show="showErrorModal" @close="closeErrorModal">
-            <div class="p-6 bg-white rounded-lg shadow-xl">
-                <h3 class="text-lg font-medium text-red-600 mb-4">
-                    Erreur
-                </h3>
-                <p class="text-sm text-gray-500 mb-4">
-                    {{ errorMessage }}
-                </p>
-                <div class="mt-6 flex justify-end">
-                    <button
-                        @click="closeErrorModal"
-                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition duration-150 ease-in-out"
-                    >
-                        Fermer
-                    </button>
-                </div>
-            </div>
-        </Modal>
-
+                <Modal :show="showErrorModal" @close="closeErrorModal">
+                    <div class="p-6 bg-white rounded-lg shadow-xl">
+                        <h3 class="text-lg font-medium text-red-600 mb-4">
+                            Erreur
+                        </h3>
+                        <p class="text-sm text-gray-500 mb-4">
+                            {{ errorMessage }}
+                        </p>
+                        <div class="mt-6 flex justify-end">
+                            <button
+                                @click="closeErrorModal"
+                                class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition duration-150 ease-in-out"
+                            >
+                                Fermer
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
             </div>
         </div>
+        <!-- Iframe caché pour le téléchargement -->
+        <iframe ref="hiddenDownloader" style="display: none"></iframe>
     </AppLayout>
 </template>
 
@@ -424,7 +481,9 @@ const contracts = ref(props.contracts.data || []);
 const tenants = ref(props.tenants || []);
 const properties = ref(props.properties || []);
 const user = props.auth.user;
-const userRoles = computed(() => props.auth?.user?.roles?.map(role => role.name) ?? []);
+const userRoles = computed(
+    () => props.auth?.user?.roles?.map((role) => role.name) ?? []
+);
 
 const showDeleteModal = ref(false);
 const contractToDelete = ref(null);
@@ -434,8 +493,8 @@ const itemsPerPage = 10;
 
 const showSuccessModal = ref(false);
 const showErrorModal = ref(false);
-const successMessage = ref('');
-const errorMessage = ref('');
+const successMessage = ref("");
+const errorMessage = ref("");
 
 const filters = ref({
     tenant: "",
@@ -563,7 +622,8 @@ const confirmDelete = () => {
             },
             onError: (errors) => {
                 closeDeleteModal();
-                errorMessage.value = "Une erreur est survenue lors de la suppression du contrat.";
+                errorMessage.value =
+                    "Une erreur est survenue lors de la suppression du contrat.";
                 showErrorModal.value = true;
             },
         });
@@ -572,12 +632,12 @@ const confirmDelete = () => {
 
 const closeSuccessModal = () => {
     showSuccessModal.value = false;
-    successMessage.value = '';
+    successMessage.value = "";
 };
 
 const closeErrorModal = () => {
     showErrorModal.value = false;
-    errorMessage.value = '';
+    errorMessage.value = "";
 };
 
 const formatDate = (dateString) => {
@@ -587,6 +647,24 @@ const formatDate = (dateString) => {
     return isNaN(date)
         ? "Invalid Date"
         : date.toLocaleDateString("fr-FR", options);
+};
+
+const hiddenDownloader = ref(null);
+
+const generateContract = (contract) => {
+    const url = route("contracts.generate", contract.id);
+
+    // Utilisation de l'iframe pour le téléchargement
+    if (hiddenDownloader.value) {
+        hiddenDownloader.value.src = url;
+    } else {
+        // Fallback si l'iframe n'est pas disponible
+        window.location.href = url;
+    }
+
+    // Afficher un message de succès
+    showSuccessModal.value = true;
+    successMessage.value = "Le contrat a été généré avec succès.";
 };
 </script>
 
@@ -629,11 +707,34 @@ const formatDate = (dateString) => {
 
 .shadow-md {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-         0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .shadow-lg {
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-         0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.tooltip {
+    z-index: 1000;
+}
+
+.custom-tooltip {
+    background-color: #4a5568;
+    color: #ffffff;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+.relative {
+    position: relative;
+}
+
+.group:hover .group-hover\:visible {
+    visibility: visible;
+}
+
+.group:hover .group-hover\:opacity-100 {
+    opacity: 1;
 }
 </style>

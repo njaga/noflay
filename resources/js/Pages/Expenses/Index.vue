@@ -91,19 +91,19 @@ const filteredExpenses = computed(() => {
 const summaryStats = computed(() => [
     {
         title: "Total des dépenses",
-        value: filteredExpenses.value.reduce((sum, expense) => sum + expense.amount, 0),
+        value: formatCurrency(filteredExpenses.value.reduce((sum, expense) => sum + expense.amount, 0)),
         description: "Montant total des dépenses pour la période sélectionnée"
     },
     {
         title: "Nombre de dépenses",
-        value: filteredExpenses.value.length,
+        value: filteredExpenses.value.length.toString(),
         description: "Nombre total de dépenses enregistrées"
     },
     {
         title: "Moyenne des dépenses",
-        value: filteredExpenses.value.length > 0
+        value: formatCurrency(filteredExpenses.value.length > 0
             ? filteredExpenses.value.reduce((sum, expense) => sum + expense.amount, 0) / filteredExpenses.value.length
-            : 0,
+            : 0),
         description: "Montant moyen des dépenses pour la période"
     }
 ]);

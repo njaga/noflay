@@ -32,7 +32,7 @@
                             {{ plan.price }}
                         </span>
                         <span class="ml-1 text-xl font-semibold text-gray-500">
-                            {{ plan.currency }}/mois
+                            {{ plan.currency }}/an
                         </span>
                     </div>
                     <ul class="mb-8 space-y-4">

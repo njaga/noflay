@@ -41,7 +41,7 @@ class CompanyController extends Controller
             'address' => 'required|string|max:255',
             'phone' => 'nullable|string|max:20',
             'website' => 'nullable|url|max:255',
-            'logo' => 'nullable|image|max:1024', // max 1MB
+            'logo' => 'nullable|image|mimes:jpeg,png|max:2048', // max 2MB, only JPEG or PNG
             'NINEA' => 'nullable|string|max:255',
             'RCCM' => 'nullable|string|max:255',
             'representant_id' => 'nullable|exists:users,id',
@@ -92,7 +92,7 @@ class CompanyController extends Controller
             'address' => 'required|string|max:255',
             'phone' => 'nullable|string|max:20',
             'website' => 'nullable|url|max:255',
-            'logo' => 'nullable|image|max:1024', // max 1MB
+            'logo' => 'nullable|image|mimes:jpeg,png|max:2048', // max 2MB, only JPEG or PNG
             'NINEA' => 'nullable|string|max:255',
             'RCCM' => 'nullable|string|max:255',
             'representant_id' => 'nullable|exists:users,id',
@@ -100,7 +100,7 @@ class CompanyController extends Controller
         ]);
 
         if ($request->hasFile('logo')) {
-            // Delete old logo if exists
+            // Supprimez l'ancien logo s'il existe
             if ($company->logo) {
                 Storage::disk('public')->delete($company->logo);
             }
@@ -117,7 +117,7 @@ class CompanyController extends Controller
     {
         Gate::authorize('delete', $company);
 
-        // Delete logo
+        // Supprimez le logo
         if ($company->logo) {
             Storage::disk('public')->delete($company->logo);
         }
@@ -137,11 +137,12 @@ class CompanyController extends Controller
 
     public function getUsers()
     {
-        // This method will be used to fetch users for the dropdown
+        // Cette méthode sera utilisée pour récupérer les utilisateurs pour la liste déroulante
         $users = User::where('id_company', auth()->user()->id_company)
             ->select('id', 'name')
             ->get();
 
         return response()->json($users);
     }
+
 }

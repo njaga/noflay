@@ -33,7 +33,8 @@ class Contract extends Model
     protected $dates = [
         'start_date',
         'end_date',
-        'deleted_at',
+        'created_at',
+        'updated_at',
     ];
 
     public function tenant()

@@ -120,6 +120,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/contracts/{contract}/edit', [ContractController::class, 'edit'])->name('contracts.edit');
         Route::put('/contracts/{contract}', [ContractController::class, 'update'])->name('contracts.update');
         Route::resource('contracts', ContractController::class)->except(['create', 'store', 'edit', 'update']);
+        Route::get('/contracts/{contract}/generate', [ContractController::class, 'generateContract'])->name('contracts.generate');
         Route::post('/contracts/{contract}/upload-document', [ContractController::class, 'uploadDocument'])->name('contracts.upload-document');
         Route::get('/contracts/{contract}/download-document/{documentType}', [ContractController::class, 'downloadDocument'])
             ->name('contracts.download-document');
@@ -166,10 +167,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('landlord-payouts', LandlordPayoutController::class);
         Route::get('landlord-payouts/details/{id}', [LandlordPayoutController::class, 'getLandlordDetails'])->name('landlord-payouts.details');
         Route::get('/landlords/{id}/details', [LandlordPayoutController::class, 'getLandlordDetails'])->name('landlords.details');
+        Route::get('/landlord-transactions/{id}/generate-receipt', [LandlordPayoutController::class, 'generateReceipt'])
+        ->name('landlord-transactions.generate-receipt');
+
 
         Route::get('/help', function () {
             return Inertia::render('Help');
         })->name('help');
+        Route::post('/help/send-email', [HelpController::class, 'sendEmail'])->name('help.send-email');
+        Route::post('/help/request-callback', [HelpController::class, 'requestCallback'])->name('help.request-callback');
 
         Route::get('/search', [SearchController::class, 'search'])->name('search');
     });

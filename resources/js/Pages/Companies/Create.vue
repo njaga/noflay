@@ -119,7 +119,7 @@ const fields = [
     { name: 'phone', label: 'Téléphone', type: 'tel', placeholder: '+221 77 123 45 67', icon: Phone },
     { name: 'address', label: 'Adresse', type: 'text', placeholder: 'Adresse complète', icon: MapPin },
     { name: 'website', label: 'Site web', type: 'url', placeholder: 'https://www.exemple.com', icon: Globe },
-    { name: 'logo', label: 'Logo', type: 'file', placeholder: 'Choisir un fichier', icon: null },
+    { name: 'logo', label: 'Logo', type: 'file', placeholder: 'Choisir un fichier', icon: Image },
     { name: 'NINEA', label: 'NINEA', type: 'text', placeholder: 'Numéro NINEA', icon: FileText },
     { name: 'RCCM', label: 'Registre de commerce', type: 'text', placeholder: 'Numéro RCCM', icon: FileText },
     { name: 'representant_id', label: 'Représentant', type: 'select', placeholder: 'Sélectionnez un représentant', icon: User },
@@ -146,7 +146,13 @@ onMounted(async () => {
 })
 
 const handleFileUpload = (event) => {
-    form.logo = event.target.files[0]
+    const file = event.target.files[0]
+    if (file && (file.type === 'image/jpeg' || file.type === 'image/png') && file.size <= 2 * 1024 * 1024) {
+        form.logo = file
+    } else {
+        alert('Veuillez sélectionner une image JPG ou PNG de moins de 2 MB.')
+        event.target.value = '' // Reset the file input
+    }
 }
 
 const submit = () => {

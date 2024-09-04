@@ -12,6 +12,7 @@ import { MotionPlugin } from '@vueuse/motion';
 import Loader from '@/Components/Loader.vue';
 import VueTelInput from 'vue-tel-input';
 import 'vue-tel-input/vue-tel-input.css';
+import VTooltip from 'v-tooltip';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -24,6 +25,7 @@ createInertiaApp({
             .use(ZiggyVue)
             .use(MotionPlugin)
             .use(VueTelInput)
+            .use(VTooltip)
             .component('Loader', Loader);
         vueApp.component('font-awesome-icon', FontAwesomeIcon);
         return vueApp.mount(el);

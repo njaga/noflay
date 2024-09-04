@@ -23,12 +23,19 @@
                         :placeholder="field.placeholder"
                         class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
                         :class="{ 'border-red-300': form.errors[field.name] }">
-                      <input v-else-if="field.type === 'file'"
-                        :id="field.name"
-                        type="file"
-                        @change="handleFileUpload"
-                        class="focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                        :class="{ 'border-red-300': form.errors[field.name] }">
+                      <div v-else-if="field.type === 'file'" class="flex items-center">
+                        <input
+                          :id="field.name"
+                          type="file"
+                          @change="handleFileUpload"
+                          class="hidden"
+                          accept="image/jpeg,image/png">
+                        <label :for="field.name" class="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                          <component :is="field.icon" class="-ml-1 mr-2 h-5 w-5 text-gray-400" />
+                          Choisir un nouveau logo
+                        </label>
+                        <span v-if="form.logo" class="ml-3 text-sm text-gray-500">{{ form.logo.name }}</span>
+                      </div>
                       <select v-else-if="field.type === 'select'"
                         :id="field.name"
                         v-model="form[field.name]"
@@ -41,7 +48,15 @@
                       </select>
                     </div>
                     <p v-if="form.errors[field.name]" class="mt-2 text-sm text-red-600">{{ form.errors[field.name] }}</p>
+                    <p v-if="field.type === 'file'" class="mt-2 text-xs text-gray-500">
+                      Formats acceptés : JPG, PNG. Taille maximale : 2 MB.
+                    </p>
                   </div>
+                </div>
+
+                <div v-if="company.logo" class="mt-6">
+                  <p class="text-sm font-medium text-gray-700">Logo actuel :</p>
+                  <img :src="'/storage/' + company.logo" alt="Logo actuel" class="mt-2 h-20 w-auto">
                 </div>
 
                 <div class="mt-6">
@@ -71,7 +86,7 @@
   import { ref, onMounted } from 'vue';
   import { useForm, usePage, Link } from '@inertiajs/vue3';
   import AppLayout from '@/Layouts/AppLayout.vue';
-  import { Building, Mail, Phone, MapPin, Globe, FileText, User } from 'lucide-vue-next';
+  import { Building, Mail, Phone, MapPin, Globe, FileText, User, Image } from 'lucide-vue-next';
 
   const props = defineProps({
     company: Object,
@@ -84,7 +99,7 @@
     { name: 'phone', label: 'Téléphone', type: 'tel', placeholder: '+221 77 123 45 67', icon: Phone },
     { name: 'address', label: 'Adresse', type: 'text', placeholder: 'Adresse complète', icon: MapPin },
     { name: 'website', label: 'Site web', type: 'url', placeholder: 'https://www.exemple.com', icon: Globe },
-    { name: 'logo', label: 'Logo', type: 'file', placeholder: 'Choisir un fichier', icon: null },
+    { name: 'logo', label: 'Logo', type: 'file', placeholder: 'Choisir un fichier', icon: Image },
     { name: 'NINEA', label: 'NINEA', type: 'text', placeholder: 'Numéro NINEA', icon: FileText },
     { name: 'RCCM', label: 'Registre de commerce', type: 'text', placeholder: 'Numéro RCCM', icon: FileText },
     { name: 'representant_id', label: 'Représentant', type: 'select', placeholder: 'Sélectionnez un représentant', icon: User },
@@ -105,7 +120,13 @@
   });
 
   const handleFileUpload = (event) => {
-    form.logo = event.target.files[0];
+    const file = event.target.files[0];
+    if (file && (file.type === 'image/jpeg' || file.type === 'image/png') && file.size <= 2 * 1024 * 1024) {
+      form.logo = file;
+    } else {
+      alert('Veuillez sélectionner une image JPG ou PNG de moins de 2 MB.');
+      event.target.value = ''; // Reset the file input
+    }
   };
 
   const submit = () => {

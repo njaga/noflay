@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use PDF;
 
 class ContractController extends Controller
 {
@@ -48,13 +49,10 @@ class ContractController extends Controller
         Gate::authorize('create', Contract::class);
 
         $tenantId = $request->input('tenant_id');
-        $selectedTenant = null;
+        $selectedTenant = $tenantId ? Tenant::find($tenantId) : null;
 
-        if ($tenantId) {
-            $selectedTenant = Tenant::find($tenantId);
-            if (!$selectedTenant) {
-                return redirect()->route('contracts.create')->withErrors('Tenant not found.');
-            }
+        if ($tenantId && !$selectedTenant) {
+            return redirect()->route('contracts.create')->withErrors('Tenant not found.');
         }
 
         $companies = Auth::user()->hasRole('super_admin')
@@ -79,7 +77,6 @@ class ContractController extends Controller
     {
         return redirect()->route('contracts.create', ['tenant_id' => $tenantId]);
     }
-
 
     public function store(Request $request)
     {
@@ -268,7 +265,6 @@ class ContractController extends Controller
             abort(403, 'This action is unauthorized.');
         }
 
-        // Récupérer le pourcentage d'agence, même si la propriété ou le bailleur ont été supprimés
         $agencyPercentage = $contract->property?->landlord?->agency_percentage ?? 0;
 
         $rentCommission = $contract->rent_amount * ($agencyPercentage / 100);
@@ -323,14 +319,60 @@ class ContractController extends Controller
             return response()->json(['error' => 'Document not found'], 404);
         }
 
-        // Delete the file from storage
         Storage::disk('public')->delete($path);
 
-        // Clear the path in the database
         $contract->$column = null;
         $contract->save();
 
         return response()->json(['message' => 'Document deleted successfully']);
     }
 
+    public function generateContract(Contract $contract)
+    {
+        $company = $contract->tenant->company;
+        
+        // Préparer le logo
+        $logoPath = $company->logo ? Storage::disk('public')->path($company->logo) : null;
+        $logoUrl = $company->logo ? Storage::disk('public')->url($company->logo) : null;
+        $logoBase64 = '';
+        
+        if ($logoPath && file_exists($logoPath)) {
+            $logoData = file_get_contents($logoPath);
+            $logoBase64 = 'data:image/' . pathinfo($logoPath, PATHINFO_EXTENSION) . ';base64,' . base64_encode($logoData);
+        }
+    
+        $data = [
+            'contract' => $contract,
+            'tenant' => $contract->tenant,
+            'property' => $contract->property,
+            'landlord' => $contract->property->landlord,
+            'company' => $company,
+            'logoPath' => $logoPath,
+            'logoUrl' => $logoUrl,
+            'logoBase64' => $logoBase64,
+        ];
+    
+        $view = $contract->contract_type === 'habitation'
+            ? 'contracts.pdf.habitation'
+            : 'contracts.pdf.commercial';
+    
+        $pdf = PDF::loadView($view, $data);
+    
+        $pdf->setOptions([
+            'chroot'  => public_path(),
+            'enable_remote' => true,
+            'isRemoteEnabled' => true,
+            'isHtml5ParserEnabled' => true,
+            'margin-top' => 20,
+            'margin-right' => 15,
+            'margin-bottom' => 20,
+            'margin-left' => 15,
+            'footer-html' => view('contracts.pdf.footer', $data)->render(),
+            'header-html' => view('contracts.pdf.header', $data)->render(),
+        ]);
+    
+        $filename = 'contrat_' . $contract->id . '.pdf';
+    
+        return $pdf->stream($filename);
+    }
 }
