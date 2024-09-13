@@ -118,7 +118,7 @@ Pour utiliser NOFLAY, suivez ces étapes :
 2. Connectez-vous avec les identifiants fournis ou créez un nouveau compte.
 3. Explorez les différentes sections de l'application pour gérer vos propriétés, locataires, contrats, etc.
 
-Pour plus de détails sur l'utilisation des fonctionnalités spécifiques, consultez notre [documentation utilisateur](lien_vers_la_documentation).
+
 
 ## 🤝 Contribuer
 
@@ -130,11 +130,11 @@ Nous accueillons chaleureusement les contributions à NOFLAY ! Si vous souhaitez
 4. Poussez vers la branche (`git push origin feature/AmazingFeature`)
 5. Ouvrez une Pull Request
 
-Pour plus de détails, consultez notre [guide de contribution](lien_vers_le_guide_de_contribution).
+Si vous souhaitez contribuer, veuillez d'abord lire notre [Guide de Contribution](CONTRIBUTING.md).
 
 ## 📜 Code de Conduite
 
-Nous nous engageons à maintenir une communauté ouverte et accueillante. Veuillez lire et respecter notre [Code de Conduite](lien_vers_le_code_de_conduite) dans toutes vos interactions avec le projet.
+Nous nous engageons à maintenir une communauté ouverte et accueillante. Veuillez lire et respecter notre [Code de Conduite](https://github.com/njaga/noflay/tree/master#coc-ov-file) dans toutes vos interactions avec le projet.
 
 ## 🔒 Sécurité
 
