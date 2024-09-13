@@ -1,52 +1,169 @@
-<h1 align="center">NOFLAY</h1>
+# NOFLAY SAAS
+
 <p align="center">
-    <strong>La solution pratique pour une gestion immobilière efficace et sans stress.</strong>
+  <img src="https://www.sunu-stock.ndiagandiaye.com/wp-content/uploads/2024/09/Fichier-6.png" alt="Logo NOFLAY" width="200" height="200">
+    
 </p>
 
 <p align="center">
-    <a href="https://github.com/njaga/noflay/actions">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-github" viewBox="0 0 16 16">
-  <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"/>
-</svg>
-    </a>
+  <strong>NOFLAY simplifie la gestion immobilière avec des outils pour les utilisateurs, les propriétés, la facturation, les mandats, les rapports, et les notifications en temps réel.</strong>
 </p>
 
-## À propos de NOFLAY
+<p align="center">
+  <a href="https://opensource.org/licenses/MIT">
+    <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT">
+  </a>
+</p>
 
-NOFLAY est une plateforme complète et intuitive pour la gestion des entreprises immobilières. Notre application simplifie les tâches courantes en offrant des fonctionnalités puissantes et accessibles, telles que :
+## 📋 Table des matières
 
-- Gestion des utilisateurs et des rôles
-- Suivi des propriétés et des contrats
-- Facturation et gestion des paiements
-- Traitement des mandats de gérance
-- Rapports d'activité détaillés
-- Système de notifications en temps réel
-- Gestion des locataires
-- Gestion des documents
-- Gestion des contrats
+- [À propos de NOFLAY](#-à-propos-de-noflay)
+- [Fonctionnalités](#-fonctionnalités)
+- [Technologies utilisées](#-technologies-utilisées)
+- [Installation](#-installation)
+- [Utilisation](#-utilisation)
+- [Contribuer](#-contribuer)
+- [Code de Conduite](#-code-de-conduite)
+- [Sécurité](#-sécurité)
+- [Contact Développeur](#-contact-développeur)
+- [Licence](#-licence)
 
-NOFLAY est conçue pour être puissante, flexible, et fournir les outils nécessaires pour des applications robustes et évolutives.
+## 🏠 À propos de NOFLAY
 
-## Contribuer
+NOFLAY est une plateforme complète et intuitive conçue pour simplifier la gestion des entreprises immobilières. Notre application offre une suite d'outils puissants et accessibles pour optimiser les opérations quotidiennes et améliorer l'efficacité globale.
 
-Merci de considérer contribuer à NOFLAY ! Le guide de contribution peut être trouvé dans la [documentation](https://github.com/njaga/noflay/).
+**Liens importants :**
+- 🌐 [Démo en ligne](https://noflay-immo.com/)
+- 💻 [Dépôt GitHub](https://github.com/njaga/noflay)
 
-## Code de Conduite
+## ✨ Fonctionnalités
 
-Afin de s'assurer que notre communauté reste accueillante pour tous, veuillez lire et respecter notre [Code de Conduite](https://github.com/njaga/noflay/).
+- 👥 Gestion des utilisateurs et des rôles
+- 🏘️ Suivi des propriétés et des contrats
+- 💰 Facturation et gestion des paiements
+- 📄 Traitement des mandats de gérance
+- 📊 Rapports d'activité détaillés
+- 🔔 Système de notifications en temps réel
+- 🏡 Gestion des locataires
+- 📁 Gestion des documents
+- 📝 Gestion des contrats
 
-## Vulnérabilités de Sécurité
+## 🛠 Technologies utilisées
 
-Si vous découvrez une vulnérabilité de sécurité dans notre application, veuillez envoyer un e-mail à [conact@ndiagandiaye.com](mailto:conact@ndiagandiaye.com). Toutes les vulnérabilités de sécurité seront traitées rapidement.
+- [Laravel](https://laravel.com/) - Framework PHP
+- [Inertia.js](https://inertiajs.com/) - Création d'applications monopages
+- [Vue.js](https://vuejs.org/) - Framework JavaScript progressif
+- [MySQL](https://www.mysql.com/) - Système de gestion de base de données
+- [Tailwind CSS](https://tailwindcss.com/) - Framework CSS utilitaire
+- [Jetstream](https://jetstream.laravel.com/) - Kit de démarrage pour Laravel
+- [Chart.js](https://www.chartjs.org/) - Bibliothèque de graphiques JavaScript
+- [DomPDF](https://github.com/dompdf/dompdf) - Générateur de PDF en PHP
+- [Vite](https://vitejs.dev/) - Outil de build frontend
+- [Axios](https://axios-http.com/) - Client HTTP basé sur les promesses
+- [Bootstrap](https://getbootstrap.com/) - Framework CSS
+- JavaScript - Langage de programmation
 
-## Contact Développeur
+## 🚀 Installation
 
-Nom et prénom : Ndiaga Ndiaye  
-Adresse : Saly Portudal, Mbour, Sénégal  
-Téléphone : +221 78 163 34 19  
-Email : [contact@ndiagandiaye](mailto:contact@ndiagandiaye.com)  
+1. Clonez le dépôt :
+   ```
+   git clone https://github.com/njaga/noflay.git
+   ```
+
+2. Accédez au répertoire du projet :
+   ```
+   cd noflay
+   ```
+
+3. Installez les dépendances PHP :
+   ```
+   composer install
+   ```
+
+4. Installez les dépendances JavaScript :
+   ```
+   npm install
+   ```
+
+5. Copiez le fichier `.env.example` en `.env` et configurez vos variables d'environnement :
+   ```
+   cp .env.example .env
+   ```
+
+6. Générez une clé d'application :
+   ```
+   php artisan key:generate
+   ```
+
+7. Exécutez les migrations et les seeders :
+   ```
+   php artisan migrate --seed
+   ```
+
+8. Compilez les assets :
+   ```
+   npm run dev
+   ```
+
+9. Démarrez le serveur de développement :
+   ```
+   php artisan serve
+   ```
+
+## 📖 Utilisation
+
+Pour utiliser NOFLAY, suivez ces étapes :
+
+1. Accédez à l'application via l'URL fournie par `php artisan serve`.
+2. Connectez-vous avec les identifiants fournis ou créez un nouveau compte.
+3. Explorez les différentes sections de l'application pour gérer vos propriétés, locataires, contrats, etc.
+
+Pour plus de détails sur l'utilisation des fonctionnalités spécifiques, consultez notre [documentation utilisateur](lien_vers_la_documentation).
+
+## 🤝 Contribuer
+
+Nous accueillons chaleureusement les contributions à NOFLAY ! Si vous souhaitez contribuer, veuillez suivre ces étapes :
+
+1. Forkez le projet
+2. Créez votre branche de fonctionnalité (`git checkout -b feature/AmazingFeature`)
+3. Committez vos changements (`git commit -m 'Add some AmazingFeature'`)
+4. Poussez vers la branche (`git push origin feature/AmazingFeature`)
+5. Ouvrez une Pull Request
+
+Pour plus de détails, consultez notre [guide de contribution](lien_vers_le_guide_de_contribution).
+
+## 📜 Code de Conduite
+
+Nous nous engageons à maintenir une communauté ouverte et accueillante. Veuillez lire et respecter notre [Code de Conduite](lien_vers_le_code_de_conduite) dans toutes vos interactions avec le projet.
+
+## 🔒 Sécurité
+
+La sécurité est une priorité pour nous. Si vous découvrez une vulnérabilité de sécurité au sein de NOFLAY, veuillez nous en informer immédiatement en envoyant un e-mail à [contact@ndiagandiaye.com](mailto:contact@ndiagandiaye.com). Nous apprécions votre aide pour rendre notre application plus sûre et traiterons votre rapport avec la plus grande attention.
+
+## 👨‍💻 Contact Développeur
+
+- **Nom et prénom** : Ndiaga Ndiaye
+- **Adresse** : Saly Portudal, Mbour, Sénégal
+- **Téléphone** : +221 78 163 34 19
+- **Email** : [contact@ndiagandiaye.com](mailto:contact@ndiagandiaye.com)
+- **Site web** : [https://ndiagandiaye.com](https://ndiagandiaye.com)
+
+## 📄 Licence
+
+NOFLAY est un logiciel propriétaire. Tous droits réservés.
+
+© 2024 Ndiaga Ndiaye. Tous droits réservés.
+
+Ce logiciel et sa documentation associée sont protégés par les lois sur le droit d'auteur et les traités internationaux. Toute reproduction, distribution ou utilisation non autorisée de ce logiciel, en tout ou en partie, est strictement interdite sans l'accord écrit préalable de Ndiaga Ndiaye.
+
+Pour toute demande d'utilisation, de licence ou de partenariat, veuillez contacter :
+
+Ndiaga Ndiaye
+Email : [contact@ndiagandiaye.com](mailto:contact@ndiagandiaye.com)
 Site web : [https://ndiagandiaye.com](https://ndiagandiaye.com)
 
-## Licence
+---
 
-NOFLAY est un logiciel open-source sous licence [MIT](https://opensource.org/licenses/MIT).
+<p align="center">
+  Développé avec ❤️ par <a href="https://ndiagandiaye.com">Ndiaga Ndiaye</a>
+</p>
