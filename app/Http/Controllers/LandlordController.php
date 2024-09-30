@@ -17,9 +17,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Carbon\Carbon;
+use App\Models\Attachment;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
 class LandlordController extends Controller
@@ -117,115 +119,93 @@ class LandlordController extends Controller
 
     public function store(Request $request)
     {
-        Gate::authorize('create', Landlord::class);
+        try {
+            Gate::authorize('create', Landlord::class);
 
-        $validatedData = $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'address' => 'required|string|max:255',
-            'phone' => 'required|string|max:15',
-            'email' => 'required|string|email|max:255|unique:landlords',
-            'identity_number' => 'required|string|max:255',
-            'identity_expiry_date' => 'required|date',
-            'agency_percentage' => 'required|numeric|min:0|max:100',
-            'contract_duration' => 'required|integer|min:1',
-            'company_id' => 'required|integer|exists:companies,id',
-            'attachments.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
-        ]);
+            Log::info('Received request data:', $request->all());
 
-        if ($request->hasFile('attachments')) {
+            $validator = Validator::make($request->all(), [
+                'first_name' => 'required|string|max:255',
+                'last_name' => 'required|string|max:255',
+                'address' => 'required|string|max:255',
+                'phone' => 'required|string|max:25',
+                'email' => 'required|string|email|max:255|unique:landlords',
+                'identity_number' => 'required|string|max:255',
+                'identity_expiry_date' => 'required|date|after:today',
+                'agency_percentage' => 'required|numeric|min:0|max:100',
+                'rental_percentage' => 'required|numeric|min:0|max:100',
+                'contract_duration' => 'required|integer|min:1',
+                'company_id' => 'required|integer|exists:companies,id',
+                'attachments' => 'nullable|array|max:5',
+                'attachments.*' => 'file|mimes:pdf,jpg,jpeg,png|max:5120',
+            ]);
+
+            if ($validator->fails()) {
+                return Inertia::render('Landlords/Create', [
+                    'errors' => $validator->errors(),
+                ])->withViewData(['error' => 'Validation failed']);
+            }
+
+            $validatedData = $validator->validated();
+
+            if (!Auth::user()->hasRole('super_admin')) {
+                $validatedData['company_id'] = Auth::user()->company_id;
+            }
+
             $attachments = [];
-            foreach ($request->file('attachments') as $file) {
-                $attachments[] = $file->store('attachments');
+            if ($request->hasFile('attachments')) {
+                foreach ($request->file('attachments') as $file) {
+                    try {
+                        $filename = uniqid() . '.' . $file->getClientOriginalExtension();
+                        $path = $file->storeAs('attachments', $filename, 'public');
+                        $attachments[] = $path;
+                    } catch (\Exception $e) {
+                        Log::error("Error storing file: " . $e->getMessage());
+                        return Inertia::render('Landlords/Create', [
+                            'errors' => ['attachments' => 'Une erreur est survenue lors du téléchargement des pièces jointes.'],
+                        ])->withViewData(['error' => 'File upload failed']);
+                    }
+                }
             }
             $validatedData['attachments'] = json_encode($attachments);
+
+            $landlord = Landlord::create($validatedData);
+
+            Log::info('Landlord created successfully:', $landlord->toArray());
+
+            return Inertia::render('Landlords/Index', [
+                'message' => 'Bailleur créé avec succès.',
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in LandlordController@store: ' . $e->getMessage());
+            return Inertia::render('Landlords/Create', [
+                'errors' => ['general' => 'Une erreur est survenue lors de la création du bailleur.'],
+            ])->withViewData(['error' => 'Creation failed']);
         }
-
-        if (!Auth::user()->hasRole('super_admin')) {
-            $validatedData['company_id'] = Auth::user()->company_id;
-        }
-
-        Landlord::create($validatedData);
-
-        return redirect()->route('landlords.index')->with('success', 'Bailleur créé avec succès.');
     }
+
 
     public function show($id)
     {
         $landlord = Landlord::with(['properties.contracts.tenant', 'company'])->findOrFail($id);
         Gate::authorize('view', $landlord);
 
-        // Récupérer les transactions récentes
-        $transactions = LandlordTransaction::where('landlord_id', $id)
-            ->orderBy('transaction_date', 'desc')
-            ->take(10)
-            ->get();
+        $currentDate = Carbon::now();
 
-        // Récupérer les dépenses récentes
-        $expenses = Expense::whereHas('property', function ($query) use ($landlord) {
-            $query->where('landlord_id', $landlord->id);
-        })
-            ->orderBy('expense_date', 'desc')
-            ->take(10)
-            ->get();
+        // Récupérer toutes les transactions récentes
+        $recentTransactions = $this->getRecentTransactions($landlord, $currentDate);
 
-        // Récupérer les contrats récents
-        $contracts = Contract::whereHas('property', function ($query) use ($landlord) {
-            $query->where('landlord_id', $landlord->id);
-        })
-            ->orderBy('created_at', 'desc')
-            ->take(10)
-            ->get()
-            ->map(function ($contract) {
-                $contract->type = 'contract';
-                if ($contract->commission_amount) {
-                    $contract->sub_type = 'contract_commission';
-                    $contract->amount = $contract->commission_amount;
-                } elseif ($contract->caution_amount) {
-                    $contract->sub_type = 'contract_caution';
-                    $contract->amount = $contract->caution_amount;
-                }
-                $contract->transaction_date = $contract->created_at;
-                return $contract;
-            });
+        // Calculer les informations financières
+        $financialInfo = $this->calculateFinancialInfo($landlord, $currentDate);
 
-        // Récupérer les paiements récentes
-        $payments = Payment::whereHas('contract.property', function ($query) use ($landlord) {
-            $query->where('landlord_id', $landlord->id);
-        })
-            ->orderBy('payment_date', 'desc')
-            ->take(10)
-            ->get();
-
-        // Fusionner toutes les transactions dans un seul tableau
-        $recentTransactions = $transactions->concat($expenses)->concat($contracts)->concat($payments)->sortByDesc(function ($item) {
-            return $item->transaction_date ?? $item->expense_date ?? $item->created_at ?? $item->payment_date;
-        })->take(10);
-
-        // Ajouter un type par défaut si absent
-        $recentTransactions->each(function ($item) {
-            if (!isset($item->type)) {
-                if ($item instanceof LandlordTransaction) {
-                    $item->type = 'transaction';
-                } elseif ($item instanceof Expense) {
-                    $item->type = 'expense';
-                    $item->transaction_date = $item->expense_date;
-                } elseif ($item instanceof Contract) {
-                    $item->type = 'contract';
-                } elseif ($item instanceof Payment) {
-                    $item->type = 'payment';
-                    $item->transaction_date = $item->payment_date;
-                } else {
-                    $item->type = 'unknown';
-                }
-            }
-        });
-
-        $financialInfo = $this->calculateFinancialInfo($landlord, Carbon::now());
+        // Assurez-vous que toutes les valeurs sont des nombres
+        $financialInfo = array_map(function ($value) {
+            return is_numeric($value) ? (float)$value : $value;
+        }, $financialInfo);
 
         return Inertia::render('Landlords/Show', [
             'landlord' => $landlord,
-            'transactions' => $recentTransactions->values(),
+            'transactions' => $recentTransactions,
             'financialInfo' => $financialInfo,
             'company' => $landlord->company,
             'auth' => [
@@ -233,6 +213,78 @@ class LandlordController extends Controller
                 'roles' => Auth::user()->roles->pluck('name')
             ]
         ]);
+    }
+
+    private function getRecentTransactions($landlord, $date)
+    {
+        $transactions = collect();
+
+        // Transactions du bailleur
+        $transactions = $transactions->concat(
+            LandlordTransaction::where('landlord_id', $landlord->id)
+                ->orderBy('transaction_date', 'desc')
+                ->take(10)
+                ->get()
+                ->map(function ($item) {
+                    $item->type = 'transaction';
+                    $item->transaction_date = $item->transaction_date;
+                    return $item;
+                })
+        );
+
+        // Dépenses
+        $transactions = $transactions->concat(
+            Expense::whereHas('property', function ($query) use ($landlord) {
+                $query->where('landlord_id', $landlord->id);
+            })
+                ->orderBy('expense_date', 'desc')
+                ->take(10)
+                ->get()
+                ->map(function ($item) {
+                    $item->type = 'expense';
+                    $item->transaction_date = $item->expense_date;
+                    return $item;
+                })
+        );
+
+        // Contrats
+        $transactions = $transactions->concat(
+            Contract::whereHas('property', function ($query) use ($landlord) {
+                $query->where('landlord_id', $landlord->id);
+            })
+                ->orderBy('created_at', 'desc')
+                ->take(10)
+                ->get()
+                ->map(function ($item) {
+                    $item->type = 'contract';
+                    if ($item->commission_amount) {
+                        $item->sub_type = 'contract_commission';
+                        $item->amount = $item->commission_amount;
+                    } elseif ($item->caution_amount) {
+                        $item->sub_type = 'contract_caution';
+                        $item->amount = $item->caution_amount;
+                    }
+                    $item->transaction_date = $item->created_at;
+                    return $item;
+                })
+        );
+
+        // Paiements
+        $transactions = $transactions->concat(
+            Payment::whereHas('contract.property', function ($query) use ($landlord) {
+                $query->where('landlord_id', $landlord->id);
+            })
+                ->orderBy('payment_date', 'desc')
+                ->take(10)
+                ->get()
+                ->map(function ($item) {
+                    $item->type = 'payment';
+                    $item->transaction_date = $item->payment_date;
+                    return $item;
+                })
+        );
+
+        return $transactions->sortByDesc('transaction_date')->take(10)->values();
     }
 
     public function edit(Landlord $landlord)
@@ -257,6 +309,7 @@ class LandlordController extends Controller
     {
         Gate::authorize('update', $landlord);
 
+        // Validation des données du formulaire, y compris rental_percentage et la date d'expiration
         $validatedData = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -264,13 +317,15 @@ class LandlordController extends Controller
             'phone' => 'required|string|max:15',
             'email' => 'required|string|email|max:255|unique:landlords,email,' . $landlord->id,
             'identity_number' => 'required|string|max:255',
-            'identity_expiry_date' => 'required|date',
+            'identity_expiry_date' => 'required|date|after:today', // Validation de la date d'expiration
             'agency_percentage' => 'required|numeric|min:0|max:100',
+            'rental_percentage' => 'required|numeric|min:0|max:100',
             'contract_duration' => 'required|integer|min:1',
             'company_id' => 'required|integer|exists:companies,id',
-            'attachments.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
+            'attachments.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5120 KB = 5 MB
         ]);
 
+        // Gestion des pièces jointes si nécessaire
         if ($request->hasFile('attachments')) {
             $attachments = json_decode($landlord->attachments) ?? [];
             foreach ($request->file('attachments') as $file) {
@@ -279,14 +334,17 @@ class LandlordController extends Controller
             $validatedData['attachments'] = json_encode($attachments);
         }
 
+        // Si l'utilisateur n'est pas un super admin, forcer l'id de la compagnie à celui de l'utilisateur authentifié
         if (!Auth::user()->hasRole('super_admin')) {
             $validatedData['company_id'] = Auth::user()->company_id;
         }
 
+        // Mise à jour des informations du bailleur
         $landlord->update($validatedData);
 
         return redirect()->route('landlords.index')->with('success', 'Bailleur mis à jour avec succès.');
     }
+
 
     public function destroy(Landlord $landlord)
     {
@@ -359,11 +417,16 @@ class LandlordController extends Controller
         })->where('is_reversed', false)
             ->sum('caution_amount');
 
+        // Calcul des commissions de gérance
         $agencyPercentage = $landlord->agency_percentage / 100;
         $rentCommission = $monthlyRent * $agencyPercentage;
         $cautionCommission = $totalCautionAmount * $agencyPercentage;
 
-        $totalCommissions = $rentCommission + $cautionCommission;
+        // Calcul des commissions locatives
+        $rentalPercentage = $landlord->rental_percentage / 100;
+        $rentalCommission = $monthlyRent * $rentalPercentage;
+
+        $totalCommissions = $rentCommission + $cautionCommission + $rentalCommission;
 
         $totalTva = ($monthlyRent + $totalCautionAmount) * self::TVA_RATE;
 
@@ -384,7 +447,7 @@ class LandlordController extends Controller
                 ->get(['tenant_id', 'contract_id', 'amount'])
                 ->map(function ($payment) {
                     return [
-                        'tenant' => $payment->contract->tenant->first_name . ' ' . $payment->contract->tenant->last_name,
+                        'tenant' => $payment->contract?->tenant?->first_name . ' ' . $payment->contract?->tenant?->last_name ?? 'Locataire non spécifié',
                         'property' => $payment->contract->property->name,
                         'amount' => round($payment->amount, 2)
                     ];
@@ -395,7 +458,7 @@ class LandlordController extends Controller
                 ->get(['tenant_id', 'property_id', 'caution_amount'])
                 ->map(function ($contract) {
                     return [
-                        'tenant' => $contract->tenant->first_name . ' ' . $contract->tenant->last_name,
+                        'tenant' => $contract->tenant ? $contract->tenant->first_name . ' ' . $contract->tenant->last_name : 'Locataire non spécifié',
                         'property' => $contract->property->name,
                         'amount' => round($contract->caution_amount, 2)
                     ];
@@ -421,6 +484,10 @@ class LandlordController extends Controller
                 [
                     'type' => 'Rent Commission',
                     'amount' => round($rentCommission, 2)
+                ],
+                [
+                    'type' => 'Rental Commission',
+                    'amount' => round($rentalCommission, 2)
                 ]
             ],
             'payoutDetails' => LandlordTransaction::where('landlord_id', $landlord->id)
@@ -436,6 +503,7 @@ class LandlordController extends Controller
                 })
         ];
     }
+
 
     public function createAccount($id)
     {

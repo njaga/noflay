@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddDescriptionToLandlordPayoutsTable extends Migration
+class AddRentalPercentageToLandlordsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,8 @@ class AddDescriptionToLandlordPayoutsTable extends Migration
      */
     public function up()
     {
-        Schema::table('landlord_payouts', function (Blueprint $table) {
-            $table->text('description')->nullable();
+        Schema::table('landlords', function (Blueprint $table) {
+            $table->double('rental_percentage')->after('agency_percentage')->nullable();
         });
     }
 
@@ -25,8 +25,8 @@ class AddDescriptionToLandlordPayoutsTable extends Migration
      */
     public function down()
     {
-        Schema::table('landlord_payouts', function (Blueprint $table) {
-            $table->dropColumn('description');
+        Schema::table('landlords', function (Blueprint $table) {
+            $table->dropColumn('rental_percentage');
         });
     }
 }

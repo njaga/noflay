@@ -23,9 +23,10 @@ class Landlord extends Model
         'identity_number',
         'identity_expiry_date',
         'agency_percentage',
+        'rental_percentage',
         'contract_duration',
         'company_id',
-        'attachments'
+        'attachments',
     ];
 
     protected $casts = [
@@ -105,4 +106,9 @@ class Landlord extends Model
             });
         });
     }
+
+    public function landlordTransactions()
+{
+    return $this->hasMany(LandlordTransaction::class);
+}
 }

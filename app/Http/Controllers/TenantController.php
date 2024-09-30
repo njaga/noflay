@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Str;
 
 class TenantController extends Controller
 {
@@ -100,35 +104,87 @@ class TenantController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255',
-            'phone_number' => 'required|string|max:20',
-            'address' => 'required|string|max:255',
-            'id_card_number' => 'required|string|max:255',
-            'id_card_expiration_date' => 'required|date',
-        ]);
+        try {
+            $validated = $request->validate([
+                'first_name' => 'required|string|max:255',
+                'last_name' => 'required|string|max:255',
+                'email' => 'required|string|email|max:255|unique:tenants',
+                'phone_number' => 'required|string|max:20',
+                'address' => 'required|string|max:255',
+                'id_card_number' => 'required|string|max:255',
+                'id_card_expiration_date' => 'required|date',
+                'attachments' => 'nullable|array|max:5',
+                'attachments.*' => 'file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120', // 5MB max
+            ]);
 
-        $tenant = new Tenant($request->all());
-        if (!Auth::user()->hasRole('super_admin')) {
-            $tenant->company_id = Auth::user()->company_id;
-        } else {
-            $tenant->company_id = $request->company_id;
+            $attachments = [];
+            if ($request->hasFile('attachments')) {
+                foreach ($request->file('attachments') as $file) {
+                    $fileName = $this->generateUniqueFileName($file);
+                    $path = $file->storeAs('tenant-attachments', $fileName, 'public');
+                    $attachments[] = [
+                        'name' => $file->getClientOriginalName(),
+                        'path' => $path,
+                    ];
+                }
+            }
+
+            $tenant = new Tenant($validated);
+            $tenant->attachments = json_encode($attachments);
+            $tenant->company_id = $request->user()->company_id;
+            $tenant->save();
+
+            return redirect()->route('contracts.createWithTenant', ['tenantId' => $tenant->id])
+                ->with('success', 'Locataire créé avec succès. Vous pouvez maintenant créer un contrat pour ce locataire.');
+        } catch (\Exception $e) {
+            Log::error('Tenant creation failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request' => $request->all()
+            ]);
+            return back()->withErrors(['error' => "Une erreur s'est produite lors de la création du locataire."])->withInput();
         }
-        $tenant->save();
+    }
 
-        return redirect()->route('contracts.create', $tenant->id)->with('success', 'Locataire créé avec succès. Veuillez créer un contrat.');
+    private function generateUniqueFileName($file)
+    {
+        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $extension = $file->getClientOriginalExtension();
+
+        // Tronquer le nom du fichier s'il est trop long
+        $truncatedName = Str::limit($originalName, 100, '');
+
+        // Générer un nom de fichier unique
+        $fileName = $truncatedName . '_' . time() . '_' . Str::random(10) . '.' . $extension;
+
+        return $fileName;
     }
 
     public function show(Tenant $tenant)
     {
-        Gate::authorize('view', $tenant);
-
         $tenant->load('contracts.property.landlord');
 
+        // Récupérer et formater les pièces jointes
+        $attachments = [];
+        if ($tenant->attachments) {
+            // Vérifier si $tenant->attachments est déjà un tableau
+            $attachmentsData = is_array($tenant->attachments)
+                ? $tenant->attachments
+                : json_decode($tenant->attachments, true);
+
+            // Vérifier si le décodage a réussi
+            if (is_array($attachmentsData)) {
+                foreach ($attachmentsData as $attachment) {
+                    $attachments[] = [
+                        'name' => $attachment['name'],
+                        'url' => Storage::url($attachment['path']),
+                    ];
+                }
+            }
+        }
+
         return Inertia::render('Tenants/Show', [
-            'tenant' => $tenant,
+            'tenant' => array_merge($tenant->toArray(), ['formatted_attachments' => $attachments])
         ]);
     }
 
@@ -143,22 +199,69 @@ class TenantController extends Controller
 
     public function update(Request $request, Tenant $tenant)
     {
+        Log::info('Raw request data:', $request->all());
+        Log::info('Files:', $request->allFiles());
+
         Gate::authorize('update', $tenant);
 
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255',
+            'email' => 'required|email|max:255|unique:tenants,email,' . $tenant->id,
             'phone_number' => 'required|string|max:20',
             'address' => 'required|string|max:255',
             'id_card_number' => 'required|string|max:255',
             'id_card_expiration_date' => 'required|date',
+            'attachments' => 'nullable|array',
+            'attachments.*' => 'file|mimes:jpeg,png,jpg,pdf,doc,docx|max:2048',
+            'removed_attachments' => 'nullable|array',
+            'removed_attachments.*' => 'string',
         ]);
 
-        $tenant->update($validated);
+        // Mise à jour des informations de base du locataire
+        $tenant->update([
+            'first_name' => $validated['first_name'],
+            'last_name' => $validated['last_name'],
+            'email' => $validated['email'],
+            'phone_number' => $validated['phone_number'],
+            'address' => $validated['address'],
+            'id_card_number' => $validated['id_card_number'],
+            'id_card_expiration_date' => $validated['id_card_expiration_date'],
+        ]);
 
-        return redirect()->route('tenants.index')->with('success', 'Tenant updated successfully.');
+        // Gestion des pièces jointes
+        $currentAttachments = json_decode($tenant->attachments, true) ?? [];
+
+        // Suppression des pièces jointes
+        if (isset($validated['removed_attachments'])) {
+            foreach ($validated['removed_attachments'] as $removedAttachment) {
+                $key = array_search($removedAttachment, array_column($currentAttachments, 'name'));
+                if ($key !== false) {
+                    Storage::delete($currentAttachments[$key]['path']);
+                    unset($currentAttachments[$key]);
+                }
+            }
+            $currentAttachments = array_values($currentAttachments); // Réindexer le tableau
+        }
+
+        // Ajout de nouvelles pièces jointes
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $path = $file->store('tenant-attachments', 'public');
+                $currentAttachments[] = [
+                    'name' => $file->getClientOriginalName(),
+                    'path' => $path,
+                ];
+            }
+        }
+
+        // Mise à jour des pièces jointes dans la base de données
+        $tenant->attachments = json_encode($currentAttachments);
+        $tenant->save();
+
+        return redirect()->route('tenants.index')->with('success', 'Locataire mis à jour avec succès.');
     }
+
 
     public function destroy(Tenant $tenant)
     {
@@ -269,29 +372,29 @@ class TenantController extends Controller
         Gate::authorize('view', $tenant);
 
         $tenant->load([
-            'contracts' => function($query) {
+            'contracts' => function ($query) {
                 $query->withTrashed();
             },
-            'contracts.property' => function($query) {
+            'contracts.property' => function ($query) {
                 $query->withTrashed();
             },
-            'contracts.property.landlord' => function($query) {
+            'contracts.property.landlord' => function ($query) {
                 $query->withTrashed();
             },
             'company'
         ]);
 
         // Récupérer les propriétés associées
-        $properties = Property::with(['contracts' => function($query) use ($tenant) {
+        $properties = Property::with(['contracts' => function ($query) use ($tenant) {
             $query->where('tenant_id', $tenant->id)->withTrashed();
         }, 'landlord'])->whereHas('contracts', function ($query) use ($tenant) {
             $query->where('tenant_id', $tenant->id);
         })->withTrashed()->get();
 
         // Récupérer les paiements associés
-        $payments = Payment::with(['contract' => function($query) {
+        $payments = Payment::with(['contract' => function ($query) {
             $query->withTrashed();
-        }, 'contract.property' => function($query) {
+        }, 'contract.property' => function ($query) {
             $query->withTrashed();
         }])->whereHas('contract', function ($query) use ($tenant) {
             $query->where('tenant_id', $tenant->id);
@@ -307,5 +410,4 @@ class TenantController extends Controller
             ]
         ]);
     }
-
 }

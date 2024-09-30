@@ -6,11 +6,14 @@ use App\Models\Contract;
 use App\Models\Property;
 use App\Models\Tenant;
 use App\Models\Company;
+use App\Models\Transaction;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use PDF;
 
 class ContractController extends Controller
 {
@@ -45,39 +48,34 @@ class ContractController extends Controller
     {
         Gate::authorize('create', Contract::class);
 
-        $companies = Auth::user()->hasRole('super_admin') ? Company::all() : Company::where('id', Auth::user()->company_id)->get();
+        $tenantId = $request->input('tenant_id');
+        $selectedTenant = $tenantId ? Tenant::find($tenantId) : null;
+
+        if ($tenantId && !$selectedTenant) {
+            return redirect()->route('contracts.create')->withErrors('Tenant not found.');
+        }
+
+        $companies = Auth::user()->hasRole('super_admin')
+            ? Company::all()
+            : Company::where('id', Auth::user()->company_id)->get();
+
         $properties = Property::with('landlord')
             ->where('company_id', Auth::user()->company_id)
             ->get();
 
+        $tenants = Tenant::where('company_id', Auth::user()->company_id)->get();
+
         return Inertia::render('Contracts/Create', [
-            'tenants' => Tenant::all(),
+            'tenants' => $tenants,
             'properties' => $properties,
             'companies' => $companies,
-            'tenant' => null,
+            'selectedTenant' => $selectedTenant,
         ]);
     }
 
     public function createWithTenant($tenantId)
     {
-        Gate::authorize('create', Contract::class);
-
-        $tenant = Tenant::find($tenantId);
-        if (!$tenant) {
-            return redirect()->route('contracts.create')->withErrors('Tenant not found.');
-        }
-
-        $companies = Auth::user()->hasRole('super_admin') ? Company::all() : Company::where('id', Auth::user()->company_id)->get();
-        $properties = Property::with('landlord')
-            ->where('company_id', Auth::user()->company_id)
-            ->get();
-
-        return Inertia::render('Contracts/Create', [
-            'tenants' => Tenant::all(),
-            'properties' => $properties,
-            'companies' => $companies,
-            'tenant' => $tenant,
-        ]);
+        return redirect()->route('contracts.create', ['tenant_id' => $tenantId]);
     }
 
     public function store(Request $request)
@@ -114,12 +112,26 @@ class ContractController extends Controller
             $validated['company_id'] = Auth::user()->company_id;
         }
 
-        Contract::create($validated);
+        $contract = Contract::create($validated);
 
         $landlord->balance += $validated['caution_amount'] - $commissionCaution;
         $landlord->save();
 
         $property->decrementAvailableCount();
+
+        // Créer une transaction pour la caution
+        if (isset($validated['caution_amount']) && $validated['caution_amount'] > 0) {
+            Transaction::create([
+                'date' => $contract->start_date,
+                'amount' => $validated['caution_amount'],
+                'type' => 'DEPOSIT',
+                'description' => 'Caution pour le contrat',
+                'property_id' => $contract->property_id,
+                'landlord_id' => $contract->property->landlord_id,
+                'tenant_id' => $contract->tenant_id,
+                'contract_id' => $contract->id,
+            ]);
+        }
 
         return redirect()->route('contracts.index')->with('success', 'Contrat créé avec succès.');
     }
@@ -253,14 +265,114 @@ class ContractController extends Controller
             abort(403, 'This action is unauthorized.');
         }
 
-        $rentCommission = $contract->rent_amount * ($contract->property->landlord->agency_percentage / 100);
-        $cautionCommission = $contract->caution_amount * ($contract->property->landlord->agency_percentage / 100);
+        $agencyPercentage = $contract->property?->landlord?->agency_percentage ?? 0;
+
+        $rentCommission = $contract->rent_amount * ($agencyPercentage / 100);
+        $cautionCommission = $contract->caution_amount * ($agencyPercentage / 100);
         $totalCommission = $rentCommission + $cautionCommission;
 
         return Inertia::render('Contracts/ShowArchived', [
             'contract' => $contract,
+            'rentCommission' => $rentCommission,
+            'cautionCommission' => $cautionCommission,
             'totalCommission' => $totalCommission,
+            'propertyName' => $contract->property?->name ?? 'Propriété supprimée',
+            'propertyAddress' => $contract->property?->address ?? 'N/A',
+            'landlordName' => $contract->property?->landlord?->name ?? 'Bailleur supprimé',
         ]);
     }
 
+    public function uploadDocument(Request $request, Contract $contract)
+    {
+        $request->validate([
+            'document_type' => 'required|string|in:contract_signed,insurance,inventory,other_documents',
+            'file' => 'required|file|max:10240', // 10MB max
+        ]);
+
+        $path = $request->file('file')->store('contracts/' . $contract->id, 'public');
+
+        $column = $request->document_type . '_path';
+        $contract->$column = $path;
+        $contract->save();
+
+        return response()->json(['message' => 'Document uploaded successfully']);
+    }
+
+    public function downloadDocument(Contract $contract, $documentType)
+    {
+        $column = $documentType . '_path';
+        $path = $contract->$column;
+
+        if (!$path) {
+            return response()->json(['error' => 'Document not found'], 404);
+        }
+
+        return response()->file(storage_path('app/public/' . $path));
+    }
+
+    public function deleteDocument(Contract $contract, $documentType)
+    {
+        $column = $documentType . '_path';
+        $path = $contract->$column;
+
+        if (!$path) {
+            return response()->json(['error' => 'Document not found'], 404);
+        }
+
+        Storage::disk('public')->delete($path);
+
+        $contract->$column = null;
+        $contract->save();
+
+        return response()->json(['message' => 'Document deleted successfully']);
+    }
+
+    public function generateContract(Contract $contract)
+    {
+        $company = $contract->tenant->company;
+        
+        // Préparer le logo
+        $logoPath = $company->logo ? Storage::disk('public')->path($company->logo) : null;
+        $logoUrl = $company->logo ? Storage::disk('public')->url($company->logo) : null;
+        $logoBase64 = '';
+        
+        if ($logoPath && file_exists($logoPath)) {
+            $logoData = file_get_contents($logoPath);
+            $logoBase64 = 'data:image/' . pathinfo($logoPath, PATHINFO_EXTENSION) . ';base64,' . base64_encode($logoData);
+        }
+    
+        $data = [
+            'contract' => $contract,
+            'tenant' => $contract->tenant,
+            'property' => $contract->property,
+            'landlord' => $contract->property->landlord,
+            'company' => $company,
+            'logoPath' => $logoPath,
+            'logoUrl' => $logoUrl,
+            'logoBase64' => $logoBase64,
+        ];
+    
+        $view = $contract->contract_type === 'habitation'
+            ? 'contracts.pdf.habitation'
+            : 'contracts.pdf.commercial';
+    
+        $pdf = PDF::loadView($view, $data);
+    
+        $pdf->setOptions([
+            'chroot'  => public_path(),
+            'enable_remote' => true,
+            'isRemoteEnabled' => true,
+            'isHtml5ParserEnabled' => true,
+            'margin-top' => 20,
+            'margin-right' => 15,
+            'margin-bottom' => 20,
+            'margin-left' => 15,
+            'footer-html' => view('contracts.pdf.footer', $data)->render(),
+            'header-html' => view('contracts.pdf.header', $data)->render(),
+        ]);
+    
+        $filename = 'contrat_' . $contract->id . '.pdf';
+    
+        return $pdf->stream($filename);
+    }
 }

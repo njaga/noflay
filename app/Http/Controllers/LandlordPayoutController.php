@@ -11,6 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Carbon\Carbon;
+use PDF;
+
 
 class LandlordPayoutController extends Controller
 {
@@ -391,4 +393,41 @@ class LandlordPayoutController extends Controller
             ],
         ];
     }
+    
+    public function generateReceipt($id)
+    {
+        try {
+            $transaction = LandlordTransaction::with('landlord.company')->findOrFail($id);
+
+            $data = [
+                'transaction_id' => $transaction->id,
+                'payout_date' => $transaction->payout_date ? Carbon::parse($transaction->payout_date)->format('d/m/Y') : 'N/A',
+                'landlord_name' => $transaction->landlord ? $transaction->landlord->first_name . ' ' . $transaction->landlord->last_name : 'N/A',
+                'landlord_address' => $transaction->landlord ? $transaction->landlord->address : 'N/A',
+                'amount' => number_format($transaction->amount, 2, ',', ' '),
+                'tva_amount' => number_format($transaction->tva_amount, 2, ',', ' '),
+                'commission_amount' => number_format($transaction->commission_amount, 2, ',', ' '),
+                'net_amount' => number_format($transaction->net_amount, 2, ',', ' '),
+                'payment_method' => $transaction->payment_method ?? 'N/A',
+                'cheque_number' => $transaction->cheque_number ?? 'N/A',
+                'cheque_amount' => $transaction->cheque_amount ? number_format($transaction->cheque_amount, 2, ',', ' ') : 'N/A',
+                'cash_amount' => $transaction->cash_amount ? number_format($transaction->cash_amount, 2, ',', ' ') : 'N/A',
+                'company_name' => $transaction->landlord && $transaction->landlord->company ? $transaction->landlord->company->name : 'N/A',
+                'company_address' => $transaction->landlord && $transaction->landlord->company ? $transaction->landlord->company->address : 'N/A',
+            ];
+
+            $pdf = PDF::loadView('receipts.landlord-payout', $data);
+
+            return $pdf->download('recu_versement_' . $transaction->id . '.pdf');
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la génération du reçu', [
+                'transaction_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json(['error' => 'Une erreur est survenue lors de la génération du reçu'], 500);
+        }
+    }
+
 }

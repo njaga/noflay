@@ -4,20 +4,33 @@
             <div class="max-w-7xl mx-auto">
                 <!-- En-tête -->
                 <header class="mb-10">
-                    <div class="flex flex-col sm:flex-row justify-between items-center">
-                        <h1 class="text-4xl font-extrabold text-indigo-900 mb-4 sm:mb-0 flex items-center space-x-3">
+                    <div
+                        class="flex flex-col sm:flex-row justify-between items-center"
+                    >
+                        <h1
+                            class="text-4xl font-extrabold text-indigo-900 mb-4 sm:mb-0 flex items-center space-x-3"
+                        >
                             <i class="fas fa-building text-indigo-600"></i>
                             <span>Catalogue Immobilier</span>
                         </h1>
                         <div v-if="canCreate" class="flex space-x-4">
-                            <Link :href="route('properties.create')" class="btn-primary">
-                            <i class="fas fa-plus mr-2"></i>Ajouter un bien
+                            <Link
+                                :href="route('properties.create')"
+                                class="btn-primary"
+                            >
+                                <i class="fas fa-plus mr-2"></i>Ajouter un bien
                             </Link>
-                            <button @click="toggleViewMode" class="btn-secondary">
-                                <i :class="viewMode === 'grid'
-                                        ? 'fas fa-th-list'
-                                        : 'fas fa-th'
-                                    "></i>
+                            <button
+                                @click="toggleViewMode"
+                                class="btn-secondary"
+                            >
+                                <i
+                                    :class="
+                                        viewMode === 'grid'
+                                            ? 'fas fa-th-list'
+                                            : 'fas fa-th'
+                                    "
+                                ></i>
                                 <span class="ml-2">{{
                                     viewMode === "grid"
                                         ? "Vue Liste"
@@ -29,14 +42,23 @@
                 </header>
 
                 <!-- Filtres -->
-                <Filters :landlords="landlords" :property-types="propertyTypes" :filters="filters"
-                    @applyFilters="applyFilters" @resetFilters="resetFilters" />
+                <Filters
+                    :landlords="landlords"
+                    :property-types="propertyTypes"
+                    :filters="filters"
+                    @applyFilters="applyFilters"
+                    @resetFilters="resetFilters"
+                />
 
                 <!-- Liste des propriétés -->
-                <div v-if="!filteredProperties.length"
-                    class="flex items-center justify-center h-64 bg-white rounded-lg shadow-md">
+                <div
+                    v-if="!filteredProperties.length"
+                    class="flex items-center justify-center h-64 bg-white rounded-lg shadow-md"
+                >
                     <div class="text-center">
-                        <i class="fas fa-home text-6xl mb-4 text-indigo-300"></i>
+                        <i
+                            class="fas fa-home text-6xl mb-4 text-indigo-300"
+                        ></i>
                         <p class="text-xl text-gray-700">
                             Aucun bien immobilier trouvé
                         </p>
@@ -44,36 +66,66 @@
                 </div>
 
                 <div v-else>
-                    <div v-if="viewMode === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                        <PropertyCard v-for="property in paginatedProperties" :key="property.id" :property="property"
-                            :auth="auth" @openDeleteModal="openDeleteModal"
-                            @togglePropertyStatus="togglePropertyStatus" />
+                    <div
+                        v-if="viewMode === 'grid'"
+                        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
+                    >
+                        <PropertyCard
+                            v-for="property in paginatedProperties"
+                            :key="property.id"
+                            :property="property"
+                            :auth="auth"
+                            @openDeleteModal="openDeleteModal"
+                            @togglePropertyStatus="togglePropertyStatus"
+                        />
                     </div>
 
-                    <PropertyTable v-else :properties="paginatedProperties" :auth="auth"
-                        @openDeleteModal="openDeleteModal" @togglePropertyStatus="togglePropertyStatus" />
+                    <PropertyTable
+                        v-else
+                        :properties="paginatedProperties"
+                        :auth="auth"
+                        @openDeleteModal="openDeleteModal"
+                        @togglePropertyStatus="togglePropertyStatus"
+                    />
 
                     <!-- Pagination -->
                     <div class="mt-8 flex justify-center">
-                        <button @click="previousPage" :disabled="currentPage === 1"
-                            class="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed">
+                        <button
+                            @click="previousPage"
+                            :disabled="currentPage === 1"
+                            class="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
                             Précédent
                         </button>
-                        <span class="px-4 py-2 text-gray-700">{{ currentPage }} / {{ totalPages }}</span>
-                        <button @click="nextPage" :disabled="currentPage === totalPages"
-                            class="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span class="px-4 py-2 text-gray-700"
+                            >{{ currentPage }} / {{ totalPages }}</span
+                        >
+                        <button
+                            @click="nextPage"
+                            :disabled="currentPage === totalPages"
+                            class="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
                             Suivant
                         </button>
                     </div>
                 </div>
 
                 <!-- Modal de suppression -->
-                <DeleteModal :show="showDeleteModal" :property="propertyToDelete" @close="closeDeleteModal"
-                    @confirmDelete="confirmDelete" />
+                <DeleteModal
+                    :show="showDeleteModal"
+                    :property="propertyToDelete"
+                    @close="closeDeleteModal"
+                    @confirmDelete="confirmDelete"
+                />
 
                 <!-- Modal de mise à jour du statut -->
-                <StatusModal :show="showStatusModal" :property="statusModalProperty" :message="statusModalMessage"
-                    :type="statusType" @close="closeStatusModal" />
+                <StatusModal
+                    :show="showStatusModal"
+                    :property="statusModalProperty"
+                    :message="statusModalMessage"
+                    :type="statusType"
+                    @close="closeStatusModal"
+                />
             </div>
         </div>
     </AppLayout>
@@ -125,7 +177,7 @@ const filteredProperties = computed(() => {
         const matchesDate =
             !filters.value.date ||
             new Date(property.created_at).toISOString().split("T")[0] ===
-            filters.value.date;
+                filters.value.date;
         const matchesOwner =
             !filters.value.owner ||
             property.landlord_id === parseInt(filters.value.owner);

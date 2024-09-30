@@ -20,7 +20,15 @@ class Tenant extends Model
         'id_card_expiration_date',
         'company_id',
         'property_id',
+        'attachments',
     ];
+
+    protected $casts = [
+        'attachments' => 'array',
+    ];
+
+    protected $dates = ['id_card_expiration_date'];
+
 
     public function rentalApplications()
     {

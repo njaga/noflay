@@ -11,7 +11,7 @@
 
                         <!-- Onglets d'information -->
                         <div class="mt-8">
-                            <Tab :titles="['Coordonnées', 'Informations personnelles', 'Propriétés']" :default-index="0">
+                            <Tab :titles="['Coordonnées', 'Informations personnelles', 'Propriétés', 'Pièces jointes']" :default-index="0">
                                 <template v-slot:tab0>
                                     <div class="space-y-4">
                                         <InfoCard icon="fa-phone" title="Téléphone" :value="tenant.phone_number" />
@@ -42,14 +42,27 @@
                                         <p v-else class="text-gray-500 italic">Aucune propriété associée</p>
                                     </div>
                                 </template>
+                                <template v-slot:tab3>
+        <div class="space-y-4">
+            <div v-if="tenant.formatted_attachments && tenant.formatted_attachments.length">
+                <div v-for="(attachment, index) in tenant.formatted_attachments" :key="index" class="flex items-center justify-between p-3 bg-gray-100 rounded-lg mb-2">
+                    <span class="text-sm font-medium text-gray-700">{{ attachment.name }}</span>
+                    <a :href="attachment.url" target="_blank" class="text-indigo-600 hover:text-blue-800 flex items-center">
+                        <i class="fas fa-download mr-2"></i> Télécharger
+                    </a>
+                </div>
+            </div>
+            <p v-else class="text-gray-500 italic">Aucune pièce jointe</p>
+        </div>
+    </template>
                             </Tab>
                         </div>
 
                         <!-- Actions -->
                         <div class="mt-12 flex justify-center space-x-4">
-                            <Button @click="$emit('edit')" variant="primary" size="md" class="flex items-center">
+                            <Link :href="route('tenants.edit', tenant.id)" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-blue-800 focus:outline-none focus:border-blue-800 focus:ring focus:ring-blue-300 disabled:opacity-25 transition">
                                 <i class="fas fa-edit mr-2"></i> Modifier le profil
-                            </Button>
+                            </Link>
                             <Button @click="showDeleteModal = true" variant="danger" size="md"
                                 class="flex items-center">
                                 <i class="fas fa-trash-alt mr-2"></i> Supprimer le compte
@@ -86,6 +99,7 @@
 
 <script setup>
 import { ref } from 'vue';
+import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from '@/Components/UI/Button.vue';
 import Tab from '@/Components/Tab.vue';
@@ -96,7 +110,7 @@ const props = defineProps({
     tenant: Object,
 });
 
-const emit = defineEmits(['edit', 'delete']);
+const emit = defineEmits(['delete']);
 
 const showDeleteModal = ref(false);
 

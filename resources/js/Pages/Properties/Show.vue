@@ -3,23 +3,39 @@
         <div class="min-h-screen bg-gray-100">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 <!-- Hero Section -->
-                <div class="relative rounded-3xl overflow-hidden shadow-2xl mb-12 bg-white">
-                    <img :src="coverImage" :alt="property.name" class="w-full h-[50vh] object-cover" />
+                <div
+                    class="relative rounded-3xl overflow-hidden shadow-2xl mb-12 bg-white"
+                >
+                    <img
+                        :src="coverImage"
+                        :alt="property.name"
+                        class="w-full h-[50vh] object-cover"
+                    />
                     <div
-                        class="absolute inset-0 bg-gradient-to-t from-gray-900/70 to-transparent flex flex-col justify-end p-8">
-                        <h1 class="text-4xl font-bold text-white mb-4 animate-fade-in-up">
+                        class="absolute inset-0 bg-gradient-to-t from-gray-900/70 to-transparent flex flex-col justify-end p-8"
+                    >
+                        <h1
+                            class="text-4xl font-bold text-white mb-4 animate-fade-in-up"
+                        >
                             {{ property.name }}
                         </h1>
-                        <div class="flex items-center space-x-4 animate-fade-in-up" style="animation-delay: 0.2s">
-                            <span class="bg-indigo-700 text-white px-4 py-2 rounded-full text-sm font-semibold">
+                        <div
+                            class="flex items-center space-x-4 animate-fade-in-up"
+                            style="animation-delay: 0.2s"
+                        >
+                            <span
+                                class="bg-indigo-700 text-white px-4 py-2 rounded-full text-sm font-semibold"
+                            >
                                 {{ property.property_type }}
                             </span>
-                            <span :class="[
-                                'px-4 py-2 rounded-full text-sm font-semibold',
-                                property.available_count > 0
-                                    ? 'bg-green-500 text-white'
-                                    : 'bg-red-500 text-white',
-                            ]">
+                            <span
+                                :class="[
+                                    'px-4 py-2 rounded-full text-sm font-semibold',
+                                    property.available_count > 0
+                                        ? 'bg-green-500 text-white'
+                                        : 'bg-red-500 text-white',
+                                ]"
+                            >
                                 {{
                                     property.available_count > 0
                                         ? "Disponible"
@@ -35,21 +51,51 @@
                     <!-- Left Column: Description, Details, and Gallery -->
                     <div class="lg:col-span-2 space-y-8">
                         <!-- Quick Info -->
-                        <div class="bg-white rounded-2xl shadow-lg p-6 animate-fade-in" style="animation-delay: 0.4s">
+                        <div
+                            class="bg-white rounded-2xl shadow-lg p-6 animate-fade-in"
+                            style="animation-delay: 0.4s"
+                        >
                             <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                <InfoItem icon="fa fa-map-marker-alt" label="Adresse" :value="property.address" />
-                                <InfoItem icon="fa fa-home" label="Disponibles" :value="property.available_count" />
-                                <InfoItem icon="fa fa-building" label="Entreprise" :value="property.company.name" />
-                                <InfoItem icon="fa fa-user" label="Bailleur"
-                                    :value="`${property.landlord.first_name} ${property.landlord.last_name}`" />
-                                <InfoItem icon="fa fa-dollar-sign" label="Prix de la Propriété"
-                                    :value="formatCurrency(rentAmount)" />
+                                <InfoItem
+                                    icon="fa fa-map-marker-alt"
+                                    label="Adresse"
+                                    :value="property.address"
+                                />
+                                <InfoItem
+                                    icon="fa fa-home"
+                                    label="Disponibles"
+                                    :value="property.available_count"
+                                />
+                                <InfoItem
+                                    icon="fa fa-building"
+                                    label="Entreprise"
+                                    :value="property.company.name"
+                                />
+                                <InfoItem
+                                    icon="fa fa-user"
+                                    label="Bailleur"
+                                    :value="
+                                        property.landlord
+                                            ? `${property.landlord.first_name} ${property.landlord.last_name}`
+                                            : 'Non spécifié'
+                                    "
+                                />
+                                <InfoItem
+                                    icon="fa fa-dollar-sign"
+                                    label="Prix de la Propriété"
+                                    :value="formatCurrency(rentAmount)"
+                                />
                             </div>
                         </div>
 
                         <!-- Description -->
-                        <div class="bg-white rounded-2xl shadow-lg p-6 animate-fade-in" style="animation-delay: 0.6s">
-                            <h2 class="text-2xl font-semibold mb-4 text-gray-800">
+                        <div
+                            class="bg-white rounded-2xl shadow-lg p-6 animate-fade-in"
+                            style="animation-delay: 0.6s"
+                        >
+                            <h2
+                                class="text-2xl font-semibold mb-4 text-gray-800"
+                            >
                                 À propos de cette propriété
                             </h2>
                             <p class="text-gray-600 text-base leading-relaxed">
@@ -58,20 +104,33 @@
                         </div>
 
                         <!-- Photo Gallery -->
-                        <div class="bg-white rounded-2xl shadow-lg p-6 animate-fade-in" style="animation-delay: 0.8s">
-                            <h2 class="text-2xl font-semibold mb-4 text-gray-800">
+                        <div
+                            class="bg-white rounded-2xl shadow-lg p-6 animate-fade-in"
+                            style="animation-delay: 0.8s"
+                        >
+                            <h2
+                                class="text-2xl font-semibold mb-4 text-gray-800"
+                            >
                                 Galerie photos
                             </h2>
                             <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                <div v-for="(photo, index) in parsedPhotos" :key="index"
+                                <div
+                                    v-for="(photo, index) in parsedPhotos"
+                                    :key="index"
                                     class="relative group cursor-pointer overflow-hidden rounded-lg"
-                                    @click="openLightbox(index)">
-                                    <img :src="`/storage/${photo}`" :alt="`Photo ${index + 1}`"
-                                        class="w-full h-48 object-cover transition duration-300 ease-in-out transform group-hover:scale-110" />
+                                    @click="openLightbox(index)"
+                                >
+                                    <img
+                                        :src="`/storage/${photo}`"
+                                        :alt="`Photo ${index + 1}`"
+                                        class="w-full h-48 object-cover transition duration-300 ease-in-out transform group-hover:scale-110"
+                                    />
                                     <div
-                                        class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition duration-300 ease-in-out flex items-center justify-center">
+                                        class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition duration-300 ease-in-out flex items-center justify-center"
+                                    >
                                         <i
-                                            class="fas fa-search text-white text-2xl opacity-0 group-hover:opacity-100 transition duration-300 ease-in-out"></i>
+                                            class="fas fa-search text-white text-2xl opacity-0 group-hover:opacity-100 transition duration-300 ease-in-out"
+                                        ></i>
                                     </div>
                                 </div>
                             </div>
@@ -81,21 +140,31 @@
                     <!-- Right Column: Stats, Tenants, and Actions -->
                     <div class="space-y-8">
                         <!-- Property Stats -->
-                        <div class="bg-white rounded-2xl shadow-lg p-6 animate-fade-in relative"
-                            style="animation-delay: 1s">
-                            <h2 class="text-2xl font-semibold mb-8 text-gray-800">
+                        <div
+                            class="bg-white rounded-2xl shadow-lg p-6 animate-fade-in relative"
+                            style="animation-delay: 1s"
+                        >
+                            <h2
+                                class="text-2xl font-semibold mb-8 text-gray-800"
+                            >
                                 Statistiques
                             </h2>
                             <div class="swiper-container">
                                 <div class="swiper-wrapper">
                                     <div class="swiper-slide">
-                                        <BarChart :chartData="chartDataCautions" />
+                                        <BarChart
+                                            :chartData="chartDataCautions"
+                                        />
                                     </div>
                                     <div class="swiper-slide">
-                                        <BarChart :chartData="chartDataLoyers" />
+                                        <BarChart
+                                            :chartData="chartDataLoyers"
+                                        />
                                     </div>
                                     <div class="swiper-slide">
-                                        <BarChart :chartData="chartDataTotalRent" />
+                                        <BarChart
+                                            :chartData="chartDataTotalRent"
+                                        />
                                     </div>
                                 </div>
                                 <div class="swiper-pagination"></div>
@@ -105,57 +174,85 @@
                         </div>
 
                         <!-- Tenants List -->
-                        <div class="bg-white rounded-2xl shadow-lg p-6 animate-fade-in" style="animation-delay: 1.2s">
-                            <h2 class="text-2xl font-semibold mb-4 text-gray-800">
+                        <div
+                            class="bg-white rounded-2xl shadow-lg p-6 animate-fade-in"
+                            style="animation-delay: 1.2s"
+                        >
+                            <h2
+                                class="text-2xl font-semibold mb-4 text-gray-800"
+                            >
                                 Locataires
                             </h2>
-                            <div v-if="
-                                property.contracts &&
-                                property.contracts.length
-                            " class="space-y-4">
-                                <div v-for="contract in property.contracts" :key="contract.id"
-                                    class="flex items-center p-4 bg-gray-50 rounded-lg transition duration-300 ease-in-out hover:bg-gray-100">
-                                    <img :src="`https://ui-avatars.com/api/?name=${contract.tenant.first_name}+${contract.tenant.last_name}&background=4F46E5&color=ffffff`"
-                                        :alt="contract.tenant.first_name"
-                                        class="w-12 h-12 rounded-full mr-4 shadow-md" />
-                                    <Link :href="route(
-                                        'tenants.show',
-                                        contract.tenant.id
-                                    )
+                            <div
+                                v-if="
+                                    property.contracts &&
+                                    property.contracts.length
+                                "
+                                class="space-y-4"
+                            >
+                                <div
+                                    v-for="contract in property.contracts"
+                                    :key="contract.id"
+                                    class="flex items-center p-4 bg-gray-50 rounded-lg transition duration-300 ease-in-out hover:bg-gray-100"
+                                >
+                                    <img
+                                        :src="`https://ui-avatars.com/api/?name=${
+                                            contract.tenant?.first_name ||
+                                            'Unknown'
+                                        }+${
+                                            contract.tenant?.last_name ||
+                                            'Tenant'
+                                        }&background=4F46E5&color=ffffff`"
+                                        :alt="
+                                            contract.tenant?.first_name ||
+                                            'Unknown Tenant'
                                         "
-                                        class="text-base text-indigo-600 hover:text-indigo-800 transition duration-150 ease-in-out">
-                                    {{ contract.tenant.first_name }}
-                                    {{ contract.tenant.last_name }}
+                                        class="w-12 h-12 rounded-full mr-4 shadow-md"
+                                    />
+                                    <Link
+                                        v-if="contract.tenant"
+                                        :href="
+                                            route(
+                                                'tenants.show',
+                                                contract.tenant.id
+                                            )
+                                        "
+                                        class="text-base text-indigo-600 hover:text-indigo-800 transition duration-150 ease-in-out"
+                                    >
+                                        {{ contract.tenant.first_name }}
+                                        {{ contract.tenant.last_name }}
                                     </Link>
+                                    <span v-else class="text-base text-gray-500"
+                                        >Locataire non spécifié</span
+                                    >
                                 </div>
                             </div>
-                            <p v-else class="text-gray-500 italic text-center py-4">
-                                Aucun locataire pour le moment
-                            </p>
+                            <div v-else class="text-gray-500">
+                                Aucun locataire pour le moment.
+                            </div>
                         </div>
 
                         <!-- Actions -->
-                        <div class="bg-white rounded-2xl shadow-lg p-6 animate-fade-in" style="animation-delay: 1.4s">
-                            <h2 class="text-2xl font-semibold mb-4 text-gray-800">
+                        <div
+                            class="bg-white rounded-2xl shadow-lg p-6 animate-fade-in"
+                            style="animation-delay: 1.4s"
+                        >
+                            <h2
+                                class="text-2xl font-semibold mb-4 text-gray-800"
+                            >
                                 Actions
                             </h2>
                             <div class="space-y-4">
-                                <Link :href="route('properties.edit', property.id)
+                                <Link
+                                    :href="
+                                        route('properties.edit', property.id)
                                     "
-                                    class="flex items-center justify-center w-full bg-indigo-600 text-white px-4 py-3 rounded-lg font-semibold transition duration-300 ease-in-out hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                <i class="fas fa-edit mr-2"></i> Modifier la
-                                propriété
-                                </Link>
-                                <Link :href="route('tenants.create', {
-                                    property_id: property.id,
-                                })
-                                    "
-                                    class="flex items-center justify-center w-full bg-green-600 text-white px-4 py-3 rounded-lg font-semibold transition duration-300 ease-in-out hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                                <i class="fas fa-user-plus mr-2"></i>
-                                Ajouter un locataire
+                                    class="flex items-center justify-center w-full bg-indigo-600 text-white px-4 py-3 rounded-lg font-semibold transition duration-300 ease-in-out hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                >
+                                    <i class="fas fa-edit mr-2"></i> Modifier la
+                                    propriété
                                 </Link>
 
-                                <!-- Générer rapport
                                 <Link
                                     :href="
                                         route('properties.report', property.id)
@@ -165,10 +262,11 @@
                                     <i class="fas fa-file-alt mr-2"></i> Générer
                                     un rapport
                                 </Link>
-                                -->
 
-                                <button @click="showDeleteModal = true"
-                                    class="flex items-center justify-center w-full bg-red-600 text-white px-4 py-3 rounded-lg font-semibold transition duration-300 ease-in-out hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                <button
+                                    @click="showDeleteModal = true"
+                                    class="flex items-center justify-center w-full bg-red-600 text-white px-4 py-3 rounded-lg font-semibold transition duration-300 ease-in-out hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                >
                                     <i class="fas fa-trash-alt mr-2"></i>
                                     Supprimer
                                 </button>
@@ -180,33 +278,69 @@
         </div>
 
         <TransitionRoot appear :show="lightboxOpen" as="template">
-            <Dialog as="div" @close="closeLightbox" class="fixed inset-0 z-50 overflow-y-auto">
+            <Dialog
+                as="div"
+                @close="closeLightbox"
+                class="fixed inset-0 z-50 overflow-y-auto"
+            >
                 <div class="min-h-screen px-4 text-center">
-                    <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0"
-                        enter-to="opacity-100" leave="ease-in duration-200" leave-from="opacity-100"
-                        leave-to="opacity-0">
-                        <DialogOverlay class="fixed inset-0 bg-black bg-opacity-75 transition-opacity" />
+                    <TransitionChild
+                        as="template"
+                        enter="ease-out duration-300"
+                        enter-from="opacity-0"
+                        enter-to="opacity-100"
+                        leave="ease-in duration-200"
+                        leave-from="opacity-100"
+                        leave-to="opacity-0"
+                    >
+                        <DialogOverlay
+                            class="fixed inset-0 bg-black bg-opacity-75 transition-opacity"
+                        />
                     </TransitionChild>
-                    <span class="inline-block h-screen align-middle" aria-hidden="true">&#8203;</span>
-                    <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0 scale-95"
-                        enter-to="opacity-100 scale-100" leave="ease-in duration-200" leave-from="opacity-100 scale-100"
-                        leave-to="opacity-0 scale-95">
+                    <span
+                        class="inline-block h-screen align-middle"
+                        aria-hidden="true"
+                        >&#8203;</span
+                    >
+                    <TransitionChild
+                        as="template"
+                        enter="ease-out duration-300"
+                        enter-from="opacity-0 scale-95"
+                        enter-to="opacity-100 scale-100"
+                        leave="ease-in duration-200"
+                        leave-from="opacity-100 scale-100"
+                        leave-to="opacity-0 scale-95"
+                    >
                         <div
-                            class="inline-block w-full max-w-4xl p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
-                            <img :src="`/storage/${parsedPhotos[currentPhotoIndex]}`" :alt="`Photo de la propriété ${currentPhotoIndex + 1
-                                }`" class="w-full h-auto rounded-lg shadow-lg" />
+                            class="inline-block w-full max-w-4xl p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl"
+                        >
+                            <img
+                                :src="`/storage/${parsedPhotos[currentPhotoIndex]}`"
+                                :alt="`Photo de la propriété ${
+                                    currentPhotoIndex + 1
+                                }`"
+                                class="w-full h-auto rounded-lg shadow-lg"
+                            />
                             <div class="mt-6 flex justify-between items-center">
-                                <button @click="previousPhoto"
-                                    class="bg-gray-200 hover:bg-gray-300 rounded-full p-3 transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                    <i class="fas fa-chevron-left text-gray-600"></i>
+                                <button
+                                    @click="previousPhoto"
+                                    class="bg-gray-200 hover:bg-gray-300 rounded-full p-3 transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                >
+                                    <i
+                                        class="fas fa-chevron-left text-gray-600"
+                                    ></i>
                                 </button>
                                 <span class="text-gray-500">
                                     {{ currentPhotoIndex + 1 }} /
                                     {{ parsedPhotos.length }}
                                 </span>
-                                <button @click="nextPhoto"
-                                    class="bg-gray-200 hover:bg-gray-300 rounded-full p-3 transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                    <i class="fas fa-chevron-right text-gray-600"></i>
+                                <button
+                                    @click="nextPhoto"
+                                    class="bg-gray-200 hover:bg-gray-300 rounded-full p-3 transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                >
+                                    <i
+                                        class="fas fa-chevron-right text-gray-600"
+                                    ></i>
                                 </button>
                             </div>
                         </div>
@@ -215,8 +349,12 @@
             </Dialog>
         </TransitionRoot>
 
-        <DeleteModal :show="showDeleteModal" :property="property" @close="showDeleteModal = false"
-            @confirm="deleteProperty" />
+        <DeleteModal
+            :show="showDeleteModal"
+            :property="property"
+            @close="showDeleteModal = false"
+            @confirm="deleteProperty"
+        />
     </AppLayout>
 </template>
 
@@ -335,22 +473,22 @@ const formatCurrency = (amount) => {
 };
 
 onMounted(() => {
-    new Swiper('.swiper-container', {
+    new Swiper(".swiper-container", {
         loop: true,
         pagination: {
-            el: '.swiper-pagination',
+            el: ".swiper-pagination",
             clickable: true,
         },
         navigation: {
-            nextEl: '.swiper-button-next',
-            prevEl: '.swiper-button-prev',
+            nextEl: ".swiper-button-next",
+            prevEl: ".swiper-button-prev",
         },
         autoplay: {
             delay: 5000,
         },
-        effect: 'fade',
+        effect: "fade",
         fadeEffect: {
-            crossFade: true
+            crossFade: true,
         },
     });
 });
@@ -382,7 +520,7 @@ onMounted(() => {
 
 .swiper-button-prev,
 .swiper-button-next {
-    color: #4F46E5;
+    color: #4f46e5;
     width: 30px;
     /* Réduire la largeur */
     height: 30px;
@@ -421,13 +559,13 @@ onMounted(() => {
 .swiper-pagination-bullet {
     width: 8px;
     height: 8px;
-    background-color: #D1D5DB;
+    background-color: #d1d5db;
     opacity: 1;
     margin: 0 5px;
 }
 
 .swiper-pagination-bullet-active {
-    background-color: #4F46E5;
+    background-color: #4f46e5;
 }
 
 @keyframes fadeIn {

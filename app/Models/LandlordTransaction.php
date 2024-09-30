@@ -34,4 +34,6 @@ class LandlordTransaction extends Model
     {
         return $this->belongsTo(Landlord::class);
     }
+
+
 }

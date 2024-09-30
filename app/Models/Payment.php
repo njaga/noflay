@@ -12,10 +12,16 @@ class Payment extends Model
 
     protected $fillable = [
         'company_id',
-        'contract_id',
         'tenant_id',
+        'contract_id',
         'amount',
+        'total_amount',
+        'tva_amount',
         'payment_date',
+        'payment_month',
+        'payment_type',
+        'payment_month',
+        'payment_type',
     ];
 
     public function contract()

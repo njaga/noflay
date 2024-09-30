@@ -40,7 +40,6 @@ watch(isMobile, (newValue) => {
     }
 });
 
-
 const navItems = computed(() => {
     const items = [
         {
@@ -53,6 +52,7 @@ const navItems = computed(() => {
             name: "Entreprises",
             icon: "bi-briefcase",
             roles: ["super_admin"],
+            defaultHref: route("companies.index"),
             children: [
                 {
                     name: "Gérer les entreprises",
@@ -70,6 +70,7 @@ const navItems = computed(() => {
             name: "Bailleurs",
             icon: "bi-building",
             roles: ["super_admin", "admin_entreprise", "user_entreprise"],
+            defaultHref: route("landlords.index"),
             children: [
                 {
                     name: "Gérer les bailleurs",
@@ -97,6 +98,7 @@ const navItems = computed(() => {
             name: "Locataires",
             icon: "bi-person-check",
             roles: ["super_admin", "admin_entreprise", "user_entreprise", "bailleur"],
+            defaultHref: route("tenants.index"),
             children: [
                 {
                     name: "Gérer les locataires",
@@ -116,14 +118,20 @@ const navItems = computed(() => {
             ],
         },
         {
-            name: "Logements",
+            name: "Propriétés",
             icon: "bi-house-door",
             roles: ["super_admin", "admin_entreprise", "user_entreprise", "bailleur", "locataire"],
+            defaultHref: route("properties.index"),
             children: [
                 {
                     name: "Liste des logements",
                     href: route("properties.index"),
                     icon: "bi-list",
+                },
+                {
+                    name: "Archives",
+                    href: route("properties.archives"),
+                    icon: "bi-archive",
                 },
                 {
                     name: "Ajouter un logement",
@@ -136,11 +144,17 @@ const navItems = computed(() => {
             name: "Locations",
             icon: "bi-file-earmark-text",
             roles: ["super_admin", "admin_entreprise", "user_entreprise", "bailleur", "locataire"],
+            defaultHref: route("contracts.index"),
             children: [
                 {
                     name: "Liste des dossiers",
                     href: route("contracts.index"),
                     icon: "bi-list-ul",
+                },
+                {
+                    name: "Archives",
+                    href: route("contracts.archives"),
+                    icon: "bi-archive",
                 },
                 {
                     name: "Nouveau dossier",
@@ -153,11 +167,22 @@ const navItems = computed(() => {
             name: "Finances",
             icon: "bi-cash-coin",
             roles: ["super_admin", "admin_entreprise", "user_entreprise", "bailleur", "locataire"],
+            defaultHref: route("finance.index"),
             children: [
                 {
                     name: "Vue d'ensemble",
                     href: route("finance.index"),
                     icon: "bi-graph-up",
+                },
+                {
+                    name: "Grand livre de caisse",
+                    href: route("transactions.grand-livre"),
+                    icon: "bi-bar-chart",
+                },
+                {
+                    name: "Ventilation caisse",
+                    href: route("transactions.ventilation"),
+                    icon: "bi-plus-slash-minus",
                 },
                 {
                     name: "Dépenses",
@@ -213,6 +238,7 @@ const groupItems = computed(() => navItems.value.filter((item) => item.children)
                 :icon="item.icon"
                 :text="item.name"
                 :is-collapsed="isCollapsed"
+                :is-mobile="isMobile"
             />
 
             <SidebarDropdown
@@ -221,6 +247,8 @@ const groupItems = computed(() => navItems.value.filter((item) => item.children)
                 :icon="group.icon"
                 :text="group.name"
                 :is-collapsed="isCollapsed"
+                :is-mobile="isMobile"
+                :default-href="group.defaultHref"
             >
                 <SidebarItem
                     v-for="subItem in group.children"
@@ -229,6 +257,7 @@ const groupItems = computed(() => navItems.value.filter((item) => item.children)
                     :icon="subItem.icon"
                     :text="subItem.name"
                     :is-collapsed="isCollapsed"
+                    :is-mobile="isMobile"
                 />
             </SidebarDropdown>
         </nav>

@@ -1,77 +1,90 @@
 <template>
-    <div class="bg-white overflow-hidden shadow rounded-lg">
-        <div class="p-5">
-            <div class="flex items-center">
-                <div :class="`flex-shrink-0 rounded-md p-3 ${bgColorClass}`">
-                    <component :is="iconComponent" class="h-6 w-6 text-white" aria-hidden="true" />
+    <div
+        class="bg-white overflow-hidden shadow-lg rounded-xl transition-all duration-300 hover:shadow-xl"
+    >
+        <div class="p-6">
+            <div class="flex items-start">
+                <div :class="`flex-shrink-0 rounded-full p-3 ${color}`">
+                    <component
+                        :is="iconComponent"
+                        class="h-6 w-6 text-white"
+                        aria-hidden="true"
+                    />
                 </div>
-                <div class="ml-5 w-0 flex-1">
+                <div class="ml-5 flex-1 min-w-0">
                     <dl>
                         <dt class="text-sm font-medium text-gray-500 truncate">
                             {{ title }}
                         </dt>
-                        <dd>
-                            <div class="text-lg font-medium text-gray-900">
-                                {{ value }}
-                            </div>
+                        <dd class="mt-1 flex flex-col">
+                            <span
+                                class="text-2xl font-semibold text-gray-900"
+                                >{{ formattedValue }}</span
+                            >
+                            <span class="text-sm text-gray-500">{{
+                                valuePrefix
+                            }}</span>
                         </dd>
                     </dl>
                 </div>
-            </div>
-        </div>
-        <div v-if="link" class="bg-gray-50 px-5 py-3">
-            <div class="text-sm">
-                <Link :href="link" class="font-medium text-cyan-700 hover:text-cyan-900">
-                    Voir les détails
-                </Link>
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import { Users, FileText, Home, UserCheck, DollarSign, CreditCard, ShoppingCart } from 'lucide-vue-next';
-import { Link } from '@inertiajs/vue3';
+import { computed } from "vue";
+import { Lock, DollarSign, Home, ShoppingCart } from "lucide-vue-next";
 
 const props = defineProps({
     title: {
         type: String,
-        required: true
+        required: true,
     },
     value: {
-        type: [Number, String],
-        required: true
+        type: Number,
+        required: true,
     },
     icon: {
         type: String,
-        required: true
+        required: true,
     },
     color: {
         type: String,
-        default: 'bg-blue-500'
+        required: true,
     },
-    link: {
+    useKFormat: {
+        type: Boolean,
+        default: true,
+    },
+    valuePrefix: {
         type: String,
-        default: null  // Rend le prop optionnel
-    }
+        default: "",
+    },
 });
 
 const iconComponent = computed(() => {
     const icons = {
-        users: Users,
-        'file-text': FileText,
+        lock: Lock,
+        "dollar-sign": DollarSign,
         home: Home,
-        'user-check': UserCheck,
-        'dollar-sign': DollarSign,
-        'credit-card': CreditCard,
-        'shopping-cart': ShoppingCart,
-        'lock': UserCheck  // Ajouté pour l'icône "lock"
+        "shopping-cart": ShoppingCart,
     };
-    return icons[props.icon] || Users;
+    return icons[props.icon] || Lock;
 });
 
-const bgColorClass = computed(() => {
-    return props.color;
+const formatNumberWithK = (value) => {
+    if (value >= 1000000) {
+        return (value / 1000000).toFixed(1) + "M";
+    } else if (value >= 1000) {
+        return (value / 1000).toFixed(1) + "K";
+    }
+    return value.toString();
+};
+
+const formattedValue = computed(() => {
+    return props.useKFormat
+        ? formatNumberWithK(props.value)
+        : props.value.toLocaleString();
 });
 </script>

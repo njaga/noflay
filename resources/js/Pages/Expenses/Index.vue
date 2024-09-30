@@ -4,9 +4,12 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <h2 class="text-4xl font-bold mb-8 text-gray-900">Dépenses</h2>
 
+                <!-- Summary Cards -->
+                <SummaryCards :summaryStats="summaryStats" />
+
                 <!-- Boutons de raccourcis -->
                 <div class="flex justify-end mb-8">
-                    <Link href="{{ route('expenses.create') }}" class="btn-primary mr-2">Ajouter une Dépense</Link>
+                    <Link :href="route('expenses.create')" class="btn-primary mr-2">Ajouter une Dépense</Link>
                 </div>
 
                 <!-- Filtres -->
@@ -55,6 +58,7 @@ import { ref, computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import DataSection from '@/Components/DataSection.vue';
+import SummaryCards from '@/Components/LandlordPayouts/SummaryCards.vue';
 import { Link } from '@inertiajs/vue3';
 
 const { props } = usePage();
@@ -83,6 +87,26 @@ const filteredExpenses = computed(() => {
         return matchesProperty && matchesDateFrom && matchesDateTo;
     });
 });
+
+const summaryStats = computed(() => [
+    {
+        title: "Total des dépenses",
+        value: formatCurrency(filteredExpenses.value.reduce((sum, expense) => sum + expense.amount, 0)),
+        description: "Montant total des dépenses pour la période sélectionnée"
+    },
+    {
+        title: "Nombre de dépenses",
+        value: filteredExpenses.value.length.toString(),
+        description: "Nombre total de dépenses enregistrées"
+    },
+    {
+        title: "Moyenne des dépenses",
+        value: formatCurrency(filteredExpenses.value.length > 0
+            ? filteredExpenses.value.reduce((sum, expense) => sum + expense.amount, 0) / filteredExpenses.value.length
+            : 0),
+        description: "Montant moyen des dépenses pour la période"
+    }
+]);
 
 const applyFilters = () => {
     console.log('Filtres appliqués:', filters.value);

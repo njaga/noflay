@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateLandlordTransactionsTableNew extends Migration
+class CreateLandlordTransactionsTable extends Migration
 {
     public function up()
     {

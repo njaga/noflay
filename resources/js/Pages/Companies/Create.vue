@@ -13,13 +13,32 @@
                                     {{ field.label }}
                                 </label>
                                 <div class="mt-1 relative rounded-md shadow-sm">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <div v-if="field.icon" class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                         <component :is="field.icon" class="h-5 w-5 text-gray-400" />
                                     </div>
-                                    <input :id="field.name" v-model="form[field.name]" :type="field.type"
+                                    <input v-if="field.type !== 'file' && field.type !== 'select'"
+                                        :id="field.name"
+                                        v-model="form[field.name]"
+                                        :type="field.type"
                                         :placeholder="field.placeholder"
                                         class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md transition duration-150 ease-in-out"
                                         :class="{ 'border-red-300': form.errors[field.name] }">
+                                    <input v-else-if="field.type === 'file'"
+                                        :id="field.name"
+                                        type="file"
+                                        @change="handleFileUpload"
+                                        class="focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md transition duration-150 ease-in-out"
+                                        :class="{ 'border-red-300': form.errors[field.name] }">
+                                    <select v-else-if="field.type === 'select'"
+                                        :id="field.name"
+                                        v-model="form[field.name]"
+                                        class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-3 pr-10 py-2 text-base border-gray-300 sm:text-sm rounded-md transition duration-150 ease-in-out"
+                                        :class="{ 'border-red-300': form.errors[field.name] }">
+                                        <option value="">Sélectionnez un représentant</option>
+                                        <option v-for="user in users" :key="user.id" :value="user.id">
+                                            {{ user.name }}
+                                        </option>
+                                    </select>
                                 </div>
                                 <p v-if="form.errors[field.name]" class="mt-2 text-sm text-red-600">
                                     {{ form.errors[field.name] }}
@@ -89,7 +108,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useForm, usePage } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import Modal from '@/Components/Modal.vue'
-import { Building, Mail, Phone, MapPin, Globe } from 'lucide-vue-next'
+import { Building, Mail, Phone, MapPin, Globe, FileText, User } from 'lucide-vue-next'
 
 const showModal = ref(false)
 const createdCompanyName = ref('')
@@ -100,6 +119,10 @@ const fields = [
     { name: 'phone', label: 'Téléphone', type: 'tel', placeholder: '+221 77 123 45 67', icon: Phone },
     { name: 'address', label: 'Adresse', type: 'text', placeholder: 'Adresse complète', icon: MapPin },
     { name: 'website', label: 'Site web', type: 'url', placeholder: 'https://www.exemple.com', icon: Globe },
+    { name: 'logo', label: 'Logo', type: 'file', placeholder: 'Choisir un fichier', icon: Image },
+    { name: 'NINEA', label: 'NINEA', type: 'text', placeholder: 'Numéro NINEA', icon: FileText },
+    { name: 'RCCM', label: 'Registre de commerce', type: 'text', placeholder: 'Numéro RCCM', icon: FileText },
+    { name: 'representant_id', label: 'Représentant', type: 'select', placeholder: 'Sélectionnez un représentant', icon: User },
 ]
 
 const form = useForm({
@@ -108,8 +131,29 @@ const form = useForm({
     phone: '',
     address: '',
     website: '',
+    logo: null,
+    NINEA: '',
+    RCCM: '',
+    representant_id: '',
     is_active: true,
 })
+
+const users = ref([])
+
+onMounted(async () => {
+    const response = await fetch('/api/users')
+    users.value = await response.json()
+})
+
+const handleFileUpload = (event) => {
+    const file = event.target.files[0]
+    if (file && (file.type === 'image/jpeg' || file.type === 'image/png') && file.size <= 2 * 1024 * 1024) {
+        form.logo = file
+    } else {
+        alert('Veuillez sélectionner une image JPG ou PNG de moins de 2 MB.')
+        event.target.value = '' // Reset the file input
+    }
+}
 
 const submit = () => {
     form.post(route('companies.store'), {

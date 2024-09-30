@@ -3,10 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Company;
-use App\Models\Role;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Storage;
 
 class CompanyController extends Controller
 {
@@ -24,9 +25,10 @@ class CompanyController extends Controller
     public function create()
     {
         Gate::authorize('create', Company::class);
-        return Inertia::render(
-            'Companies/Create',
-        );
+        $users = User::all();
+        return Inertia::render('Companies/Create', [
+            'users' => $users,
+        ]);
     }
 
     public function store(Request $request)
@@ -39,8 +41,17 @@ class CompanyController extends Controller
             'address' => 'required|string|max:255',
             'phone' => 'nullable|string|max:20',
             'website' => 'nullable|url|max:255',
+            'logo' => 'nullable|image|mimes:jpeg,png|max:2048', // max 2MB, only JPEG or PNG
+            'NINEA' => 'nullable|string|max:255',
+            'RCCM' => 'nullable|string|max:255',
+            'representant_id' => 'nullable|exists:users,id',
             'is_active' => 'boolean',
         ]);
+
+        if ($request->hasFile('logo')) {
+            $path = $request->file('logo')->store('company_logos', 'public');
+            $validated['logo'] = $path;
+        }
 
         $company = Company::create($validated);
 
@@ -51,23 +62,23 @@ class CompanyController extends Controller
         ]);
     }
 
-
     public function show(Company $company)
     {
-        $company->load('users.roles', 'landlords', 'tenants', 'properties');
+        $company->load('users.roles', 'landlords', 'tenants', 'properties', 'representant');
 
         return Inertia::render('Companies/Show', [
             'company' => $company,
         ]);
     }
 
-
     public function edit(Company $company)
     {
         Gate::authorize('update', $company);
+        $users = User::all();
 
         return Inertia::render('Companies/Edit', [
             'company' => $company,
+            'users' => $users,
         ]);
     }
 
@@ -75,28 +86,45 @@ class CompanyController extends Controller
     {
         Gate::authorize('update', $company);
 
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:companies,email,' . $company->id,
             'address' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:20',
+            'website' => 'nullable|url|max:255',
+            'logo' => 'nullable|image|mimes:jpeg,png|max:2048', // max 2MB, only JPEG or PNG
+            'NINEA' => 'nullable|string|max:255',
+            'RCCM' => 'nullable|string|max:255',
+            'representant_id' => 'nullable|exists:users,id',
+            'is_active' => 'boolean',
         ]);
 
-        $company->update([
-            'name' => $request->name,
-            'email' => $request->email,
-            'address' => $request->address,
-        ]);
+        if ($request->hasFile('logo')) {
+            // Supprimez l'ancien logo s'il existe
+            if ($company->logo) {
+                Storage::disk('public')->delete($company->logo);
+            }
+            $path = $request->file('logo')->store('company_logos', 'public');
+            $validated['logo'] = $path;
+        }
 
-        return redirect()->route('companies.index')->with('success', 'Company updated successfully.');
+        $company->update($validated);
+
+        return redirect()->route('companies.index')->with('success', 'Entreprise mise à jour avec succès.');
     }
 
     public function destroy(Company $company)
     {
         Gate::authorize('delete', $company);
 
+        // Supprimez le logo
+        if ($company->logo) {
+            Storage::disk('public')->delete($company->logo);
+        }
+
         $company->delete();
 
-        return redirect()->route('companies.index')->with('success', 'Company deleted successfully.');
+        return redirect()->route('companies.index')->with('success', 'Entreprise supprimée avec succès.');
     }
 
     public function toggleStatus(Company $company)
@@ -104,7 +132,17 @@ class CompanyController extends Controller
         $company->is_active = !$company->is_active;
         $company->save();
 
-        return redirect()->route('companies.index')->with('success', 'Company status updated successfully.');
+        return redirect()->route('companies.index')->with('success', 'Statut de l\'entreprise mis à jour avec succès.');
+    }
+
+    public function getUsers()
+    {
+        // Cette méthode sera utilisée pour récupérer les utilisateurs pour la liste déroulante
+        $users = User::where('id_company', auth()->user()->id_company)
+            ->select('id', 'name')
+            ->get();
+
+        return response()->json($users);
     }
 
 }

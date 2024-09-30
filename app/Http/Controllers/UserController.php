@@ -22,14 +22,12 @@ class UserController extends Controller
 
         $query = User::with('roles', 'company');
 
-        if (Gate::denies('viewSuperAdmin', Auth::user())) {
+        if (!Auth::user()->hasRole('super_admin')) {
             $query->whereDoesntHave('roles', function ($q) {
                 $q->where('name', 'super_admin');
             });
-        }
 
-        if (Gate::denies('isSuperAdmin', Auth::user())) {
-            if (Gate::allows('isAdminEntreprise', Auth::user()) || Gate::allows('isUserEntreprise', Auth::user())) {
+            if (Auth::user()->hasAnyRole(['admin_entreprise', 'user_entreprise'])) {
                 $query->where('company_id', Auth::user()->company_id);
             }
         }
@@ -49,11 +47,12 @@ class UserController extends Controller
     {
         Gate::authorize('create', User::class);
 
-        $companies = Gate::allows('viewAny', Company::class) ? Company::all() : [Auth::user()->company];
+        $companies = Auth::user()->hasRole('super_admin') ? Company::all() : [Auth::user()->company];
+        $roles = Auth::user()->hasRole('super_admin') ? Role::all()->pluck('name') : Role::where('name', '!=', 'super_admin')->pluck('name');
 
         return Inertia::render('Users/Create', [
             'companies' => $companies,
-            'roles' => Role::all()->pluck('name'),
+            'roles' => $roles,
         ]);
     }
 
@@ -69,8 +68,7 @@ class UserController extends Controller
             'role' => 'required|string|exists:roles,name',
         ]);
 
-        // Ensure admin_entreprise cannot create super_admin
-        if (Gate::denies('isSuperAdmin', Auth::user()) && $validatedData['role'] === 'super_admin') {
+        if (!Auth::user()->hasRole('super_admin') && $validatedData['role'] === 'super_admin') {
             return redirect()->route('users.index')->with('error', 'Unauthorized to create super admin.');
         }
 
@@ -82,15 +80,11 @@ class UserController extends Controller
             'is_active' => true,
         ]);
 
-        // Manually insert the role with model_type
-        DB::table('model_has_roles')->insert([
-            'role_id' => Role::where('name', $validatedData['role'])->first()->id,
-            'model_type' => User::class,
-            'model_id' => $user->id,
-        ]);
+        $user->assignRole($validatedData['role']);
 
         return redirect()->route('users.index')->with('success', 'User created successfully.');
     }
+
 
     public function show(User $user)
     {
@@ -106,12 +100,13 @@ class UserController extends Controller
     {
         Gate::authorize('update', $user);
 
-        $companies = Gate::allows('viewAny', Company::class) ? Company::all() : [Auth::user()->company];
+        $companies = Auth::user()->hasRole('super_admin') ? Company::all() : [Auth::user()->company];
+        $roles = Auth::user()->hasRole('super_admin') ? Role::all()->pluck('name') : Role::where('name', '!=', 'super_admin')->pluck('name');
 
         return Inertia::render('Users/Edit', [
             'user' => $user->load('company', 'roles'),
             'companies' => $companies,
-            'roles' => Role::all()->pluck('name'),
+            'roles' => $roles,
         ]);
     }
 
@@ -127,6 +122,10 @@ class UserController extends Controller
             'role' => 'required|string|exists:roles,name',
         ]);
 
+        if (!Auth::user()->hasRole('super_admin') && $validatedData['role'] === 'super_admin') {
+            return redirect()->route('users.index')->with('error', 'Unauthorized to assign super admin role.');
+        }
+
         $user->update([
             'name' => $validatedData['name'],
             'email' => $validatedData['email'],
@@ -137,17 +136,11 @@ class UserController extends Controller
             $user->update(['password' => Hash::make($validatedData['password'])]);
         }
 
-        // Manually update the role with model_type
-        DB::table('model_has_roles')->where('model_id', $user->id)->delete();
-
-        DB::table('model_has_roles')->insert([
-            'role_id' => Role::where('name', $validatedData['role'])->first()->id,
-            'model_type' => User::class,
-            'model_id' => $user->id,
-        ]);
+        $user->syncRoles([$validatedData['role']]);
 
         return redirect()->route('users.index')->with('success', 'User updated successfully.');
     }
+
 
     public function destroy(User $user)
     {

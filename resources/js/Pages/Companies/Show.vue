@@ -1,257 +1,159 @@
 <template>
-    <AppLayout :title="'Détails de ' + company.name">
-        <div class="min-h-screen py-12">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div
-                    class="bg-white bg-opacity-90 backdrop-filter backdrop-blur-lg overflow-hidden shadow-2xl rounded-3xl">
-                    <div class="p-8">
-                        <!-- En-tête avec le nom de l'entreprise et les boutons d'action -->
-                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-12">
-                            <div class="flex items-center space-x-4">
-                                <div
-                                    class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-full flex items-center justify-center">
-                                    <i class="fas fa-building text-3xl text-white"></i>
-                                </div>
-                                <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">
-                                    {{ company.name }}
-                                </h1>
-                            </div>
-                            <div class="flex space-x-4 mt-4 sm:mt-0">
-                                <Link :href="route('companies.edit', company.id)" class="btn-primary">
-                                <i class="fas fa-edit mr-2"></i>
-                                Modifier
-                                </Link>
-                                <button @click="confirmDelete" class="btn-danger">
-                                    <i class="fas fa-trash-alt mr-2"></i>
-                                    Supprimer
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Informations de l'entreprise -->
-                        <div class="bg-gradient-to-br from-indigo-50 to-indigo-50 p-8 rounded-2xl mb-12 shadow-inner">
-                            <h2 class="text-2xl font-semibold text-indigo-800 mb-6 flex items-center">
-                                <i class="fas fa-info-circle mr-3 text-indigo-600"></i> Informations de l'entreprise
-                            </h2>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div v-for="(value, key) in companyInfo" :key="key" class="flex items-start">
-                                    <div
-                                        class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mr-4">
-                                        <i :class="['fas', getIcon(key), 'text-indigo-600 text-xl']"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-medium text-indigo-600 mb-1">{{ getLabel(key) }}</p>
-                                        <p v-if="key === 'website'" class="text-lg text-gray-800">
-                                            <a v-if="value" :href="value" target="_blank"
-                                                class="text-indigo-600 hover:text-indigo-800 underline">
-                                                {{ value }}
-                                            </a>
-                                            <span v-else>Non spécifié</span>
-                                        </p>
-                                        <p v-else-if="key === 'is_active'" class="text-lg">
-                                            <span
-                                                :class="value ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
-                                                class="px-3 py-1 inline-flex text-sm font-semibold rounded-full">
-                                                {{ value ? "Actif" : "Inactif" }}
-                                            </span>
-                                        </p>
-                                        <p v-else class="text-lg text-gray-800">{{ value || "Non spécifié" }}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Sections pour les utilisateurs, bailleurs, locataires et propriétés -->
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                            <AssociatedSection title="Utilisateurs associés" icon="fas fa-users" :items="company.users">
-                                <template #item="{ item: user }">
-                                    <div class="flex items-center space-x-4">
-                                        <img class="h-12 w-12 rounded-full object-cover" :src="user.profile_photo_url"
-                                            :alt="user.name" />
-                                        <div>
-                                            <p class="font-semibold text-gray-900">{{ user.name }}</p>
-                                            <p class="text-sm text-gray-600">{{ user.email }}</p>
-                                            <p class="text-xs text-indigo-600 mt-1">
-                                                {{ user.roles.map(role => role.name).join(', ') }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </template>
-                            </AssociatedSection>
-
-                            <AssociatedSection title="Bailleurs associés" icon="fas fa-user-tie"
-                                :items="company.landlords">
-                                <template #item="{ item: landlord }">
-                                    <div>
-                                        <p class="font-semibold text-gray-900">{{ landlord.first_name }} {{
-                                            landlord.last_name }}</p>
-                                        <p class="text-sm text-gray-600">{{ landlord.email }}</p>
-                                        <p class="text-sm text-gray-600">{{ landlord.phone }}</p>
-                                    </div>
-                                </template>
-                            </AssociatedSection>
-
-                            <AssociatedSection title="Locataires associés" icon="fas fa-home" :items="company.tenants">
-                                <template #item="{ item: tenant }">
-                                    <div>
-                                        <p class="font-semibold text-gray-900">{{ tenant.first_name }} {{
-                                            tenant.last_name }}</p>
-                                        <p class="text-sm text-gray-600">{{ tenant.email }}</p>
-                                        <p class="text-sm text-gray-600">{{ tenant.phone_number }}</p>
-                                    </div>
-                                </template>
-                            </AssociatedSection>
-
-                            <AssociatedSection title="Propriétés associées" icon="fas fa-building"
-                                :items="company.properties">
-                                <template #item="{ item: property }">
-                                    <div class="flex space-x-4">
-                                        <img :src="getPropertyImage(property)" alt="Property Image"
-                                            class="w-24 h-24 object-cover rounded-lg" />
-                                        <div>
-                                            <p class="font-semibold text-gray-900">{{ property.name }}</p>
-                                            <p class="text-sm text-gray-600">{{ property.address }}</p>
-                                            <p class="text-sm text-indigo-600">{{ property.property_type }}</p>
-                                        </div>
-                                    </div>
-                                </template>
-                            </AssociatedSection>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Modal de confirmation de suppression -->
-        <Modal :show="showDeleteModal" @close="closeDeleteModal">
-            <div class="p-6">
-                <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
-                    <i class="fas fa-exclamation-triangle text-red-500 mr-3"></i>
-                    Confirmer la suppression
+    <AppLayout title="Détails de l'entreprise">
+      <div class="py-12">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+          <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
+            <div class="p-6 sm:px-20 bg-white border-b border-gray-200">
+              <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gradient bg-gradient-to-r from-blue-600 to-purple-600">
+                  {{ company.name }}
                 </h2>
-                <p class="mb-6 text-gray-600">
-                    Êtes-vous sûr de vouloir supprimer cette entreprise ? Cette action est irréversible.
-                </p>
-                <div class="flex justify-end space-x-4">
-                    <button @click="closeDeleteModal" class="btn-secondary">
-                        Annuler
-                    </button>
-                    <button @click="deleteCompany" class="btn-danger">
-                        Supprimer
-                    </button>
+                <div class="flex space-x-2">
+                  <Link :href="route('companies.edit', company.id)" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring focus:ring-indigo-300 disabled:opacity-25 transition">
+                    Modifier
+                  </Link>
+                  <button @click="deleteCompany" class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 active:bg-red-900 focus:outline-none focus:border-red-900 focus:ring focus:ring-red-300 disabled:opacity-25 transition">
+                    Supprimer
+                  </button>
                 </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="col-span-2 flex justify-center">
+                  <div v-if="company.logo" class="mb-4">
+                    <img :src="'/storage/' + company.logo" alt="Logo de l'entreprise" class="h-40 w-auto object-contain rounded-lg shadow-md">
+                  </div>
+                  <div v-else class="mb-4 flex items-center justify-center h-40 w-40 bg-gray-100 rounded-lg">
+                    <span class="text-gray-400">Aucun logo</span>
+                  </div>
+                </div>
+                <div v-for="field in fields" :key="field.name" class="flex items-center">
+                  <component :is="field.icon" class="h-5 w-5 text-gray-400 mr-2" />
+                  <div>
+                    <p class="text-sm font-medium text-gray-500">{{ field.label }}</p>
+                    <p class="mt-1 text-sm text-gray-900">
+                      <template v-if="field.name === 'is_active'">
+                        <span :class="company.is_active ? 'text-green-600' : 'text-red-600'">
+                          {{ company.is_active ? 'Active' : 'Inactive' }}
+                        </span>
+                      </template>
+                      <template v-else-if="field.name === 'website'">
+                        <a v-if="company.website" :href="company.website" target="_blank" class="text-blue-600 hover:underline">{{ company.website }}</a>
+                        <span v-else>Non spécifié</span>
+                      </template>
+                      <template v-else>
+                        {{ company[field.name] || 'Non spécifié' }}
+                      </template>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-8">
+                <h3 class="text-lg font-medium text-gray-900">Représentant</h3>
+                <p v-if="company.representant" class="mt-1 text-sm text-gray-600">
+                  {{ company.representant.name }} ({{ company.representant.email }})
+                </p>
+                <p v-else class="mt-1 text-sm text-gray-600">Aucun représentant spécifié</p>
+              </div>
+
+              <div class="mt-8">
+                <h3 class="text-lg font-medium text-gray-900">Utilisateurs associés</h3>
+                <ul v-if="company.users.length" class="mt-2 border border-gray-200 rounded-md divide-y divide-gray-200">
+                  <li v-for="user in company.users" :key="user.id" class="pl-3 pr-4 py-3 flex items-center justify-between text-sm">
+                    <div class="w-0 flex-1 flex items-center">
+                      <User class="h-5 w-5 text-gray-400 mr-2" />
+                      <span class="ml-2 flex-1 w-0 truncate">{{ user.name }} ({{ user.email }})</span>
+                    </div>
+                  </li>
+                </ul>
+                <p v-else class="mt-1 text-sm text-gray-600">Aucun utilisateur associé</p>
+              </div>
+
+              <div class="mt-8">
+                <h3 class="text-lg font-medium text-gray-900">Propriétaires</h3>
+                <ul v-if="company.landlords.length" class="mt-2 border border-gray-200 rounded-md divide-y divide-gray-200">
+                  <li v-for="landlord in company.landlords" :key="landlord.id" class="pl-3 pr-4 py-3 flex items-center justify-between text-sm">
+                    <div class="w-0 flex-1 flex items-center">
+                      <User class="h-5 w-5 text-gray-400 mr-2" />
+                      <span class="ml-2 flex-1 w-0 truncate">{{ landlord.name }} ({{ landlord.email }})</span>
+                    </div>
+                  </li>
+                </ul>
+                <p v-else class="mt-1 text-sm text-gray-600">Aucun propriétaire associé</p>
+              </div>
+
+              <div class="mt-8">
+                <h3 class="text-lg font-medium text-gray-900">Locataires</h3>
+                <ul v-if="company.tenants.length" class="mt-2 border border-gray-200 rounded-md divide-y divide-gray-200">
+                  <li v-for="tenant in company.tenants" :key="tenant.id" class="pl-3 pr-4 py-3 flex items-center justify-between text-sm">
+                    <div class="w-0 flex-1 flex items-center">
+                      <User class="h-5 w-5 text-gray-400 mr-2" />
+                      <span class="ml-2 flex-1 w-0 truncate">{{ tenant.name }} ({{ tenant.email }})</span>
+                    </div>
+                  </li>
+                </ul>
+                <p v-else class="mt-1 text-sm text-gray-600">Aucun locataire associé</p>
+              </div>
+
+              <div class="mt-8">
+                <h3 class="text-lg font-medium text-gray-900">Propriétés</h3>
+                <ul v-if="company.properties.length" class="mt-2 border border-gray-200 rounded-md divide-y divide-gray-200">
+                  <li v-for="property in company.properties" :key="property.id" class="pl-3 pr-4 py-3 flex items-center justify-between text-sm">
+                    <div class="w-0 flex-1 flex items-center">
+                      <Home class="h-5 w-5 text-gray-400 mr-2" />
+                      <span class="ml-2 flex-1 w-0 truncate">{{ property.name }} ({{ property.address }})</span>
+                    </div>
+                  </li>
+                </ul>
+                <p v-else class="mt-1 text-sm text-gray-600">Aucune propriété associée</p>
+              </div>
+
             </div>
-        </Modal>
+          </div>
+        </div>
+      </div>
     </AppLayout>
-</template>
+  </template>
 
-<script>
-import { defineComponent, ref, computed } from "vue";
-import AppLayout from "@/Layouts/AppLayout.vue";
-import { Link, router } from "@inertiajs/vue3";
-import Modal from "@/Components/Modal.vue";
-import AssociatedSection from "@/Components/AssociatedSection.vue";
+  <script setup>
+  import { ref } from 'vue';
+  import { Link, useForm } from '@inertiajs/vue3';
+  import AppLayout from '@/Layouts/AppLayout.vue';
+  import { Building, Mail, Phone, MapPin, Globe, FileText, User, CheckCircle, Home } from 'lucide-vue-next';
 
-export default defineComponent({
-    components: {
-        AppLayout,
-        Link,
-        Modal,
-        AssociatedSection
+  const props = defineProps({
+    company: {
+      type: Object,
+      required: true,
     },
-    props: {
-        company: Object,
-    },
-    setup(props) {
-        const showDeleteModal = ref(false);
+  });
 
-        const companyInfo = computed(() => ({
-            email: props.company.email,
-            phone: props.company.phone,
-            website: props.company.website,
-            is_active: props.company.is_active,
-            address: props.company.address
-        }));
+  const fields = [
+    { name: 'name', label: 'Nom de l\'entreprise', icon: Building },
+    { name: 'email', label: 'Email', icon: Mail },
+    { name: 'phone', label: 'Téléphone', icon: Phone },
+    { name: 'address', label: 'Adresse', icon: MapPin },
+    { name: 'website', label: 'Site web', icon: Globe },
+    { name: 'NINEA', label: 'NINEA', icon: FileText },
+    { name: 'RCCM', label: 'Registre de commerce', icon: FileText },
+    { name: 'is_active', label: 'Statut', icon: CheckCircle },
+  ];
 
-        const getIcon = (key) => {
-            const icons = {
-                email: 'fa-envelope',
-                phone: 'fa-phone',
-                website: 'fa-globe',
-                is_active: 'fa-toggle-on',
-                address: 'fa-map-marker-alt'
-            };
-            return icons[key] || 'fa-info-circle';
-        };
+  const form = useForm({});
 
-        const getLabel = (key) => {
-            const labels = {
-                email: 'Email',
-                phone: 'Téléphone',
-                website: 'Site web',
-                is_active: 'Statut',
-                address: 'Adresse'
-            };
-            return labels[key] || key.replace('_', ' ').charAt(0).toUpperCase() + key.replace('_', ' ').slice(1);
-        };
+  const deleteCompany = () => {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cette entreprise ?')) {
+      form.delete(route('companies.destroy', props.company.id), {
+        preserveState: false,
+        preserveScroll: true,
+      });
+    }
+  };
+  </script>
 
-        const confirmDelete = () => {
-            showDeleteModal.value = true;
-        };
-
-        const closeDeleteModal = () => {
-            showDeleteModal.value = false;
-        };
-
-        const deleteCompany = () => {
-            router.delete(route("companies.destroy", props.company.id), {
-                preserveState: false,
-                preserveScroll: false,
-                onSuccess: () => {
-                    router.visit(route("companies.index"));
-                },
-            });
-        };
-
-        const getPropertyImage = (property) => {
-            if (property.photos && property.photos.length) {
-                try {
-                    const parsedPhotos = JSON.parse(property.photos);
-                    if (parsedPhotos.length > 0) {
-                        const photoPath = parsedPhotos[0].replace(/^public\//, '');
-                        return `/storage/${photoPath}`;
-                    }
-                } catch (error) {
-                    console.error("Error parsing property photos:", error);
-                }
-            }
-            return 'https://via.placeholder.com/150'; // Image par défaut
-        };
-
-        return {
-            showDeleteModal,
-            confirmDelete,
-            closeDeleteModal,
-            deleteCompany,
-            companyInfo,
-            getIcon,
-            getLabel,
-            getPropertyImage
-        };
-    },
-});
-</script>
-
-<style scoped>
-.btn-primary {
-    @apply inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-500 to-indigo-700 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:from-indigo-600 hover:to-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring focus:ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150;
-}
-
-.btn-danger {
-    @apply inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-500 to-pink-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:from-red-600 hover:to-pink-700 active:bg-red-900 focus:outline-none focus:border-red-900 focus:ring focus:ring-red-300 disabled:opacity-25 transition ease-in-out duration-150;
-}
-
-.btn-secondary {
-    @apply inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:border-blue-300 focus:ring focus:ring-blue-200 active:text-gray-800 active:bg-gray-50 disabled:opacity-25 transition ease-in-out duration-150;
-}
-</style>
+  <style scoped>
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+  }
+  </style>

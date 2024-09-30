@@ -7,7 +7,7 @@
             :type="showCurrentPassword ? 'text' : 'password'"
             v-model="form.current_password"
             placeholder="Mot de passe actuel"
-            class="w-full px-4 py-3 rounded-md bg-gray-100 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition duration-300"
+            class="w-full px-4 py-3 rounded-md text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition duration-300"
             :class="{ 'border-red-500': form.errors.current_password }"
           >
           <button
@@ -24,7 +24,7 @@
             :type="showNewPassword ? 'text' : 'password'"
             v-model="form.password"
             placeholder="Nouveau mot de passe"
-            class="w-full px-4 py-3 rounded-md bg-gray-100 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition duration-300"
+            class="w-full px-4 py-3 rounded-md text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition duration-300"
             :class="{ 'border-red-500': form.errors.password }"
           >
           <button
@@ -41,7 +41,7 @@
             :type="showConfirmPassword ? 'text' : 'password'"
             v-model="form.password_confirmation"
             placeholder="Confirmer le nouveau mot de passe"
-            class="w-full px-4 py-3 rounded-md bg-gray-100 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition duration-300"
+            class="w-full px-4 py-3 rounded-md text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition duration-300"
           >
           <button
             @click="showConfirmPassword = !showConfirmPassword"

@@ -19,9 +19,10 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
         $roles = $user ? $user->roles->toArray() : [];
-        Log::info('Sharing user roles:', ['roles' => $roles]);
+        //Log::info('Sharing user roles:', ['roles' => $roles]);
 
         return array_merge(parent::share($request), [
+            'csrf_token' => csrf_token(),
             'appName' => config('app.name'),
             'auth.role' => fn () => $request->user()
                 ? $request->user()->getRoleNames()
