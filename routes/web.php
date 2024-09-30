@@ -22,6 +22,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\TenantAccountController;
 use App\Http\Controllers\HelpController;
+use App\Http\Controllers\LandlordProfileController;
 use App\Http\Controllers\PrivacyPolicyController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TermsOfServiceController;
@@ -75,15 +76,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('users', UserController::class);
         Route::put('/users/toggle-status/{user}', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
 
-        // Routes pour la gestion des bailleurs
-        Route::get('landlords/archives', [LandlordController::class, 'archives'])->name('landlords.archives');
-        Route::post('landlords/{id}/restore', [LandlordController::class, 'restore'])->name('landlords.restore');
-        Route::post('landlords/{id}/force-delete', [LandlordController::class, 'forceDelete'])->name('landlords.forceDelete');
-        Route::get('landlords/archived/{id}', [LandlordController::class, 'showArchived'])->name('landlords.showArchived');
-        Route::get('landlords/{landlord}/account', [LandlordController::class, 'show'])->name('landlords.account.show');
-        Route::post('landlords/{id}/create-account', [LandlordController::class, 'createAccount'])->name('landlords.create-account');
-        Route::get('/mandat', [MandatController::class, 'create'])->name('mandat.create');
-        Route::resource('landlords', LandlordController::class);
+// Routes pour la gestion des bailleurs
+Route::get('landlords/archives', [LandlordController::class, 'archives'])->name('landlords.archives');
+Route::post('landlords/{id}/restore', [LandlordController::class, 'restore'])->name('landlords.restore');
+Route::post('landlords/{id}/force-delete', [LandlordController::class, 'forceDelete'])->name('landlords.forceDelete');
+Route::get('landlords/archived/{id}', [LandlordController::class, 'showArchived'])->name('landlords.showArchived');
+Route::get('landlords/{landlord}/account', [LandlordController::class, 'show'])->name('landlords.account.show');
+Route::post('landlords/{id}/create-account', [LandlordController::class, 'createAccount'])->name('landlords.create-account');
+Route::get('/mandat', [MandatController::class, 'create'])->name('mandat.create');
+Route::resource('landlords', LandlordController::class);
+
+// Nouvelles routes pour la complétion du profil du bailleur
+Route::get('/landlord/profile/complete', function () {
+    return Inertia::render('Landlords/ProfileCompletion');
+})->name('landlord.profile.show');
+
+Route::post('/landlord/profile/complete', [LandlordController::class, 'completeProfile'])
+    ->name('landlord.profile.complete');
 
         // Routes pour la gestion des propriétés
         Route::get('properties/archives', [PropertyController::class, 'archives'])->name('properties.archives');
@@ -189,6 +198,10 @@ Route::fallback(function () {
     ]);
 });
 
+// Route pour la section À PROPOS DE NOFLAY
+Route::get('/about', function () {
+    return Inertia::render('About');
+})->name('about');
 
 // API Paiement de Paytech
 Route::post('/api/my-ipn', function () {

@@ -4,10 +4,12 @@
         <Head title="Noflay - Simplifiez votre gestion locative" />
         <Navigation @open-login-modal="loginModalOpen = true" @open-demo-modal="demoModalOpen = true" />
         <HeroSection @open-demo-modal="demoModalOpen = true" />
+        <AboutSection /> <!-- Ajout de la section À propos -->
         <FeaturesSection />
         <BenefitsSection />
         <PricingSection @select-plan="selectPlan" />
         <ContactSection @contact-submitted="handleContactForm" />
+        <FaqSection />
         <Footer />
         <PromotionalPopup />
         <LoginModal v-if="loginModalOpen" @close="loginModalOpen = false" @login="handleLogin" />
@@ -32,6 +34,7 @@ import FeaturesSection from '@/Components/FeaturesSection.vue';
 import BenefitsSection from '@/Components/BenefitsSection.vue';
 import PricingSection from '@/Components/PricingSection.vue';
 import ContactSection from '@/Components/ContactSection.vue';
+import AboutSection from '@/Components/About.vue'; // Import du composant About
 import Footer from '@/Components/Footer.vue';
 import LoginModal from '@/Components/LoginModal.vue';
 import DemoModal from '@/Components/DemoModal.vue';
@@ -40,6 +43,7 @@ import ChatWidget from '@/Components/ChatWidget.vue';
 import axios from 'axios';
 import Loader from '@/Components/Loader.vue';
 import PromotionalPopup from '@/Components/PromotionalPopup.vue';
+import FaqSection from '@/Components/FaqSection.vue';
 
 const loginModalOpen = ref(false);
 const demoModalOpen = ref(false);

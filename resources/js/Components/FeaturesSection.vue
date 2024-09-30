@@ -1,185 +1,212 @@
 <template>
-    <section id="fonctionnalites" class="py-20 bg-white overflow-hidden">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-            <div class="text-center mb-16">
-                <h2 class="text-base text-indigo-600 font-semibold tracking-wide uppercase animate-pulse">
-                    Avantages
+    <section id="fonctionnalites" class="py-24 bg-gradient-to-b from-white to-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="sr-only">Fonctionnalités de Noflay</h2>
+
+            <!-- Intro avec typographie moderne -->
+            <div class="mb-24 text-center">
+                <h2 class="text-4xl sm:text-5xl font-extrabold text-gray-900 leading-tight mb-4">
+                    Révolutionnez <span class="text-indigo-600">votre gestion</span> immobilière
                 </h2>
-                <p class="mt-2 text-4xl font-extrabold text-gray-900">
-                    Découvrez nos
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600">fonctionnalités uniques</span>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    Découvrez comment Noflay transforme la gestion immobilière avec des outils puissants et intuitifs.
                 </p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div v-for="(feature, index) in displayedFeatures" :key="feature.title"
-                    class="feature-card bg-white rounded-2xl shadow-xl p-8 transition-all duration-300 hover:shadow-2xl transform hover:-translate-y-2"
-                    :style="{ animationDelay: `${index * 150}ms` }">
-                    <div class="flex flex-col h-full">
-                        <div class="feature-icon text-4xl mb-6 text-indigo-500 transition-all duration-300 group-hover:scale-110 group-hover:text-purple-600">
-                            <i :class="['bi', feature.icon]"></i>
+            <!-- Fonctionnalités principales avec design épuré -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-32">
+                <div v-for="(feature, index) in mainFeatures" :key="index"
+                    class="bg-white p-8 rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105">
+                    <div class="text-indigo-600 mb-4">
+                        <component :is="feature.icon" class="w-12 h-12" />
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4 text-gray-900">{{ feature.title }}</h3>
+                    <p class="text-gray-600">{{ feature.description }}</p>
+                </div>
+            </div>
+
+            <!-- Fonctionnalités détaillées avec design moderne -->
+            <div class="space-y-32">
+                <div v-for="(feature, index) in detailedFeatures" :key="index"
+                    class="flex flex-col lg:flex-row items-center" :class="{ 'lg:flex-row-reverse': index % 2 !== 0 }">
+                    <div class="w-full lg:w-1/2 mb-8 lg:mb-0">
+                        <div class="relative overflow-hidden rounded-xl shadow-2xl">
+                            <img :src="feature.image" :alt="feature.title" class="w-full h-auto" />
+                            <div class="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 opacity-20">
+                            </div>
                         </div>
-                        <h3 class="text-xl font-bold text-gray-900 mb-4">
-                            {{ feature.title }}
-                        </h3>
-                        <p class="text-gray-600 mb-6 flex-grow">
-                            {{ feature.description }}
-                        </p>
-                        <ul class="space-y-2 mt-auto">
-                            <li v-for="subFeature in feature.subFeatures" :key="subFeature"
-                                class="flex items-center text-sm text-gray-500">
-                                <i class="bi bi-check-circle-fill mr-2 text-indigo-500"></i>
-                                {{ subFeature }}
+                    </div>
+                    <div class="w-full lg:w-1/2 lg:px-12">
+                        <h3 class="text-3xl font-bold mb-6 text-gray-900">{{ feature.title }}</h3>
+                        <p class="text-xl text-gray-600 mb-8">{{ feature.description }}</p>
+                        <ul class="space-y-4">
+                            <li v-for="(point, pIndex) in feature.points" :key="pIndex"
+                                class="flex items-start text-gray-700">
+                                <CheckIcon class="w-6 h-6 text-indigo-500 mr-3 flex-shrink-0" />
+                                <span>{{ point }}</span>
                             </li>
                         </ul>
                     </div>
                 </div>
             </div>
 
-            <div class="mt-20 text-center">
-                <button @click="toggleAllFeatures"
-                    class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 transition-colors duration-300 animate-bounce">
-                    {{ showAllFeatures ? 'Masquer les fonctionnalités supplémentaires' : 'Découvrir toutes nos fonctionnalités' }}
-                    <i :class="['bi', showAllFeatures ? 'bi-arrow-up' : 'bi-arrow-down', 'ml-2']"></i>
-                </button>
-            </div>
+            <!-- Section sur l'application mobile avec design moderne -->
+            <section class="mt-40 relative overflow-visible">
+                <div class="absolute inset-x-0 top-0 h-2/3 bg-indigo-50 rounded-2xl"></div>
+                <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-24">
+                    <div class="lg:flex lg:items-start lg:justify-between">
+                        <div class="lg:w-1/2 z-10 relative text-center lg:text-left">
+                            <h3 class="text-3xl font-bold mb-6 text-gray-900">Bientôt sur Mobile</h3>
+                            <p class="text-xl text-gray-600 mb-10">
+                                Toute la puissance de Noflay dans votre poche. Soyez parmi les premiers à découvrir
+                                notre application révolutionnaire.
+                            </p>
+                            <form @submit.prevent="submitMobileNotification" class="max-w-md mx-auto lg:mx-0">
+                                <div class="flex flex-col sm:flex-row gap-4">
+                                    <input
+                                        class="flex-grow appearance-none bg-white border border-gray-300 rounded-lg py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:border-indigo-500"
+                                        type="email" placeholder="Votre adresse e-mail"
+                                        aria-label="Email pour notification" v-model="mobileNotificationEmail" required>
+                                    <button
+                                        class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300"
+                                        type="submit">
+                                        Notifiez-moi
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="lg:w-1/2 mt-12 lg:mt-0">
+                            <div
+                                class="relative w-full h-[400px] sm:h-[500px] lg:h-[600px] xl:h-[700px] -mt-40 lg:-mt-80">
+                                <img src="/img/noflay-mobile.png" alt="Noflay Mobile App Mockup"
+                                    class="absolute left-1/2 top-0 transform -translate-x-1/2 lg:left-auto lg:right-[1rem] lg:translate-x-0 w-auto h-full object-contain lg:object-cover" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-            <div class="absolute top-0 left-0 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob"></div>
-            <div class="absolute top-0 right-0 w-72 h-72 bg-indigo-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000"></div>
-            <div class="absolute bottom-0 left-1/2 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-4000"></div>
+
+
         </div>
     </section>
 </template>
 
-<script setup>
-import { ref, computed } from "vue";
+<script>
+import { ref } from 'vue';
+import {
+    CreditCardIcon,
+    BanknotesIcon,
+    ShieldCheckIcon,
+    CurrencyDollarIcon,
+    DocumentTextIcon,
+    UsersIcon,
+    ChartBarIcon,
+    CheckIcon
+} from '@heroicons/vue/24/outline';
 
-const showAllFeatures = ref(false);
+export default {
+    components: {
+        CreditCardIcon,
+        BanknotesIcon,
+        ShieldCheckIcon,
+        CurrencyDollarIcon,
+        DocumentTextIcon,
+        UsersIcon,
+        ChartBarIcon,
+        CheckIcon
+    },
+    setup() {
+        const mainFeatures = ref([
+            {
+                title: 'Automatisation des Documents',
+                description: 'Générez instantanément tous vos documents essentiels, conformes à la législation en vigueur.',
+                icon: DocumentTextIcon,
+            },
+            {
+                title: 'Gestion Complète',
+                description: 'Centralisez la gestion de vos locataires, propriétaires et équipes en un seul endroit.',
+                icon: UsersIcon,
+            },
+            {
+                title: 'Finances & Comptabilité',
+                description: 'Suivez vos revenus, dépenses et commissions en temps réel avec une précision inégalée.',
+                icon: ChartBarIcon,
+            },
+        ]);
 
-const allFeatures = [
-    {
-        icon: "bi-person-check-fill",
-        title: "Gestion des locataires",
-        description: "Simplifiez la gestion de vos locataires avec notre plateforme.",
-        subFeatures: [
-            "Création et suivi des dossiers de location",
-            "Gestion des paiements et des quittances",
-            "Notifications et rappels automatiques",
-        ],
-    },
-    {
-        icon: "bi-file-earmark-text-fill",
-        title: "Gestion des documents",
-        description: "Organisez tous vos documents en un seul endroit.",
-        subFeatures: [
-            "Archivage sécurisé",
-            "Accès facile et rapide",
-            "Partage de documents",
-        ],
-    },
-    {
-        icon: "bi-building-fill",
-        title: "Gestion des contrats",
-        description: "Créez, modifiez et suivez vos contrats facilement.",
-        subFeatures: [
-            "Modèles personnalisables",
-            "Signatures électroniques",
-            "Suivi des renouvellements",
-        ],
-    },
-    {
-        icon: "bi-people-fill",
-        title: "Gestion des bailleurs",
-        description: "Gérez efficacement les relations avec vos bailleurs.",
-        subFeatures: [
-            "Profils des bailleurs",
-            "Suivi des communications",
-            "Reporting personnalisé",
-        ],
-    },
-    {
-        icon: "bi-archive-fill",
-        title: "Archivage des documents",
-        description: "Conservez et organisez tous vos documents importants.",
-        subFeatures: [
-            "Stockage sécurisé",
-            "Recherche avancée",
-            "Gestion des versions",
-        ],
-    },
-    {
-        icon: "bi-gear-fill",
-        title: "Facile à paramétrer",
-        description: "Configurez rapidement votre espace selon vos besoins.",
-        subFeatures: [
-            "Interface intuitive",
-            "Personnalisation avancée",
-            "Assistance au paramétrage",
-        ],
-    },
-    {
-        icon: "bi-receipt",
-        title: "Facturation",
-        description: "Gérez votre facturation de manière simple et efficace.",
-        subFeatures: [
-            "Génération automatique de factures",
-            "Suivi des paiements",
-            "Relances automatisées",
-        ],
-    },
-    {
-        icon: "bi-cash-stack",
-        title: "Gestion des finances",
-        description: "Optimisez la gestion financière de vos biens immobiliers.",
-        subFeatures: [
-            "Tableau de bord financier",
-            "Analyse des revenus et dépenses",
-            "Prévisions budgétaires",
-        ],
-    },
-];
+        const detailedFeatures = ref([
+            {
+                title: 'Documents Intelligents',
+                description: 'Révolutionnez votre gestion documentaire grâce à notre système d\'automatisation de pointe.',
+                image: '/img/smart-documents.png',
+                points: [
+                    'Génération instantanée de mandats de gérance',
+                    'Contrats de location personnalisés',
+                    'États des lieux avec signature électronique',
+                    'Reçus et quittances automatisés',
+                ],
+            },
+            {
+                title: 'Gestion Financière Avancée',
+                description: 'Optimisez vos performances financières avec nos outils d\'analyse sophistiqués.',
+                image: '/img/financial-management.png',
+                points: [
+                    'Calcul automatique des commissions',
+                    'Suivi détaillé des dépenses par propriété',
+                    'Gestion des cotisations locatives',
+                    'Rapports financiers sur mesure',
+                ],
+            },
+            {
+                title: 'Gestion d\'Équipe Simplifiée',
+                description: 'Boostez l\'efficacité de votre agence grâce à nos outils de gestion d\'équipe innovants.',
+                image: '/img/team-management.png',
+                points: [
+                    'Gestion centralisée du personnel',
+                    'Système de permissions avancé',
+                    'Collaboration en temps réel',
+                    'Suivi des performances',
+                ],
+            },
+        ]);
 
-const displayedFeatures = computed(() => {
-    return showAllFeatures.value ? allFeatures : allFeatures.slice(0, 3);
-});
+        const paymentOptions = ref([
+            {
+                icon: CreditCardIcon,
+                description: 'Paiements par carte bancaire, PayPal, et plus',
+            },
+            {
+                icon: BanknotesIcon,
+                description: 'Options de paiement mobile (Wave, Orange Money, Free Money)',
+            },
+            {
+                icon: ShieldCheckIcon,
+                description: 'Transactions sécurisées et traçables',
+            },
+            {
+                icon: CurrencyDollarIcon,
+                description: 'Encaissements rapides pour les propriétaires',
+            },
+        ]);
 
-const toggleAllFeatures = () => {
-    showAllFeatures.value = !showAllFeatures.value;
+        const mobileNotificationEmail = ref('');
+
+        const submitMobileNotification = () => {
+            console.log('Inscription à la notification mobile:', mobileNotificationEmail.value);
+            mobileNotificationEmail.value = '';
+            alert('Merci pour votre inscription ! Nous vous tiendrons informé de la sortie de notre application mobile.');
+        };
+
+        return {
+            mainFeatures,
+            detailedFeatures,
+            paymentOptions,
+            mobileNotificationEmail,
+            submitMobileNotification,
+        };
+    },
 };
 </script>
 
-<style scoped>
-@keyframes float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-    100% { transform: translateY(0px); }
-}
-
-@keyframes blob {
-    0% { transform: translate(0px, 0px) scale(1); }
-    33% { transform: translate(30px, -50px) scale(1.1); }
-    66% { transform: translate(-20px, 20px) scale(0.9); }
-    100% { transform: translate(0px, 0px) scale(1); }
-}
-
-.animate-blob {
-    animation: blob 7s infinite;
-}
-
-.animation-delay-2000 {
-    animation-delay: 2s;
-}
-
-.animation-delay-4000 {
-    animation-delay: 4s;
-}
-
-.feature-card {
-    animation: float 6s ease-in-out infinite;
-}
-
-.text-transparent.bg-clip-text {
-    -webkit-background-clip: text;
-    background-clip: text;
-}
-</style>
+<style scoped></style>

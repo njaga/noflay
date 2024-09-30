@@ -14,13 +14,14 @@ class UpdatePaymentsTable extends Migration
     public function up()
     {
         Schema::table('payments', function (Blueprint $table) {
-            // Adding new columns
+            // Adding new columns from both migrations
             $table->unsignedBigInteger('tenant_id')->after('company_id')->nullable();
+            $table->string('payment_month', 7)->nullable()->after('amount');
+            $table->string('payment_type')->nullable()->after('payment_month');
+            $table->decimal('tva_amount', 10, 2)->default(0.00)->after('payment_type');
 
             // Adding foreign key constraints
             $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
-
-            // Ensure that contract_id and company_id columns are foreign keys
             $table->foreign('contract_id')->references('id')->on('contracts')->onDelete('cascade');
             $table->foreign('company_id')->references('id')->on('companies')->onDelete('cascade');
         });
@@ -41,6 +42,9 @@ class UpdatePaymentsTable extends Migration
 
             // Dropping the columns
             $table->dropColumn('tenant_id');
+            $table->dropColumn('payment_month');
+            $table->dropColumn('payment_type');
+            $table->dropColumn('tva_amount');
         });
     }
 }
