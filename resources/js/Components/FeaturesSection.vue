@@ -53,7 +53,7 @@
             <!-- Section sur l'application mobile avec design moderne -->
             <section class="mt-40 relative overflow-visible">
                 <div class="absolute inset-x-0 top-0 h-2/3 bg-indigo-50 rounded-2xl"></div>
-                <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-24">
+                <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-4">
                     <div class="lg:flex lg:items-start lg:justify-between">
                         <div class="lg:w-1/2 z-10 relative text-center lg:text-left">
                             <h3 class="text-3xl font-bold mb-6 text-gray-900">Bientôt sur Mobile</h3>
@@ -86,10 +86,37 @@
                 </div>
             </section>
 
-
+        <!-- Section des options de paiement -->
+        <section>
+          <div class="mx-auto w-full max-w-5xl">
+            <div class="grid items-center gap-12 lg:grid-cols-2">
+              <div>
+                <h2 class="mb-6 text-3xl font-bold md:text-4xl lg:text-5xl">
+                  Paiements et encaissements simplifiés
+                </h2>
+                <p class="mb-8 text-lg text-gray-600">
+                  Offrez à vos clients et propriétaires une expérience de paiement fluide et sécurisée avec nos options variées.
+                </p>
+                <a href="#" class="inline-block rounded-lg bg-indigo-600 px-6 py-3 text-center font-semibold text-white hover:bg-indigo-700 transition-colors duration-300">
+                  En savoir plus
+                </a>
+              </div>
+              <div class="grid grid-cols-2 gap-6">
+                <div v-for="(option, index) in paymentOptions" :key="index"
+                     class="flex flex-col items-center justify-center p-6 text-center bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                  <div class="mb-4">
+                    <component :is="option.icon" class="w-12 h-12 text-indigo-600" />
+                  </div>
+                  <p class="text-sm font-medium">{{ option.description }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
         </div>
     </section>
+
 </template>
 
 <script>
