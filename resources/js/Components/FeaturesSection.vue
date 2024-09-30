@@ -53,7 +53,7 @@
             <!-- Section sur l'application mobile avec design moderne -->
             <section class="mt-40 relative overflow-visible">
                 <div class="absolute inset-x-0 top-0 h-2/3 bg-indigo-50 rounded-2xl"></div>
-                <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-4">
+                <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-24">
                     <div class="lg:flex lg:items-start lg:justify-between">
                         <div class="lg:w-1/2 z-10 relative text-center lg:text-left">
                             <h3 class="text-3xl font-bold mb-6 text-gray-900">Bientôt sur Mobile</h3>
